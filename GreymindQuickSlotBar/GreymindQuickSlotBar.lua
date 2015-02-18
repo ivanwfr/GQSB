@@ -14,8 +14,8 @@
 -- OBSOLETE:
 --  /LAM:AddHeader
 
---[[ CHANGELOG 150218   // 141105:
-APIVersion: 10010       // 10011
+--[[ CHANGELOG 150218   // 141105
+APIVersion: 100011      // 100010
 Version     "v2.1.2"    // "v2.1.0"
 Bag items update excluding bag #0 events (equipped items wearing stats?)
 Some unnecessary GUI refresh removed (small optimization)
