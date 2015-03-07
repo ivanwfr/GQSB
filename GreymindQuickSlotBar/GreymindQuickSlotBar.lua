@@ -6,7 +6,7 @@
 
 -- ESOUI Developer Discussions - General Authoring Discussion - Changes on PTS 1.2.2
 -- http://www.esoui.com/forums/showthread.php?t=1811
---  C:/Users/ivan/Documents/ARCHIVES/liveeu/Addons/GreymindQuickSlotBar/lib/LibAddonMenu-1.0
+--  ../../../../ARCHIVES/liveeu/Addons/GreymindQuickSlotBar/lib/LibAddonMenu-1.0
 --  lib/LibAddonMenu-2.0/LibAddonMenu-2.0.lua
 --  lib/exampleoptions.lua
 --  lib/LibAddonMenu-2.0/controls/panel.lua
@@ -16,7 +16,7 @@
 
 --[[ CHANGELOG 150218   // 141105
 APIVersion: 100011      // 100010
-Version     "v2.1.2"    // "v2.1.0"
+Version     "v2.1.3"    // "v2.1.0"
 Bag items update excluding bag #0 events (equipped items wearing stats?)
 Some unnecessary GUI refresh removed (small optimization)
 --]]
@@ -106,7 +106,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.1.2", -- APIVersion: 100010 -- 141126 previous: 141106 141104 141016 140924 140813,140810,140625
+    Version                             = "v2.1.3", -- 141126 [APIVersion 100011 Update 1.6] previous: 141106 141104 141016 140924 140813,140810,140625
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -227,6 +227,8 @@ local OnResizeStart
 local OnResizeStop
 
 local OnSlashCommand
+local PlaySoundAlert
+local PlaySoundSlotted
 local Refresh
 local RegisterEventHandlers
 local Release_Settings_Locked
@@ -1040,6 +1042,19 @@ function GetAlignmentXY(hAlign, vAlign) --{{{
     return x, y
 end --}}}
 
+function PlaySoundAlert(caller) --{{{
+D("PlaySoundAlert(|cFF00FF"..caller.."|r)")
+    PlaySound("General_Alert_Error")
+end
+
+--}}}
+function PlaySoundSlotted(caller) --{{{
+D("PlaySoundSlotted(|cFF00FF"..caller.."|r)")
+    PlaySound(SOUNDS.ABILITY_SLOTTED)
+end
+
+--}}}
+
 -- KEYBINDINGS
 function BuildKeyBindingsMenu() --{{{
     for i = 1, #KEYBINDINGS do
@@ -1149,6 +1164,7 @@ function QSB_Item7() SelectButton(7) end
 function QSB_Item8() SelectButton(8) end
 --}}}
 function QSB_NextItem() --{{{
+D("NextItem()")
     local slotIndex = GetCurrentQuickslot()
     local bNum      = Get_bNum_of_slotIndex( slotIndex )
 
@@ -1158,18 +1174,19 @@ function QSB_NextItem() --{{{
         step = step + 1
         bNum = bNum + 1
         if QSB.Settings.NextPrevWrap then
-            bNum  = math.fmod(bNum, QSB.ButtonCountMax+1)
-        elseif bNum > QSB.ButtonCountMax then
+            bNum  = math.fmod(bNum, QSB.Settings.ButtonsDisplayed+1)
+        elseif bNum > QSB.Settings.ButtonsDisplayed then
             Show()
-            PlaySound("General_Alert_Error")
+            PlaySoundAlert("NextItem")
             break
         end
         slotIndex = Get_slotIndex_of_bNum( bNum )
-    until not IsEmptySlot(slotIndex) or (step > QSB.ButtonCountMax+1)
+    until not IsEmptySlot(slotIndex) or (step > QSB.Settings.ButtonsDisplayed+1)
 
-    if(step > QSB.ButtonCountMax) then PlaySound("General_Alert_Error") end
-
-    SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+    if (bNum > 0) and (bNum <= QSB.Settings.ButtonsDisplayed) then
+        PlaySoundSlotted("NextItem")
+        SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+    end
 end --}}}
 function QSB_PreviousItem() --{{{
 D("PreviousItem()")
@@ -1182,16 +1199,19 @@ D("PreviousItem()")
         step = step + 1
         bNum = bNum - 1
         if QSB.Settings.NextPrevWrap then
-            bNum = math.fmod(bNum+ QSB.ButtonCountMax+1, QSB.ButtonCountMax+1) -- cares for negative values
+            bNum = math.fmod(bNum+ QSB.Settings.ButtonsDisplayed+1, QSB.Settings.ButtonsDisplayed+1) -- cares for negative values
         elseif bNum < 1 then
             Show()
-            PlaySound("General_Alert_Error")
+            PlaySoundAlert("PreviousItem")
             break
         end
     slotIndex = Get_slotIndex_of_bNum( bNum )
-    until not IsEmptySlot(slotIndex) or (step > QSB.ButtonCountMax+1)
+    until not IsEmptySlot(slotIndex) or (step > QSB.Settings.ButtonsDisplayed+1)
 
-    SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+    if (bNum > 0) and (bNum <= QSB.Settings.ButtonsDisplayed) then
+        PlaySoundSlotted("PreviousItem")
+        SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+    end
 end --}}}
 function QSB_ForceBarVisibility() --{{{
 D("QSB_ForceBarVisibility()")
@@ -1235,9 +1255,12 @@ D("SelectButton(bNum=["..tostring(bNum).."])")
 
     local slotIndex = Get_slotIndex_of_bNum( bNum )
 
-    if IsEmptySlot(slotIndex) then PlaySound("General_Alert_Error") end
-
-    SetCurrentQuickslot( slotIndex )
+    if IsEmptySlot(slotIndex) then
+        PlaySoundAlert("SelectButton")
+    else
+        PlaySoundSlotted("SelectButton")
+        SetCurrentQuickslot( slotIndex )
+    end
 
 end --}}}
 function IsEmptySlot(slotIndex) --{{{
@@ -1296,6 +1319,10 @@ end --}}}
 
 function SelectNextAuto() --{{{
 D("SelectNextAuto()")
+
+    if not QSB.Settings.NextAuto              then return end
+    if not IsEmptySlot(GetCurrentQuickslot()) then return end
+
     local slotIndex = GetCurrentQuickslot()
     local bNum      = Get_bNum_of_slotIndex( slotIndex )
     D("...bNum=["..bNum.."]")
@@ -1312,10 +1339,15 @@ D("SelectNextAuto()")
 
     until not IsEmptySlot(slotIndex) or (step > step_max)
 
-    if(step > step_max) then PlaySound("General_Alert_Error") end
+    D("...bNum=["..bNum.."] slotIndex=["..tostring(slotIndex).."]")
 
-    D("...bNum=["..bNum.."]")
-    SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+    if(bNum > 0) or (bNum <= QSB.Settings.ButtonsDisplayed) then
+        PlaySoundSlotted("SelectNextAuto")
+        SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+    else
+        PlaySoundAlert("SelectNextAuto")
+    end
+
 end --}}}
 
 -- SETTINGS (menu get & set functions)
@@ -1373,23 +1405,6 @@ D("BuildSettingsMenu()")
     --}}}
 
     -- LockUI (Checkbox) --{{{
---[[
-    controlName = "QSB_LockUI"
-    control     = LAM:AddCheckbox(panel, controlName
-    , "Lock|r on screen"
-    , "Whether to allow moving and resizing Quick Slot Bar\n"
-    ..COLOR4.."You can also Lock or Unlock with a mouse click on the UI's pin handle"
-    , function()
-        return QSB.Settings.LockUI
-    end
-    , function(value)
-        QSB.Settings.LockUI = value
-        Refresh()
-        Show()
-    end
-    , true
-    , "Disabling the lock will "..COLOR2.."force UI visibility|r and the background to show so you can reposition it with guidance")
---]]
     control = {
         type        = "checkbox",
         reference   = "QSB_LockUI",
@@ -1411,25 +1426,6 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- Visibility_ChoiceList (Dropdown) --{{{
---[[
-    controlName = "QSB_Visibility"
-    control     = LAM:AddDropdown(panel, controlName
-    , "Show|r Policy"
-    , "Choose when you'd like Quick Slot Bar displayed or hidden"
-    , QSB.Visibility_ChoiceList
-    , function()
-        --d("|c00FF00.GET:|r "..QSB.Settings.PresetName.." Visibility=["..QSB.Settings.Visibility.."]") --FIXME_backfiring_issue
-        return QSB.Settings.Visibility or QSB.SettingsDefaults.Visibility
-    end
-    , function(value)
-        if not Are_Settings_Locked(controlName, value) then
-            QSB.Settings.Visibility = value
-            Refresh()
-            Show()
-        end
-    end)
-
---]]
     control = {
         type        = "dropdown",
         reference   = "QSB_Visibility",
@@ -1457,30 +1453,7 @@ D("BuildSettingsMenu()")
     --LAM:AddHeader(panel, "QSB_Sep1", "")
     local KW_Button = COLOR1.."Button:|r "
     -- ButtonSize (Slider) --{{{
---[[
-    controlName = "QSB_SlotItem_ButtonSize"
-    control     = LAM:AddSlider(panel, controlName
-    , KW_Button.."Size" ------------------------------------------------------- text
-    , "The size of each button" ----------------------------------------------- tooltip
-    , 24 ---------------------------------------------------------------------- minValue
-    , 64 ---------------------------------------------------------------------- maxValue
-    , 1 ----------------------------------------------------------------------- step
-    , function() -------------------------------------------------------------- getFunc
-        return QSB.Settings.ButtonSize
-    end
-    , function(value) --------------------------------------------------------- setFunc
-        value = tonumber(value); if not value then return end
-        value = math.max(value, 24)
-        value = math.min(value, 64)
-        QSB.Settings.ButtonSize    = value
-        ButtonSizeChanged()
-        Refresh()
-        Show()
-    end
-    , false ------------------------------------------------------------------- warning
-    , nil --------------------------------------------------------------------- warningText
-    )
---]]
+
     control = {
         type        = "slider",
         reference   = "QSB_SlotItem_ButtonSize",
@@ -1507,29 +1480,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- ButtonFontSize (Slider) --{{{
---[[
-    controlName = "QSB_SlotItem_ButtonFontSize"
-    control     = LAM:AddSlider(panel, controlName
-    , KW_Button.."Font Size" -------------------------------------------------- text
-    , "For Keybind and Quantity labels" --------------------------------------- tooltip
-    , 12 ---------------------------------------------------------------------- minValue
-    , 32 ---------------------------------------------------------------------- maxValue
-    , 1 ----------------------------------------------------------------------- step
-    , function() -------------------------------------------------------------- getFunc
-        return QSB.Settings.ButtonFontSize
-    end
-    , function(value) --------------------------------------------------------- setFunc
-        value = tonumber(value); if not value then return end
-        value = math.max(value, 12)
-        value = math.min(value, 32)
-        QSB.Settings.ButtonFontSize = value
-        Refresh()
-        Show()
-    end
-    , false ------------------------------------------------------------------- warning
-    , nil --------------------------------------------------------------------- warningText
-    )
---]]
+
     control = {
         type        = "slider",
         reference   = "QSB_SlotItem_ButtonFontSize",
@@ -1555,29 +1506,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- NotSelectedButtonOpacity (Slider) --{{{
---[[
-    controlName = "QSB_SlotItem_NotSelectedButtonOpacity"
-    control     = LAM:AddSlider(panel, controlName
-    , KW_Button.."Not Selected Opacity" -------------------------------------- text
-    , "From plain invisible to full opacity" ---------------------------------- tooltip
-    , 0 ----------------------------------------------------------------------- minValue
-    , 100 --------------------------------------------------------------------- maxValue
-    , 5 ----------------------------------------------------------------------- step
-    , function() -------------------------------------------------------------- getFunc
-        return QSB.Settings.SlotItem.NotSelectedButtonOpacity
-    end
-    , function(value) --------------------------------------------------------- setFunc
-        value = tonumber(value); if not value then return end
-        value = math.max(value,   0)
-        value = math.min(value, 100)
-        QSB.Settings.SlotItem.NotSelectedButtonOpacity = value
-        Refresh()
-        Show()
-    end
-    , false ------------------------------------------------------------------- warning
-    , nil --------------------------------------------------------------------- warningText
-    )
---]]
+
     control = {
         type        = "slider",
         reference   = "QSB_SlotItem_NotSelectedButtonOpacity",
@@ -1603,29 +1532,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- OverlayButtonOpacity (Slider) --{{{
---[[
-    controlName = "QSB_SlotItem_OverlayButtonOpacity"
-    control     = LAM:AddSlider(panel, controlName
-    , KW_Button.."Gray-out opacity" ------------------------------------------- text
-    , "From plain invisible to full opacity" ---------------------------------- tooltip
-    , 0 ----------------------------------------------------------------------- minValue
-    , 100 --------------------------------------------------------------------- maxValue
-    , 5 ----------------------------------------------------------------------- step
-    , function() -------------------------------------------------------------- getFunc
-        return QSB.Settings.SlotItem.OverlayButtonOpacity
-    end
-    , function(value) --------------------------------------------------------- setFunc
-        value = tonumber(value); if not value then return end
-        value = math.max(value,   0)
-        value = math.min(value, 100)
-        QSB.Settings.SlotItem.OverlayButtonOpacity = value
-        Refresh()
-        Show()
-    end
-    , false ------------------------------------------------------------------- warning
-    , nil --------------------------------------------------------------------- warningText
-    )
---]]
+
     control = {
         type        = "slider",
         reference   = "QSB_SlotItem_OverlayButtonOpacity",
@@ -1654,23 +1561,7 @@ D("BuildSettingsMenu()")
     --LAM:AddHeader(panel, "QSB_Sep2", "")
     local KW_Visual_Cues = COLOR2.."Visual Cue:|r "
     -- VisualCue_ChoiceList (Dropdown) --{{{
---[[
-    controlName = "QSB_VisualCue"
-    control     = LAM:AddDropdown(panel, controlName
-    , KW_Visual_Cues.."Display Policy"
-    , "Choose how visual cues should be displayed"
-    , QSB.VisualCue_ChoiceList
-    , function()
-        return QSB.Settings.SlotItem.VisualCue or QSB.SettingsDefaults.SlotItem.VisualCue
-    end
-    , function(value)
-        if not Are_Settings_Locked(controlName, value) then
-            QSB.Settings.SlotItem.VisualCue = value
-            Refresh()
-            Show()
-        end
-    end)
---]]
+
     control = {
         type        = "dropdown",
         reference   = "QSB_VisualCue",
@@ -1694,33 +1585,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- QuantityWarning (Slider) --{{{
---[[
-    controlName = "QSB_SlotItem_WarningQuantity"
-    control     = LAM:AddSlider(panel, controlName
-    , KW_Visual_Cues.."Warning Quantity" -------------------------------------- text
-    , "The value at (and below) which the Warning Visual Cue is shown" -------- tooltip
-    , 0  ---------------------------------------------------------------------- minValue
-    , 50 ---------------------------------------------------------------------- maxValue
-    , 1 ----------------------------------------------------------------------- step
-    , function() -------------------------------------------------------------- getFunc
-        return QSB.Settings.SlotItem.QuantityWarning
-    end
-    , function(value)
-        value = tonumber(value); if not value then return end
-        if(value <= QSB.Settings.SlotItem.QuantityAlert) then
-            value = QSB.Settings.SlotItem.QuantityAlert+1
-            -- discard changes
-            QSB.SlotItemAlertQuantitySlider:GetNamedChild("Slider"    ):SetValue(value/51)
-            QSB.SlotItemAlertQuantitySlider:GetNamedChild("ValueLabel"):SetText (tostring(value))
-        end
-        QSB.Settings.SlotItem.QuantityWarning = value
-        Refresh()
-        Show()
-    end
-    , true  ------------------------------------------------------------------- warning
-    , "* must be higher than "..COLOR2.."Alert Quantity|r" -------------------- warningText
-    )
---]]
+
     control = {
         type        = "slider",
         reference   = "QSB_SlotItem_WarningQuantity",
@@ -1751,33 +1616,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- QuantityAlert (Slider) --{{{
---[[
-    controlName = "QSB_SlotItem_AlertQuantity"
-    control     = LAM:AddSlider(panel, controlName
-    , KW_Visual_Cues.."Alert Quantity" ---------------------------------------- text
-    , "The value at (and below) which the Alert Visual Cue is shown" ---------- tooltip
-    , 0  ---------------------------------------------------------------------- minValue
-    , 50 ---------------------------------------------------------------------- maxValue
-    , 1 ----------------------------------------------------------------------- step
-    , function() -------------------------------------------------------------- getFunc
-        return QSB.Settings.SlotItem.QuantityAlert
-    end
-    , function(value) --------------------------------------------------------- setFunc
-        value = tonumber(value); if not value then return end
-        if(value >= QSB.Settings.SlotItem.QuantityWarning) then
-            value = QSB.Settings.SlotItem.QuantityWarning-1
-            -- discard changes
-            QSB.SlotItemWarningQuantitySlider:GetNamedChild("Slider"    ):SetValue(value/51)
-            QSB.SlotItemWarningQuantitySlider:GetNamedChild("ValueLabel"):SetText (tostring(value))
-        end
-        QSB.Settings.SlotItem.QuantityAlert = value
-        Refresh()
-        Show()
-    end
-    , true  ------------------------------------------------------------------- warning
-    , "* must be lower than "..COLOR2.."Warning Quantity|r" ------------------- warningText
-    )
---]]
+
     control = {
         type        = "slider",
         reference   = "QSB_SlotItem_AlertQuantity",
@@ -1811,20 +1650,7 @@ D("BuildSettingsMenu()")
     --LAM:AddHeader(panel, "QSB_Sep4", "")
     local KW_Key_Bindings = COLOR3.."Key Bindings:|r "
     -- ShowKeyBindings (Checkbox) --{{{
---[[
-    controlName = "QSB_ShowKeyBindings"
-    control     = LAM:AddCheckbox(panel, controlName
-    , KW_Key_Bindings.."Show"
-    , "Whether to show key bindings for the slots in Quick Slot Bar"
-    , function()
-        return QSB.Settings.SlotItem.ShowKeyBindings
-    end
-    , function(value)
-        QSB.Settings.SlotItem.ShowKeyBindings = value
-        Refresh()
-        Show()
-    end)
---]]
+
     control = {
         type        = "checkbox",
         reference   = "QSB_ShowKeyBindings",
@@ -1844,23 +1670,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- KeyBindAlignV (Dropdown) --{{{
---[[
-    controlName = "QSB_SlotItem_KeyBindPositionVertical"
-    control     = LAM:AddDropdown(panel, controlName
-    , KW_Key_Bindings.."Position (Vertical)"
-    , "Select where you'd like the key bind displayed in relation to the slot item vertically"
-    , ALIGNV
-    , function()
-        return QSB.Settings.SlotItem.KeyBindAlignV
-    end
-    , function(value)
-        if not Are_Settings_Locked(controlName, value) then
-            QSB.Settings.SlotItem.KeyBindAlignV = value
-            Refresh()
-            Show()
-        end
-    end)
---]]
+
     control = {
         type        = "dropdown",
         reference   = "QSB_SlotItem_KeyBindPositionVertical",
@@ -1883,23 +1693,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- KeyBindAlignH (Dropdown) --{{{
---[[
-    controlName = "QSB_SlotItem_KeyBindPositionHorizontal"
-    control     = LAM:AddDropdown(panel, controlName
-    , KW_Key_Bindings.."Position (Horizontal)"
-    , "Select where you'd like the key bind displayed in relation to the slot item horizontally"
-    , ALIGNH
-    , function()
-        return QSB.Settings.SlotItem.KeyBindAlignH
-    end
-    , function(value)
-        if not Are_Settings_Locked(controlName, value) then
-            QSB.Settings.SlotItem.KeyBindAlignH = value
-            Refresh()
-            Show()
-        end
-    end)
---]]
+
     control = {
         type        = "dropdown",
         reference   = "QSB_SlotItem_KeyBindPositionHorizontal",
@@ -1925,20 +1719,7 @@ D("BuildSettingsMenu()")
     --LAM:AddHeader(panel, "QSB_Sep3", "")
     local KW_Label = COLOR4.."Label:|r "
     -- ShowQuantityLabels (Checkbox) --{{{
---[[
-    controlName = "QSB_ShowQuantityLabels"
-    control     = LAM:AddCheckbox(panel, controlName
-    , KW_Label.."Show Quantity"
-    , "Whether to show quantity of items for the slots in Quick Slot Bar"
-    , function()
-        return QSB.Settings.SlotItem.ShowQuantityLabels
-    end
-    , function(value)
-        QSB.Settings.SlotItem.ShowQuantityLabels = value
-        Refresh()
-        Show()
-    end)
---]]
+
     control = {
         type        = "checkbox",
         reference   = "QSB_ShowQuantityLabels",
@@ -1958,24 +1739,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- ALIGNV (Dropdown) --{{{
---[[
-    controlName = "QSB_SlotItem_QuantityLabelPositionVertical"
-    control     = LAM:AddDropdown(panel, controlName
-    , KW_Label.."Quantity Position (Vertical)"
-    , "Select where you'd like the quantity label displayed in relation to the slot item vertically"
-    , ALIGNV
-    , function()
-        return QSB.Settings.SlotItem.QuantityLabelPositionVertical
-    end
-    ,
-    function(value)
-        if not Are_Settings_Locked(controlName, value) then
-            QSB.Settings.SlotItem.QuantityLabelPositionVertical = value
-            Refresh()
-            Show()
-        end
-    end)
---]]
+
     control = {
         type        = "dropdown",
         reference   = "QSB_SlotItem_QuantityLabelPositionVertical",
@@ -1998,23 +1762,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- ALIGNH (Dropdown) --{{{
---[[
-    controlName = "QSB_SlotItem_QuantityLabelPositionHorizontal"
-    control     = LAM:AddDropdown(panel, controlName
-    , KW_Label.."Quantity Position (Horizontal)"
-    , "Select where you'd like the quantity label displayed in relation to the slot item horizontally"
-    , ALIGNH
-    , function()
-        return QSB.Settings.SlotItem.QuantityLabelPositionHorizontal
-    end
-    , function(value)
-        if not Are_Settings_Locked(controlName, value) then
-            QSB.Settings.SlotItem.QuantityLabelPositionHorizontal = value
-            Refresh()
-            Show()
-        end
-    end)
---]]
+
     control = {
         type        = "dropdown",
         reference   = "QSB_SlotItem_QuantityLabelPositionHorizontal",
@@ -2039,42 +1787,7 @@ D("BuildSettingsMenu()")
 
     --LAM:AddHeader(panel, "QSB_Sep5", "")
     -- Presets (Slider) --{{{
---[[
-    controlName = "QSB_Presets"
-    control     = LAM:AddSlider(panel, controlName
-    , "Preset Selection" ------------------------------------------------------ text
-    , "Current settings will be saved in current preset before each change" --- tooltip
-    , 1 ----------------------------------------------------------------------- minValue
-    , 5 ----------------------------------------------------------------------- maxValue
-    , 1 ----------------------------------------------------------------------- step
-    , function()
-        local value = 1
-        for k, v in pairs(PRESETNAMES) do
-            if string.match(v, QSB.Settings.PresetName) then
-                value = k
-                break
-            end
-        end
-        D("getFunc |cFF0000.QSB_Presets|r: return "..value)
-        return value
-    end
-    , function(value)
-        value = tostring(value)
-        D("setFunc |cFF0000.QSB_Presets|r: value="..value)
-        for k, v in pairs(PRESETNAMES) do
-            if string.match(v, tostring(value)) then
-                value = v
-                break
-            end
-        end
-        SelectPreset(value)
-        Refresh();
-        Show()
-    end
-    , false ------------------------------------------------------------------- warning
-    , nil --------------------------------------------------------------------- warningText
-    )
---]]
+
     control = {
         type        = "slider",
         reference   = "QSB_Presets",
@@ -2113,34 +1826,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- Keybindings modifiers --{{{
---[[
-    controlName = "QSB_ModBingingsButton"
-    control     = LAM:AddButton(panel, controlName
-    , "Prepare Key Modifiers"
-    , "This is a 2 steps operation:\n"
-    .."\n"
-    .."1. This button will PREPARE this addon's  "..COLOR1.."EMPTY KEYBINDINGS|r"
-    .." with "..COLOR2.."VIRTUAL KEY COMBINATIONS|r\n"
-    .."\n"
-    .."2. Then, you have to open the\n"
-    ..COLOR3.."CONTROLS-Keybindings|r window"
-    .."\nthat will let you select any "..COLOR4.."Shift|r"
-    ..", "                             ..COLOR5.."Control|r"
-    .." and "                          ..COLOR6.."Alt|r"
-    .." key combinations.\n"
-    , function()
-        ApplyKeyBindingsModifier()
-    end
-    , true
-    , COLOR1.."Brace yourself!|r This is not a friendly procedure, but it works!\n"
-    .."\n"
-    .."First you will have to click on "..COLOR2.."Not Bound|r keys"
-    .." in the "..COLOR3.."CONTROLS-Keybinds|r window"
-    .." which eventually show up as "..COLOR4.."SHIFT-F12 - F24|r you must redefine.\n"
-    .."\n"
-    .." Just another quest that could cost you a few calls to /reloadUI ... "
-    .."Good luck!\n")
---]]
+
     control = {
         type        = "button",
         reference   = "QSB_ModBingingsButton",
@@ -2174,21 +1860,7 @@ D("BuildSettingsMenu()")
     --}}}
 
     -- GameActionButtonHide (Checkbox) --{{{
---[[
-    controlName = "QSB_DisableQuickSlotActionButton"
-    control     = LAM:AddCheckbox(panel, controlName
-    , "Disable Default Quick Slot"
-    , "Whether to disable the game's default quick slot action button.\n"
-    ..COLOR4.."When OFF, no hiding or showing this button will interfere."
-    , function()
-        return QSB.Settings.GameActionButtonHide;
-    end
-    , function(value)
-        QSB.Settings.GameActionButtonHide = value;
-        -- Apply new user choice
-        GameActionButtonHideHandler(true)
-    end);
---]]
+
     control = {
         type        = "checkbox",
         reference   = "QSB_DisableQuickSlotActionButton",
@@ -2209,22 +1881,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- NextAuto (Checkbox) --{{{
---[[
-    controlName = "QSB_NextAuto"
-    control     = LAM:AddCheckbox(panel, controlName
-    , "Auto-select next not empty slot"
-    , "Whether the "..COLOR1.."next not empty slot|r should be automatically selected when current gets empty.\n"
-    .."1. When you select an empty slot.\n"
-    .."2. When last of the current slot items has just been consumed.\n"
-    , function()
-        return QSB.Settings.NextAuto
-    end
-    , function(value)
-        QSB.Settings.NextAuto = value
-        Refresh()
-        Show()
-    end)
---]]
+
     control = {
         type        = "checkbox",
         reference   = "QSB_NextAuto",
@@ -2247,21 +1904,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- NextPrevWrap (Checkbox) --{{{
---[[
-    controlName = "QSB_NextPrevWrap"
-    control     = LAM:AddCheckbox(panel, controlName
-    , "Next <-o-> Previous Wrap"
-    , "Wheter Next & Previous selection should jump from one end to the other?"
-    .." - As an elevator that takes you right to the basenent when you keep going past the roof."
-    , function()
-        return QSB.Settings.NextPrevWrap
-    end
-    , function(value)
-        QSB.Settings.NextPrevWrap = value
-        Refresh()
-        Show()
-    end)
---]]
+
     control = {
         type        = "checkbox",
         reference   = "QSB_NextPrevWrap",
@@ -2283,20 +1926,7 @@ D("BuildSettingsMenu()")
     --}}}
 
     -- ShowNumbers (Checkbox) --{{{
---[[
-    controlName = "QSB_ShowNumbers"
-    control     = LAM:AddCheckbox(panel, controlName
-    , "Show Numbers On Slots"
-    , "Whether to show buttons number over the images in Quick Slot Bar"
-    , function()
-        return QSB.Settings.SlotItem.ShowNumbers
-    end
-    , function(value)
-        QSB.Settings.SlotItem.ShowNumbers = value
-        Refresh()
-        Show()
-    end)
---]]
+
     control = {
         type        = "checkbox",
         reference   = "QSB_ShowNumbers",
@@ -2317,20 +1947,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- ShowBackground (Checkbox) --{{{
---[[
-    controlName = "QSB_ShowBackground"
-    control     = LAM:AddCheckbox(panel, controlName
-    , "Show Quick Bar Background"
-    , "Whether to show Quick Slot Bar background"
-    , function()
-        return QSB.Settings.ShowBackground
-    end
-    , function(value)
-        QSB.Settings.ShowBackground = value
-        Refresh()
-        Show()
-    end)
---]]
+
     control = {
         type        = "checkbox",
         reference   = "QSB_ShowBackground",
@@ -2350,20 +1967,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- SlotItem.HideSlotBackground (Checkbox) --{{{
---[[
-    controlName = "QSB_SlotItem_ShowBackground"
-    control     = LAM:AddCheckbox(panel, controlName
-    , "Hide buttons background"
-    , "Controls buttons background texture"
-    , function()
-        return QSB.Settings.SlotItem.HideSlotBackground
-    end
-    , function(value)
-        QSB.Settings.SlotItem.HideSlotBackground = value
-        Refresh()
-        Show()
-    end)
---]]
+
     control = {
         type        = "checkbox",
         reference   = "QSB_SlotItem_ShowBackground",
@@ -2383,17 +1987,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- Reset (Button) --{{{
---[[
-    controlName = "QSB_ResetButton"
-    control     = LAM:AddButton(panel, controlName
-    , "|CFF0000Reset|r"
-    , "Load default settings into|cFF0000 all Presets|r."
-    , function()
-        Load_Defaults()
-    end
-    , true
-    , "|cFF0000 NO CONFIRMATION ASKED!|r\nThis will also reload the UI")
---]]
+
 --[[
     control = {
         type        = "button",
@@ -2447,12 +2041,9 @@ D("RegisterEventHandlers()")
     -- update from quickslot wheel
     EVENT_MANAGER:RegisterForEvent("GQSB.ACTION_SLOT_UPDATED"
     , EVENT_ACTION_SLOT_UPDATED
-    , function(slotNum)
-        D_EVENT("slotNum "..tostring(slotNum).." - ACTION_SLOT_UPDATED")
-        QSB.SomeSlotItemChanged = true
-        if IsEmptySlot(GetCurrentQuickslot()) and QSB.Settings.NextAuto then
-            SelectNextAuto()
-        end
+    , function(eventCode, slotNum)
+        D("slotNum "..tostring(slotNum).." - ACTION_SLOT_UPDATED")
+        SelectNextAuto()
         Refresh()
         Show()
     end)
@@ -2463,10 +2054,8 @@ D("RegisterEventHandlers()")
     EVENT_MANAGER:RegisterForEvent("GQSB.ACTIVE_QUICKSLOT_CHANGED"
     , EVENT_ACTIVE_QUICKSLOT_CHANGED
     , function(self)
-        D_EVENT("ACTIVE_QUICKSLOT_CHANGED")
-        if QSB.Settings.NextAuto and IsEmptySlot(GetCurrentQuickslot()) then
-            SelectNextAuto()
-        end
+        D("ACTIVE_QUICKSLOT_CHANGED")
+        SelectNextAuto()
         Refresh()
         Show()
     end)
@@ -2569,18 +2158,11 @@ D("RegisterEventHandlers()")
     EVENT_MANAGER:RegisterForEvent("GQSB.INVENTORY_SINGLE_SLOT_UPDATE"
     , EVENT_INVENTORY_SINGLE_SLOT_UPDATE
     , function(event, bagId, slotId)
-        if bagId == 1 then
-            D_EVENT("bag "..bagId.." - slot "..slotId.." - INVENTORY_SINGLE_SLOT_UPDATE")
-            QSB.SomeSlotItemChanged = true
-
-            if IsEmptySlot(GetCurrentQuickslot()) and QSB.Settings.NextAuto then
-                SelectNextAuto()
-            end
-
-            Refresh()
-            GameActionButtonHideHandler(false) -- Apply current user choice
-        end
-
+        D("bag "..bagId.." - slot "..slotId.." - INVENTORY_SINGLE_SLOT_UPDATE")
+        if not bagId == 1 then return end
+        SelectNextAuto()
+        Refresh()
+        GameActionButtonHideHandler(false) -- Apply current user choice
     end)
 
     --}}}
@@ -2757,11 +2339,7 @@ d("GQSB("..arg..") |c00FFFF["..QSB.Version.."] APIVersion 100011|r - - - - - - -
     --}}}
     -- settings {{{
     elseif(arg == "settings"  ) then
---[[
-        local is_hidden = ZO_OptionsWindow:IsHidden()
-        ZO_OptionsWindow:SetHidden(not is_hidden )
-               QSB.Panel:SetHidden(not is_hidden )
---]]
+
       --LAM:ToggleAddonPanels( QSB.Panel )
         OnClicked_handle( "S" )
 
