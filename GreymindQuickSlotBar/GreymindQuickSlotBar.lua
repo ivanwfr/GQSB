@@ -106,7 +106,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.1.3", -- 141126 [APIVersion 100011 Update 1.6] previous: 141106 141104 141016 140924 140813,140810,140625
+    Version                             = "v2.1.4", -- 141126 [APIVersion 100011 Update 1.6] previous: 141106 141104 141016 140924 140813,140810,140625
     SettingsVersion                     = 1,
 
     -- CHOICES
