@@ -2289,7 +2289,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-d("GQSB("..arg..") |c00FFFF["..QSB.Version.."] APIVersion 100011|r - - - - - - - - - - - - - - - - - - - -")
+d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
 
     local presetName = ""
     local lua_expr
