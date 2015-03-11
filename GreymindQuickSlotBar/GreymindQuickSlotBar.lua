@@ -16,7 +16,7 @@
 
 --[[ CHANGELOG 150218   // 141105
 APIVersion: 100011      // 100010
-Version     "v2.1.3"    // "v2.1.0"
+Version     "v2.1.5"    // "v2.1.0"
 Bag items update excluding bag #0 events (equipped items wearing stats?)
 Some unnecessary GUI refresh removed (small optimization)
 --]]
@@ -106,7 +106,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.1.4", -- 141126 [APIVersion 100011 Update 1.6] previous: 141106 141104 141016 140924 140813,140810,140625
+    Version                             = "v2.1.5", -- 150311 [APIVersion 100011 Update 1.6] previous: 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -544,7 +544,7 @@ function Refresh() --{{{
         local slotItemCount     = GetSlotItemCount(slotIndex)
         local buttonTexture     = GetSlotTexture(slotIndex)
         local emptySlot         = (buttonTexture == "")
-
+if not slotItemCount then slotItemCount = 0; d("|cFF00FF-GQSB: [slotItemCount=nil] for [slotIndex="..tostringg(slotIndex).."]"); end
         --}}}
         -- Update with settings that may have changed {{{
         local font_arg = "EsoUI/Common/Fonts/univers57.otf"           .."|"..tostring(QSB.Settings.ButtonFontSize).."|".."soft-shadow-thin"
