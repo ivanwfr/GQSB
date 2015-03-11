@@ -544,7 +544,7 @@ function Refresh() --{{{
         local slotItemCount     = GetSlotItemCount(slotIndex)
         local buttonTexture     = GetSlotTexture(slotIndex)
         local emptySlot         = (buttonTexture == "")
-if not slotItemCount then slotItemCount = 0; d("|cFF00FF-GQSB: [slotItemCount=nil] for [slotIndex="..tostringg(slotIndex).."]"); end -- ESOUI - vedarion --
+if not slotItemCount then slotItemCount = 0; d("|cFF00FF-GQSB: [slotItemCount=nil] for [slotIndex="..totring(slotIndex).."]"); end -- ESOUI - vedarion --
         --}}}
         -- Update with settings that may have changed {{{
         local font_arg = "EsoUI/Common/Fonts/univers57.otf"           .."|"..tostring(QSB.Settings.ButtonFontSize).."|".."soft-shadow-thin"
