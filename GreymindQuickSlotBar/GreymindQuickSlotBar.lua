@@ -106,7 +106,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.1.5", -- 150311 [APIVersion 100011 Update 1.6] previous: 150218
+    Version                             = "v2.1.5", -- 150314 [APIVersion 100011 Update 1.6] previous: 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -544,7 +544,12 @@ function Refresh() --{{{
         local slotItemCount     = GetSlotItemCount(slotIndex)
         local buttonTexture     = GetSlotTexture(slotIndex)
         local emptySlot         = (buttonTexture == "")
-if not slotItemCount then slotItemCount = 0; d("|cFF00FF-GQSB: [slotItemCount=nil] for [slotIndex="..tostring(slotIndex).."]"); end -- ESOUI - vedarion --
+        --}}}
+        -- ESOUI-vedarion --{{{
+        if not slotItemCount then
+            D("|cFF00FF-GQSB: [slotItemCount=nil] for [slotIndex="..tostring(slotIndex).."]");
+            slotItemCount = 0;
+        end
         --}}}
         -- Update with settings that may have changed {{{
         local font_arg = "EsoUI/Common/Fonts/univers57.otf"           .."|"..tostring(QSB.Settings.ButtonFontSize).."|".."soft-shadow-thin"
