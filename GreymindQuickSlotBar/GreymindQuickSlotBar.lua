@@ -38,6 +38,8 @@ local COLORALERT              = { R =1  , G =0  , B =0  , A = 1 }
 local COLORCURRENTKEY         = { R =0.5, G =1  , B =0.5, A = 1 }
 local COLORNORMAL             = { R =0.5, G =0.5, B =0.7, A = 1 }
 local COLORWARNING            = { R =1  , G =1  , B =0  , A = 1 }
+local COLORACTIVEWEAPONPAIR1  = { R =0.0, G =1.0, B =0  , A = 1 }
+local COLORACTIVEWEAPONPAIR2  = { R =0.0, G =0.0, B =1.0, A = 1 }
 
 -- QUICK SLOT WHEEL NUMBERING
 local WHEEL_LOOKUPTABLE       = { 12, 11, 10, 9, 16, 15, 14, 13 } -- holds, and hide, the ESO Wheel items order
@@ -228,6 +230,8 @@ local GetSlotItemKeyName
 local Get_bNum_of_slotIndex
 local Get_slotIndex_of_bNum
 local Hide
+local Hide_delayed
+local Hide_delayed_pending
 local HideUIHandles
 local Initialize
 local IsEmptySlot
@@ -246,6 +250,8 @@ local OnSlashCommand
 local PlaySoundAlert
 local PlaySoundSlotted
 local Refresh
+local Refresh_delayed
+local Refresh_delayed_pending = false
 local RegisterEventHandlers
 local Release_Settings_Locked
 local SelectButton
@@ -254,9 +260,12 @@ local SelectPreset
 local SetUIHandlesVisibility
 local Settings_Locked
 local Show
+local Show_delayed
+local Show_delayed_pending
 local ShowUIHandles
 local UIWindowChanged
 
+local ForceBarVisibility = false
 --}}}
 
 -- SETTINGS
@@ -422,9 +431,33 @@ function CopySettingsDefaultsTo(dest) --{{{
 
 end --}}}
 
--- UI (build)
+-- UI (refresh)
 function Refresh() --{{{
---D("Refresh()")
+D("Refresh()")
+    if(not Refresh_delayed_pending) then
+        Refresh_delayed_pending = true
+        zo_callLater(Refresh_delayed, 100)
+    end
+end  --}}}
+function Show() --{{{
+D("Show()")
+    if(not Show_delayed_pending) then
+        Show_delayed_pending = true
+        zo_callLater(Show_delayed, 100)
+    end
+end  --}}}
+function Hide() --{{{
+D("Hide()")
+    if(not Hide_delayed_pending) then
+        Hide_delayed_pending = true
+        zo_callLater(Hide_delayed, 100)
+    end
+end  --}}}
+
+-- UI (build)
+function Refresh_delayed() --{{{
+D("Refresh_delayed()")
+    Refresh_delayed_pending = false
 
     if not QSB.Settings then return end
     if     QSB.Moving or QSB.Resizing then return end
@@ -564,7 +597,7 @@ function Refresh() --{{{
         -- ESOUI-vedarion --{{{
         if not slotItemCount then
             D("|cFF00FF-GQSB: [slotItemCount=nil] for [slotIndex="..tostring(slotIndex).."]");
-            slotItemCount = 0;
+            slotItemCount = 1;
         end
         --}}}
         -- Update with settings that may have changed {{{
@@ -758,6 +791,15 @@ function Refresh() --{{{
             end
 
             --}}}
+            -- background f(GetActiveWeaponPairInfo) -- 150329 {{{
+            local activeWeaponPair = GetActiveWeaponPairInfo()
+            if(activeWeaponPair == 1) then
+                color   = COLORACTIVEWEAPONPAIR1
+            else
+                color   = COLORACTIVEWEAPONPAIR2
+            end
+            background:SetColor(color.R, color.G, color.B)
+            --}}}
         end
     end
 
@@ -839,7 +881,9 @@ function Display() --{{{
 
     -- VIS_NEVER -- only show with ForceBarVisibility
     if QSB.Settings.Visibility == VIS_NEVER then
-        Hide()
+        if not ForceBarVisibility then
+            Hide()
+        end
         return
     end
 
@@ -861,16 +905,19 @@ function Display() --{{{
     if QSB.Settings.Visibility == VIS_COMBAT then
         if IsUnitInCombat('player') then
             Show()
-        else
+        elseif not ForceBarVisibility then
             Hide()
         end
     end
 
 end --}}}
-function Show() --{{{
---D("Show()")
+function Show_delayed() --{{{
+D("Show_delayed()")
+    Show_delayed_pending = false
 
-    if QSB.Settings.Visibility ~= VIS_NEVER then
+    if QSB.Settings.Visibility ~= VIS_NEVER
+    or ForceBarVisibility
+    then
         QSB.IsVisible = true
         GreymindQuickSlotBarUI:SetHidden(false)
     end
@@ -878,9 +925,13 @@ function Show() --{{{
     OnMouseExit()
 
 end --}}}
-function Hide() --{{{
---D("Hide()")
+function Hide_delayed() --{{{
+D("Hide_delayed()")
+    Hide_delayed_pending = false
 
+    if ForceBarVisibility then
+        return
+    end
     QSB.IsVisible = false
     GreymindQuickSlotBarUI:SetHidden(true)
 
@@ -1245,7 +1296,7 @@ D("PreviousItem()")
             PlaySoundAlert("PreviousItem")
             break
         end
-    slotIndex = Get_slotIndex_of_bNum( bNum )
+        slotIndex = Get_slotIndex_of_bNum( bNum )
     until not IsEmptySlot(slotIndex) or (step > QSB.Settings.ButtonsDisplayed+1)
 
     if (bNum > 0) and (bNum <= QSB.Settings.ButtonsDisplayed) then
@@ -1256,9 +1307,9 @@ end --}}}
 function QSB_ForceBarVisibility() --{{{
 D("QSB_ForceBarVisibility()")
 
-    if not QSB.IsVisible then
-        QSB.IsVisible = true
-        GreymindQuickSlotBarUI:SetHidden(false)
+    ForceBarVisibility = not ForceBarVisibility
+    if ForceBarVisibility then
+        Show()
     else
         Hide()
     end
@@ -2241,6 +2292,19 @@ D("RegisterEventHandlers()")
     , function(self)
         D_EVENT("PLAYER_ACTIVATED")
         Refresh()
+    end)
+
+    --}}}
+    -- EVENT_ACTIVE_WEAPON_PAIR_CHANGED (integer eventCode, integer activeWeaponPair, bool locked) --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.ACTIVE_WEAPON_PAIR_CHANGED"
+    , EVENT_ACTIVE_WEAPON_PAIR_CHANGED
+    , function(eventCode, activeWeaponPair, locked)
+        D_EVENT("ACTIVE_WEAPON_PAIR_CHANGED")
+    --  d("ACTIVE_WEAPON_PAIR_CHANGED: activeWeaponPair "..tostring(activeWeaponPair).." - locked "..tostring(locked))
+        if(not locked) then
+            D("|cFF00FFActive Weapon Pair: |c00FFFF".. tostring(activeWeaponPair).."|r")
+        end
+    --  d("GetActiveWeaponPairInfo() returns ["..tostring(GetActiveWeaponPairInfo()).."]")
     end)
 
     --}}}
