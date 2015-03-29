@@ -16,7 +16,7 @@
 
 --[[ CHANGELOG 150218   // 141105
 APIVersion: 100011      // 100010
-Version     "v2.1.5"    // "v2.1.0"
+Version     "v2.1.6"    // "v2.1.5"
 Bag items update excluding bag #0 events (equipped items wearing stats?)
 Some unnecessary GUI refresh removed (small optimization)
 --]]
@@ -98,6 +98,21 @@ local KEYBINDINGS = {
     { name=KBNAME_CLEARCHAT           , id="GREYMIND_QUICK_SLOT_BAR_CLEARCHAT"           }, -- QSB_ClearChat
 }
 
+local KEYBINDINGS_SWAPS = {
+
+    { name="Load First Preset"        , id="SWAPS_BUTTON_1"},
+    { name="Load Second Preset"       , id="SWAPS_BUTTON_2"},
+    { name="Load Third Preset"        , id="SWAPS_BUTTON_3"},
+    { name="Load Fourth Preset"       , id="SWAPS_BUTTON_4"},
+    { name="Load Fifth Preset"        , id="SWAPS_BUTTON_5"},
+    { name="Load Sixth Preset"        , id="SWAPS_BUTTON_6"},
+    { name="Load Seventh Preset"      , id="SWAPS_BUTTON_7"},
+    { name="Load Height Preset"       , id="SWAPS_BUTTON_8"},
+    { name="Load Ninth Preset"        , id="SWAPS_BUTTON_9"},
+    { name="Load Tenth Preset"        , id="SWAPS_BUTTON_10"},
+
+}
+
 --}}}
 -- ATTRIBUTES {{{
 local SETTINGSPANELNAME                 = COLOR1.."G "..COLOR2.."Quick "..COLOR3.."Slot "..COLOR4.."Bar"
@@ -106,7 +121,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.1.5", -- 150314 [APIVersion 100011 Update 1.6] previous: 150311 150218
+    Version                             = "v2.1.6", -- 150329 [APIVersion 100011 Update 1.6] previous: 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -193,6 +208,7 @@ QSB.SettingsDefaults = {
 local Adjust_ButtonColumns
 local Adjust_MainWindow
 local ApplyKeyBindingsModifier
+local ApplyKeyBindingsModifier_SWAPS
 local Are_Settings_Locked
 local BuildKeyBindingsMenu
 local BuildSettingsMenu
@@ -1142,6 +1158,25 @@ function ApplyKeyBindingsModifier() --{{{
     end
 
 end --}}}
+function ApplyKeyBindingsModifier_SWAPS() --{{{
+
+    -- Set keybinds modifiers
+    local mod = MOD_CONTROL_KEYCODE
+    D("ApplyKeyBindingsModifier_SWAPS(): mod=["..mod.."]")
+
+    local key = 87 -- F13-F24
+    for i = 1, #KEYBINDINGS_SWAPS do
+        local actionID    = KEYBINDINGS_SWAPS[i].id
+        D(" actionID["..i.."]=["..key.."] ["..tostring(actionID).."]")
+
+        for bindingIndex  = 1, GetMaxBindingsPerAction() do
+            CreateDefaultActionBind(actionID, key, mod, 0, 0, 0)
+        end
+        key = key + 1
+    end
+
+end --}}}
+
 function ClearKeyBindings() --{{{
 
     -- XXX wont work (protected)
@@ -1269,7 +1304,17 @@ D("SelectButton(bNum=["..tostring(bNum).."])")
 
 end --}}}
 function IsEmptySlot(slotIndex) --{{{
-    return (GetSlotTexture( slotIndex ) == "") or (GetSlotItemCount(slotIndex) < 1)
+D("IsEmptySlot("..tostring(slotIndex)..")")
+
+       slotItemCount = GetSlotItemCount(slotIndex)
+D("....slotItemCount     =["..tostring( slotItemCount    ).."]")
+
+    if(slotItemCount == nil) then   -- 150329 -- (ticket from doxxx on ESOUI) -- GreymindQuickSlotBar.lua:1272: operator < is not supported for nil < number
+        return false
+    else
+        return (GetSlotTexture( slotIndex ) == "") or (slotItemCount < 1)
+    end
+
 end --}}}
 
 -- LOGGING
@@ -1849,6 +1894,7 @@ D("BuildSettingsMenu()")
         .." key combinations.\n",
         func        = function()
             ApplyKeyBindingsModifier()
+            ApplyKeyBindingsModifier_SWAPS()
         end,
         width       = "full",
         warning     = COLOR1.."Brace yourself!|r This is not a friendly procedure, but it works!\n"
@@ -2294,7 +2340,8 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
+  d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
+--d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
 
     local presetName = ""
     local lua_expr
@@ -2332,7 +2379,7 @@ d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6
     elseif(arg == "p5") then presetName = PRESETNAMES[5]
 
     elseif(arg == "kbclr"  ) then ClearKeyBindings()
-    elseif(arg == "kbmod"  ) then ApplyKeyBindingsModifier()
+    elseif(arg == "kbmod"  ) then ApplyKeyBindingsModifier(); ApplyKeyBindingsModifier_SWAPS()
     --}}}
     -- lock {{{
     elseif(arg == "lock"  ) then
