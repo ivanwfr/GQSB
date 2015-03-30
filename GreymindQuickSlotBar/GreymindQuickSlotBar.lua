@@ -80,6 +80,37 @@ local KBNAME_CLEARCHAT        = COLOR4.."Clear Chat"
 local ALIGNH                  = { "Off-Left", "Left", "Center", "Right"  , "Off-Right"}
 local ALIGNV                  = { "Above"   , "Top" , "Middle", "Bottom" , "Below"    }
 local PRESETNAMES             = { "P1"      , "P2"  , "P3"    , "P4"     , "P5"       }
+local SOUNDNAMES              = {
+    "QUICKSLOT_USE_EMPTY",
+    "ABILITY_SLOTTED",
+    "ALCHEMY_SOLVENT_PLACED",
+    "DIALOG_DECLINE",
+    "DYEING_APPLY_CHANGES",
+    "DYEING_SWATCH_SELECTED",
+    "DYEING_TOOL_DYE_USED",
+    "DYEING_TOOL_ERASE_USED",
+    "DYEING_TOOL_FILL_USED",
+    "DYEING_UNDO_CHANGES",
+    "ENCHANTING_EXTRACT_START_ANIM",
+    "FENCE_ITEM_LAUNDERED",
+    "GUILD_SELF_JOINED",
+    "GUILD_SELF_LEFT",
+    "ITEM_ON_COOLDOWN",
+    "LOCKPICKING_CHAMBER_LOCKED",
+    "LOCKPICKING_CHAMBER_RESET",
+    "LOCKPICKING_CHAMBER_STRESS",
+    "LOCKPICKING_FORCE",
+    "LOCKPICKING_START",
+    "LOCKPICKING_UNLOCKED",
+    "MAIL_SENT",
+    "MAP_PING",
+    "MAP_PING_REMOVE",
+    "NEW_MAIL",
+    "NOTE_CLOSE",
+    "QUICKSLOT_CLEAR",
+    "QUICKSLOT_MOUSEOVER",
+    "QUICKSLOT_SET",
+}
 
 local KEYBINDINGS = {
 
@@ -184,6 +215,8 @@ QSB.SettingsDefaults = {
     ShowBackground                      = false,
     Visibility                          = VIS_RETICLE,
     PresetName                          = PRESETNAMES[1],
+    SoundAlert                          = SOUNDNAMES[1],
+    SoundSlotted                        = SOUNDNAMES[2],
 
     SlotItem = {
         KeyBindAlignH                   = ALIGNH[2],
@@ -231,7 +264,7 @@ local Get_bNum_of_slotIndex
 local Get_slotIndex_of_bNum
 local Hide
 local Hide_delayed
-local Hide_delayed_pending
+local Hide_pending = false
 local HideUIHandles
 local Initialize
 local IsEmptySlot
@@ -248,24 +281,29 @@ local OnResizeStop
 
 local OnSlashCommand
 local PlaySoundAlert
+local PlaySoundAlert_pending = false
 local PlaySoundSlotted
+local PlaySoundSlotted_pending = false
 local Refresh
 local Refresh_delayed
-local Refresh_delayed_pending = false
+local Refresh_pending = false
 local RegisterEventHandlers
 local Release_Settings_Locked
 local SelectButton
 local SelectNextAuto
+local SelectNextAuto_delayed
+local SelectNextAuto_pending = false
 local SelectPreset
 local SetUIHandlesVisibility
 local Settings_Locked
 local Show
 local Show_delayed
-local Show_delayed_pending
+local Show_pending = false
 local ShowUIHandles
 local UIWindowChanged
 
 local ForceBarVisibility = false
+
 --}}}
 
 -- SETTINGS
@@ -380,6 +418,8 @@ function CopyNotNilSettingsFromTo(orig, dest) --{{{
     if( orig.NextAuto                                 ~= nil) then dest.NextAuto                                 = orig.NextAuto                                 end
     if( orig.ShowBackground                           ~= nil) then dest.ShowBackground                           = orig.ShowBackground                           end
     if( orig.Visibility                               ~= nil) then dest.Visibility                               = orig.Visibility                               end
+    if( orig.SoundSlotted                             ~= nil) then dest.SoundSlotted                             = orig.SoundSlotted                               end
+    if( orig.SoundAlert                               ~= nil) then dest.SoundAlert                               = orig.SoundAlert                               end
 
     if( orig.SlotItem.KeyBindAlignH                   ~= nil) then dest.SlotItem.KeyBindAlignH                   = orig.SlotItem.KeyBindAlignH                   end
     if( orig.SlotItem.KeyBindAlignV                   ~= nil) then dest.SlotItem.KeyBindAlignV                   = orig.SlotItem.KeyBindAlignV                   end
@@ -414,6 +454,8 @@ function CopySettingsDefaultsTo(dest) --{{{
     dest.NextAuto                                 = QSB.SettingsDefaults.NextAuto
     dest.ShowBackground                           = QSB.SettingsDefaults.ShowBackground
     dest.Visibility                               = QSB.SettingsDefaults.Visibility
+    dest.SoundSlotted                             = QSB.SettingsDefaults.SoundSlotted
+    dest.SoundAlert                               = QSB.SettingsDefaults.SoundAlert
 
     dest.SlotItem.KeyBindAlignH                   = QSB.SettingsDefaults.SlotItem.KeyBindAlignH
     dest.SlotItem.KeyBindAlignV                   = QSB.SettingsDefaults.SlotItem.KeyBindAlignV
@@ -431,36 +473,20 @@ function CopySettingsDefaultsTo(dest) --{{{
 
 end --}}}
 
--- UI (refresh)
+-- UI (build & refresh)
 function Refresh() --{{{
 D("Refresh()")
-    if(not Refresh_delayed_pending) then
-        Refresh_delayed_pending = true
+    if not QSB.Settings then return end
+    if     QSB.Moving or QSB.Resizing then return end
+
+    if(not Refresh_pending) then
+        Refresh_pending = true
         zo_callLater(Refresh_delayed, 100)
     end
 end  --}}}
-function Show() --{{{
-D("Show()")
-    if(not Show_delayed_pending) then
-        Show_delayed_pending = true
-        zo_callLater(Show_delayed, 100)
-    end
-end  --}}}
-function Hide() --{{{
-D("Hide()")
-    if(not Hide_delayed_pending) then
-        Hide_delayed_pending = true
-        zo_callLater(Hide_delayed, 100)
-    end
-end  --}}}
-
--- UI (build)
 function Refresh_delayed() --{{{
-D("Refresh_delayed()")
-    Refresh_delayed_pending = false
-
-    if not QSB.Settings then return end
-    if     QSB.Moving or QSB.Resizing then return end
+D("...Refresh_delayed()")
+    Refresh_pending = false
 
     GameActionButtonHideHandler(false) -- Apply current user choice
 
@@ -873,69 +899,6 @@ function GameActionButtonHideHandler(just_changed) --{{{
     end
 
 end --}}}
-
--- UI (display)
-function Display() --{{{
---D("Display()")
-    if not QSB.Settings then return end
-
-    -- VIS_NEVER -- only show with ForceBarVisibility
-    if QSB.Settings.Visibility == VIS_NEVER then
-        if not ForceBarVisibility then
-            Hide()
-        end
-        return
-    end
-
-    -- VIS_ALWAYS -- ...
-    if QSB.Settings.Visibility == VIS_ALWAYS then
-        Show()
-        return
-    end
-
-    -- UNLOCKED -- always show
-    if not QSB.Settings.LockUI then
-        Show()
-        return
-    end
-
-    -- VIS_RETICLE -- event handler provides
-
-    -- VIS_COMBAT  -- combat state decides
-    if QSB.Settings.Visibility == VIS_COMBAT then
-        if IsUnitInCombat('player') then
-            Show()
-        elseif not ForceBarVisibility then
-            Hide()
-        end
-    end
-
-end --}}}
-function Show_delayed() --{{{
-D("Show_delayed()")
-    Show_delayed_pending = false
-
-    if QSB.Settings.Visibility ~= VIS_NEVER
-    or ForceBarVisibility
-    then
-        QSB.IsVisible = true
-        GreymindQuickSlotBarUI:SetHidden(false)
-    end
-
-    OnMouseExit()
-
-end --}}}
-function Hide_delayed() --{{{
-D("Hide_delayed()")
-    Hide_delayed_pending = false
-
-    if ForceBarVisibility then
-        return
-    end
-    QSB.IsVisible = false
-    GreymindQuickSlotBarUI:SetHidden(true)
-
-end --}}}
 function ShowUIHandles() --{{{ D("ShowUIHandles")
     if not QSB.UIHandles then return end
 
@@ -980,6 +943,79 @@ function SetUIHandlesVisibility( visible ) --{{{
         end
     end
 
+end --}}}
+
+-- UI (display)
+function Display() --{{{
+--D("Display()")
+    if not QSB.Settings then return end
+
+    -- VIS_NEVER -- only show with ForceBarVisibility
+    if QSB.Settings.Visibility == VIS_NEVER then
+        if not ForceBarVisibility then
+            Hide()
+        end
+        return
+    end
+
+    -- VIS_ALWAYS -- ...
+    if QSB.Settings.Visibility == VIS_ALWAYS then
+        Show()
+        return
+    end
+
+    -- UNLOCKED -- always show
+    if not QSB.Settings.LockUI then
+        Show()
+        return
+    end
+
+    -- VIS_RETICLE -- event handler provides
+
+    -- VIS_COMBAT  -- combat state decides
+    if QSB.Settings.Visibility == VIS_COMBAT then
+        if IsUnitInCombat('player') then
+            Show()
+        elseif not ForceBarVisibility then
+            Hide()
+        end
+    end
+
+end --}}}
+function Show() --{{{
+D("Show()")
+    if((QSB.Settings.Visibility == VIS_NEVER) and (not ForceBarVisibility)) then return end
+
+    if(not Show_pending) then
+        Show_pending = true
+        zo_callLater(Show_delayed, 100)
+    end
+end  --}}}
+function Show_delayed() --{{{
+D("...Show_delayed()")
+    Show_pending = false
+
+    QSB.IsVisible = true
+    GreymindQuickSlotBarUI:SetHidden(false)
+
+    OnMouseExit()
+end --}}}
+function Hide() --{{{
+D("Hide()")
+    if(not Hide_pending) then
+        Hide_pending = true
+        zo_callLater(Hide_delayed, 100)
+    end
+end  --}}}
+function Hide_delayed() --{{{
+D("...Hide_delayed()")
+    Hide_pending = false
+
+    if ForceBarVisibility then
+        return
+    end
+    QSB.IsVisible = false
+    GreymindQuickSlotBarUI:SetHidden(true)
 end --}}}
 
 -- LAYOUT (edit)
@@ -1114,18 +1150,58 @@ function GetAlignmentXY(hAlign, vAlign) --{{{
     return x, y
 end --}}}
 
+-- SOUND
 function PlaySoundAlert(caller) --{{{
 D("PlaySoundAlert(|cFF00FF"..caller.."|r)")
-    PlaySound("General_Alert_Error")
-end
+    if(not PlaySoundAlert_pending) then
+        PlaySoundAlert_pending = true
+        zo_callLater(PlaySoundAlert_delayed, 20)
+    end
+end  --}}}
+function PlaySoundAlert_delayed() --{{{
+D("|cFF0000...PlaySoundAlert_delayed()")
+    PlaySoundAlert_pending = false
 
+--  PlaySound(SOUNDS.GENERAL_ALERT_ERROR)
+--  PlaySound(SOUNDS.QUICKSLOT_USE_EMPTY)
+    PlaySound(QSB.Settings.SoundAlert)
+end
 --}}}
 function PlaySoundSlotted(caller) --{{{
 D("PlaySoundSlotted(|cFF00FF"..caller.."|r)")
-    PlaySound(SOUNDS.ABILITY_SLOTTED)
-end
+    if(not PlaySoundSlotted_pending) then
+        PlaySoundSlotted_pending = true
+        zo_callLater(PlaySoundSlotted_delayed, 100)
+    end
+end  --}}}
+function PlaySoundSlotted_delayed() --{{{
+D("|c00FF00...PlaySoundSlotted_delayed()|r")
+    PlaySoundSlotted_pending = false
 
+--  PlaySound(SOUNDS.ABILITY_SLOTTED)
+    PlaySound(QSB.Settings.SoundSlotted)
+end
 --}}}
+function GetSoundBefore(soundName) --{{{
+D("GetSoundBefore("..tostring(soundName)..")")
+    soundName = soundName or SOUNDNAMES[1]
+    for current = 1, #SOUNDNAMES do
+        if(SOUNDNAMES[current] == soundName) then
+            return SOUNDNAMES[current-1] or soundName
+        end
+    end
+    return soundName
+end --}}}
+function GetSoundAfter(soundName) --{{{
+D("GetSoundAfter("..tostring(soundName)..")")
+    soundName = soundName or SOUNDNAMES[#SOUNDNAMES]
+    for current = 1, #SOUNDNAMES do
+        if(SOUNDNAMES[current] == soundName) then
+            return SOUNDNAMES[current+1] or soundName
+        end
+    end
+    return soundName
+end --}}}
 
 -- KEYBINDINGS
 function BuildKeyBindingsMenu() --{{{
@@ -1254,6 +1330,46 @@ function QSB_Item6() SelectButton(6) end
 function QSB_Item7() SelectButton(7) end
 function QSB_Item8() SelectButton(8) end
 --}}}
+function SelectNextAuto() --{{{
+D("SelectNextAuto()")
+    if not QSB.Settings.NextAuto              then return end
+    if not IsEmptySlot(GetCurrentQuickslot()) then return end
+
+    if(not SelectNextAuto_pending) then
+        SelectNextAuto_pending = true
+        zo_callLater(SelectNextAuto_delayed, 100)
+    end
+end  --}}}
+function SelectNextAuto_delayed() --{{{
+D("|cFF00FF...SelectNextAuto_delayed()")
+    SelectNextAuto_pending = false
+
+    local slotIndex = GetCurrentQuickslot()
+    local bNum      = Get_bNum_of_slotIndex( slotIndex )
+    D("...bNum=["..bNum.."]")
+
+    -- select next not empty slot
+    local step     = 0
+    local step_max = QSB.Settings.ButtonsDisplayed+1
+    repeat
+        step = step + 1
+        bNum = bNum + 1
+        if QSB.Settings.NextPrevWrap then
+            bNum = math.fmod(bNum+step_max, step_max) -- cares for negative values
+        end
+        slotIndex = Get_slotIndex_of_bNum( bNum )
+    until not IsEmptySlot(slotIndex) or (step > step_max)
+
+    D("...bNum=["..bNum.."] slotIndex=["..tostring(slotIndex).."]")
+
+    if not IsEmptySlot(slotIndex) then
+        PlaySoundSlotted("SelectNextAuto")
+        SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+    else
+        PlaySoundAlert("SelectNextAuto")
+    end
+
+end --}}}
 function QSB_NextItem() --{{{
 D("NextItem()")
     local slotIndex = GetCurrentQuickslot()
@@ -1261,22 +1377,21 @@ D("NextItem()")
 
     -- select next not empty slot
     local step = 0
+    local step_max = QSB.Settings.ButtonsDisplayed+1
     repeat
         step = step + 1
         bNum = bNum + 1
         if QSB.Settings.NextPrevWrap then
-            bNum  = math.fmod(bNum, QSB.Settings.ButtonsDisplayed+1)
-        elseif bNum > QSB.Settings.ButtonsDisplayed then
-            Show()
-            PlaySoundAlert("NextItem")
-            break
+            bNum = math.fmod(bNum+step_max, step_max) -- cares for negative values
         end
         slotIndex = Get_slotIndex_of_bNum( bNum )
-    until not IsEmptySlot(slotIndex) or (step > QSB.Settings.ButtonsDisplayed+1)
+    until not IsEmptySlot(slotIndex) or (step > step_max)
 
-    if (bNum > 0) and (bNum <= QSB.Settings.ButtonsDisplayed) then
+    if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("NextItem")
         SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+    else
+        PlaySoundAlert("NextItem")
     end
 end --}}}
 function QSB_PreviousItem() --{{{
@@ -1286,22 +1401,21 @@ D("PreviousItem()")
 
     -- select previous not empty slot
     local step = 0
+    local step_max = QSB.Settings.ButtonsDisplayed+1
     repeat
         step = step + 1
         bNum = bNum - 1
         if QSB.Settings.NextPrevWrap then
-            bNum = math.fmod(bNum+ QSB.Settings.ButtonsDisplayed+1, QSB.Settings.ButtonsDisplayed+1) -- cares for negative values
-        elseif bNum < 1 then
-            Show()
-            PlaySoundAlert("PreviousItem")
-            break
+            bNum = math.fmod(bNum+step_max, step_max) -- cares for negative values
         end
         slotIndex = Get_slotIndex_of_bNum( bNum )
-    until not IsEmptySlot(slotIndex) or (step > QSB.Settings.ButtonsDisplayed+1)
+    until not IsEmptySlot(slotIndex) or (step > step_max)
 
-    if (bNum > 0) and (bNum <= QSB.Settings.ButtonsDisplayed) then
+    if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("PreviousItem")
         SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+    else
+        PlaySoundAlert("NextItem")
     end
 end --}}}
 function QSB_ForceBarVisibility() --{{{
@@ -1347,7 +1461,9 @@ D("SelectButton(bNum=["..tostring(bNum).."])")
     local slotIndex = Get_slotIndex_of_bNum( bNum )
 
     if IsEmptySlot(slotIndex) then
-        PlaySoundAlert("SelectButton")
+      PlaySoundAlert("SelectButton")
+        SetCurrentQuickslot( slotIndex ) -- force scanning
+        SelectNextAuto()
     else
         PlaySoundSlotted("SelectButton")
         SetCurrentQuickslot( slotIndex )
@@ -1418,39 +1534,6 @@ D("Update()")
 
 end --}}}
 
-function SelectNextAuto() --{{{
-D("SelectNextAuto()")
-
-    if not QSB.Settings.NextAuto              then return end
-    if not IsEmptySlot(GetCurrentQuickslot()) then return end
-
-    local slotIndex = GetCurrentQuickslot()
-    local bNum      = Get_bNum_of_slotIndex( slotIndex )
-    D("...bNum=["..bNum.."]")
-
-    -- select next not empty slot
-    local step     = 0
-    local step_max = QSB.Settings.ButtonsDisplayed+1
-    repeat
-        step = step + 1
-        bNum = bNum + 1
-        bNum = math.fmod(bNum, step_max)
-
-        slotIndex = Get_slotIndex_of_bNum( bNum )
-
-    until not IsEmptySlot(slotIndex) or (step > step_max)
-
-    D("...bNum=["..bNum.."] slotIndex=["..tostring(slotIndex).."]")
-
-    if(bNum > 0) or (bNum <= QSB.Settings.ButtonsDisplayed) then
-        PlaySoundSlotted("SelectNextAuto")
-        SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
-    else
-        PlaySoundAlert("SelectNextAuto")
-    end
-
-end --}}}
-
 -- SETTINGS (menu get & set functions)
 local LAM   = LibStub("LibAddonMenu-2.0")
 function BuildSettingsMenu() --{{{
@@ -1470,7 +1553,7 @@ D("BuildSettingsMenu()")
         slashCommand        = nil,              --(optional) will register a keybind to open to this panel
         registerForRefresh  = true,             --boolean (optional) (will refresh all options controls when a setting is changed and when the panel is shown)
         registerForDefaults = true,             --boolean (optional) (will set all options controls back to default values)
-	resetFunc           = Load_Defaults,	--(optional) custom function to run after settings are reset to defaults
+        resetFunc           = Load_Defaults,    --(optional) custom function to run after settings are reset to defaults
     }
     --}}}
     QSB.Panel = LAM:RegisterAddonPanel( QSB.Name, panelData)
@@ -1545,7 +1628,7 @@ D("BuildSettingsMenu()")
             end
         end,
         width       = "full",
-        warning     = "Will need to reload the UI.",	--(optional)
+        warning     = "Will need to reload the UI.", --(optional)
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
@@ -1748,7 +1831,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
 
-    --LAM:AddHeader(panel, "QSB_Sep4", "")
+    --LAM:AddHeader(panel, "QSB_Sep3", "")
     local KW_Key_Bindings = COLOR3.."Key Bindings:|r "
     -- ShowKeyBindings (Checkbox) --{{{
 
@@ -1817,7 +1900,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
 
-    --LAM:AddHeader(panel, "QSB_Sep3", "")
+    --LAM:AddHeader(panel, "QSB_Sep4", "")
     local KW_Label = COLOR4.."Label:|r "
     -- ShowQuantityLabels (Checkbox) --{{{
 
@@ -1862,7 +1945,7 @@ D("BuildSettingsMenu()")
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
-    -- ALIGNH (Dropdown) --{{{
+    -- QuantityLabelPositionHorizontal (Dropdown) --{{{
 
     control = {
         type        = "dropdown",
@@ -1887,6 +1970,103 @@ D("BuildSettingsMenu()")
     --}}}
 
     --LAM:AddHeader(panel, "QSB_Sep5", "")
+    local KW_Sound = COLOR5.."Sound:|r "
+    -- SoundAlert (Dropdown) --{{{
+
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_SoundAlert",
+        name        = KW_Sound.."Alert",
+        choices     = SOUNDNAMES,
+        getFunc     = function()
+            return QSB.Settings.SoundAlert
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SoundAlert = value
+            PlaySoundAlert_delayed()
+        end,
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SoundSlotted (Dropdown) --{{{
+
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_SoundSlotted",
+        name        = KW_Sound.."Slotted",
+        choices     = SOUNDNAMES,
+        getFunc     = function()
+            return QSB.Settings.SoundSlotted
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SoundSlotted = value
+            PlaySoundSlotted_delayed()
+        end,
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SoundAlert prev button --{{{
+    control = {
+        type        = "button",
+        reference   = "QSB_SoundAlert_prev",
+        name        = "<",
+        tooltip     = "previous sound",
+        func        = function()
+            QSB.Settings.SoundAlert = GetSoundBefore( QSB.Settings.SoundAlert )
+            PlaySoundAlert_delayed()
+        end,
+        width       = "half",
+    }
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SoundSlotted prev button --{{{
+    control = {
+        type        = "button",
+        reference   = "QSB_SoundSlotted_prev",
+        name        = "<",
+        tooltip     = "previous sound",
+        func        = function()
+            QSB.Settings.SoundSlotted = GetSoundBefore( QSB.Settings.SoundSlotted )
+            PlaySoundSlotted_delayed()
+        end,
+        width       = "half",
+    }
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SoundAlert next button --{{{
+    control = {
+        type        = "button",
+        reference   = "QSB_SoundAlert_next",
+        name        = ">",
+        tooltip     = "next sound",
+        func        = function()
+            QSB.Settings.SoundAlert = GetSoundAfter( QSB.Settings.SoundAlert )
+            PlaySoundAlert_delayed()
+        end,
+        width       = "half",
+    }
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SoundSlotted next button --{{{
+    control = {
+        type        = "button",
+        reference   = "QSB_SoundSlotted_next",
+        name        = ">",
+        tooltip     = "next sound",
+        func        = function()
+            QSB.Settings.SoundSlotted = GetSoundAfter( QSB.Settings.SoundSlotted )
+            PlaySoundSlotted_delayed()
+        end,
+        width       = "half",
+    }
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+
+    --LAM:AddHeader(panel, "QSB_Sep6", "")
     -- Presets (Slider) --{{{
 
     control = {
