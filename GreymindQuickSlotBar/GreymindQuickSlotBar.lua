@@ -16,7 +16,7 @@
 
 --[[ CHANGELOG 150218   // 141105
 APIVersion: 100011      // 100010
-Version     "v2.1.6"    // "v2.1.5"
+Version     "v2.1.7"    // "v2.1.6"
 Bag items update excluding bag #0 events (equipped items wearing stats?)
 Some unnecessary GUI refresh removed (small optimization)
 --]]
@@ -34,12 +34,12 @@ local COLOR5                  = "|c880088"
 local COLOR6                  = "|cBB0000"
 
 -- VISUAL-CUE BORDERS
-local COLORALERT              = { R =1  , G =0  , B =0  , A = 1 }
-local COLORCURRENTKEY         = { R =0.5, G =1  , B =0.5, A = 1 }
-local COLORNORMAL             = { R =0.5, G =0.5, B =0.7, A = 1 }
-local COLORWARNING            = { R =1  , G =1  , B =0  , A = 1 }
-local COLORACTIVEWEAPONPAIR1  = { R =0.0, G =1.0, B =0  , A = 1 }
-local COLORACTIVEWEAPONPAIR2  = { R =0.0, G =0.0, B =1.0, A = 1 }
+local COLORALERT              = { R =1  , G =0  , B =0  , A = 1   }
+local COLORCURRENTKEY         = { R =0.5, G =1  , B =0.5, A = 1   }
+local COLORNORMAL             = { R =0.5, G =0.5, B =0.5, A = 1   }
+local COLORWARNING            = { R =1  , G =1  , B =0  , A = 1   }
+local COLORACTIVEWEAPONPAIR1  = { R =0.0, G =1.0, B =0  , A = 0.5 }
+local COLORACTIVEWEAPONPAIR2  = { R =0.0, G =0.0, B =1.0, A = 0.5 }
 
 -- QUICK SLOT WHEEL NUMBERING
 local WHEEL_LOOKUPTABLE       = { 12, 11, 10, 9, 16, 15, 14, 13 } -- holds, and hide, the ESO Wheel items order
@@ -154,7 +154,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.1.6", -- 150329 [APIVersion 100011 Update 1.6] previous: 150314 150311 150218
+    Version                             = "v2.1.7", -- 150403 [APIVersion 100011 Update 1.6] previous: 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -213,6 +213,7 @@ QSB.SettingsDefaults = {
     NextPrevWrap                        = false,
     NextAuto                            = false,
     ShowBackground                      = false,
+    SwapBackgroundColors                = false,
     Visibility                          = VIS_RETICLE,
     PresetName                          = PRESETNAMES[1],
     SoundAlert                          = SOUNDNAMES[1],
@@ -417,6 +418,7 @@ function CopyNotNilSettingsFromTo(orig, dest) --{{{
     if( orig.NextPrevWrap                             ~= nil) then dest.NextPrevWrap                             = orig.NextPrevWrap                             end
     if( orig.NextAuto                                 ~= nil) then dest.NextAuto                                 = orig.NextAuto                                 end
     if( orig.ShowBackground                           ~= nil) then dest.ShowBackground                           = orig.ShowBackground                           end
+    if( orig.SwapBackgroundColors                     ~= nil) then dest.SwapBackgroundColors                     = orig.SwapBackgroundColors                           end
     if( orig.Visibility                               ~= nil) then dest.Visibility                               = orig.Visibility                               end
     if( orig.SoundSlotted                             ~= nil) then dest.SoundSlotted                             = orig.SoundSlotted                               end
     if( orig.SoundAlert                               ~= nil) then dest.SoundAlert                               = orig.SoundAlert                               end
@@ -453,6 +455,7 @@ function CopySettingsDefaultsTo(dest) --{{{
     dest.NextPrevWrap                             = QSB.SettingsDefaults.NextPrevWrap
     dest.NextAuto                                 = QSB.SettingsDefaults.NextAuto
     dest.ShowBackground                           = QSB.SettingsDefaults.ShowBackground
+    dest.SwapBackgroundColors                     = QSB.SettingsDefaults.SwapBackgroundColors
     dest.Visibility                               = QSB.SettingsDefaults.Visibility
     dest.SoundSlotted                             = QSB.SettingsDefaults.SoundSlotted
     dest.SoundAlert                               = QSB.SettingsDefaults.SoundAlert
@@ -818,13 +821,18 @@ D("...Refresh_delayed()")
 
             --}}}
             -- background f(GetActiveWeaponPairInfo) -- 150329 {{{
-            local activeWeaponPair = GetActiveWeaponPairInfo()
-            if(activeWeaponPair == 1) then
-                color   = COLORACTIVEWEAPONPAIR1
+            if QSB.Settings.SwapBackgroundColors then
+                local activeWeaponPair = GetActiveWeaponPairInfo()
+                if(activeWeaponPair == 1) then
+                    color   = COLORACTIVEWEAPONPAIR1
+                else
+                    color   = COLORACTIVEWEAPONPAIR2
+                end
             else
-                color   = COLORACTIVEWEAPONPAIR2
+                    color   = COLORNORMAL
             end
             background:SetColor(color.R, color.G, color.B)
+            background:SetAlpha(color.A)
             --}}}
         end
     end
@@ -2234,7 +2242,7 @@ D("BuildSettingsMenu()")
         type        = "checkbox",
         reference   = "QSB_ShowBackground",
         name        = "Show Quick Bar Background",
-        tooltip     = "Whether to show Quick Slot Bar background",
+        tooltip     = "Whether to show Quick Slot Bar Background",
         getFunc     = function()
             return QSB.Settings.ShowBackground
         end,
@@ -2260,6 +2268,27 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SlotItem.HideSlotBackground = value
+            Refresh()
+            Show()
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SwapBackgroundColors (Checkbox) --{{{
+
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_ShowBackgroundColors",
+        name        = "Weapon Swap Colors",
+        tooltip     = "Whether to change buttons background colors on Weapon Swap\n"
+        .."|cFF0000when Hide buttons background is OFF",
+        getFunc     = function()
+            return QSB.Settings.SwapBackgroundColors
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SwapBackgroundColors = value
             Refresh()
             Show()
         end,
