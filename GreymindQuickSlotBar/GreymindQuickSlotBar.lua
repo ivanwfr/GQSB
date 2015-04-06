@@ -16,7 +16,7 @@
 
 --[[ CHANGELOG 150218   // 141105
 APIVersion: 100011      // 100010
-Version     "v2.1.7"    // "v2.1.6"
+Version     "v2.1.8"    // "v2.1.7"
 Bag items update excluding bag #0 events (equipped items wearing stats?)
 Some unnecessary GUI refresh removed (small optimization)
 --]]
@@ -154,7 +154,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.1.7", -- 150403 [APIVersion 100011 Update 1.6] previous: 150330 150314 150311 150218
+    Version                             = "v2.1.8", -- 150406 [APIVersion 100011 Update 1.6] previous: 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2582,7 +2582,8 @@ end --}}}
 
 function OnMouseEnter() --{{{
 --D("OnMouseEnter")
-    if not QSB.UIHandles then return end
+    if not QSB.UIHandles   then return end
+    if not QSB.UIHandles.L then return end
 
     if QSB.Settings.LockUI then
         QSB.UIHandles.L:SetColor(0,1,0) -- green = may unlock
@@ -2594,7 +2595,8 @@ function OnMouseEnter() --{{{
 end --}}}
 function OnMouseExit() --{{{
 --D("OnMouseExit")
-    if not QSB.UIHandles then return end
+    if not QSB.UIHandles   then return end
+    if not QSB.UIHandles.L then return end
 
     if QSB.Settings.LockUI then
         HideUIHandles()
