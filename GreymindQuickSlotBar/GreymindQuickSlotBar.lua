@@ -16,7 +16,7 @@
 
 --[[ CHANGELOG 150218   // 141105
 APIVersion: 100011      // 100010
-Version     "v2.1.8"    // "v2.1.7"
+Version     "v2.1.9"    // "v2.1.8"
 Bag items update excluding bag #0 events (equipped items wearing stats?)
 Some unnecessary GUI refresh removed (small optimization)
 --]]
@@ -154,7 +154,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.1.8", -- 150406 [APIVersion 100011 Update 1.6] previous: 150403 150330 150314 150311 150218
+    Version                             = "v2.1.9", -- 150514 [APIVersion 100011 Update 1.6] previous: 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -572,8 +572,8 @@ D("...Refresh_delayed()")
             button:SetEnabled(true)
             button:SetVerticalAlignment(1)
             button:SetHandler("OnClicked"   , function() OnClicked_bNum(bNum) end)
-            button:SetHandler("OnMouseEnter",            OnMouseEnter            )
-            button:SetHandler("OnMouseExit" ,            OnMouseExit             )
+            button:SetHandler("OnMouseEnter", ZO_Options_OnMouseEnter)
+            button:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
 
             QSB.Basegrounds[bNum] = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBaseground" .. tostring(bNum), GreymindQuickSlotBarUI, CT_TEXTURE)
             local baseground = QSB.Basegrounds[bNum]
@@ -664,7 +664,7 @@ D("...Refresh_delayed()")
             x = QSB.ButtonPadding + col * (buttonSize + QSB.ButtonMargin)
             y = QSB.ButtonPadding + row * (buttonSize + QSB.ButtonMargin)
             button:SetAnchor(TOPLEFT, GreymindQuickSlotBarUI, TOPLEFT, x, y)
-
+            button.data = {tooltipText = GetSlotName(slotIndex)}
             col = col + 1
             if ((col % QSB.Settings.ButtonColumns) == 0) then
                 row = row + 1
@@ -2615,7 +2615,8 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
+  d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
+--d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
 
     local presetName = ""
