@@ -5,6 +5,7 @@
 --  Feature Author: ivanwfr
 
 -- ESOUI Developer Discussions - General Authoring Discussion - Changes on PTS 1.2.2
+-- http://forums.elderscrollsonline.com/en/categories/add-ons-and-ui-mods
 -- http://www.esoui.com/forums/showthread.php?t=1811
 --  ../../../../ARCHIVES/liveeu/Addons/GreymindQuickSlotBar/lib/LibAddonMenu-1.0
 --  lib/LibAddonMenu-2.0/LibAddonMenu-2.0.lua
@@ -154,7 +155,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.1.9", -- 150514 [APIVersion 100011 Update 1.6] previous: 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.2.0", -- 150905 [APIVersion 100012 Update 7] previous: 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2615,7 +2616,8 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
+  d("GQSB("..arg..") |c00FFFF["..QSB.Version..           "|r Update 7 (API 100012)")
+--d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
 
