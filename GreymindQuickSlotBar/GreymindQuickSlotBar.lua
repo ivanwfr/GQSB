@@ -15,10 +15,10 @@
 -- OBSOLETE:
 --  /LAM:AddHeader
 
---[[ CHANGELOG  150905  // 150218
-APIVersion: 100012      // 100011
-Version     "v2.2.0"    // "v2.1.9"
-Checked agains Update 7 ...still working as it should, nothing changed
+--[[ CHANGELOG  151108 // 150905
+APIVersion: 100013     // 100012
+Version     "v2.2.1"   // "v2.2.0"
+Checked against Update 2.2.4 : Orsinium ...still working, no change
 --]]
 
 local DEBUG = false
@@ -154,7 +154,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.2.0", -- 150905 [APIVersion 100012 Update 7] previous: 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.2.1", --  [APIVersion 100013 - Update 2.2.4 : Orsinium] previous: 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2615,7 +2615,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version..           "|r Update 7 (API 100012)")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version..           "|r Update 2.2.4 : Orsinium (API 100013)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
