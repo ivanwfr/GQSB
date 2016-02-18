@@ -15,10 +15,12 @@
 -- OBSOLETE:
 --  /LAM:AddHeader
 
---[[ CHANGELOG  151108 // 150905
-APIVersion: 100013     // 100012
-Version     "v2.2.1"   // "v2.2.0"
-Checked against Update 2.2.4 : Orsinium ...still working, no change
+--[[ CHANGELOG  160218
+Version     "v2.2.2"
+Smarter handling of "Disable Default Quick Slot" option
+Added new slash command: "/gqsb qsbhide" to toggle this option
+APIVersion: 100013
+Update 2.2.4: Orsinium
 --]]
 
 local DEBUG = false
@@ -154,7 +156,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.2.1", --  [APIVersion 100013 - Update 2.2.4 : Orsinium] previous: 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.2.2", --  [APIVersion 100013 - Update 2.2.4: Orsinium] 160218 previous: 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -359,8 +361,8 @@ D("SelectPreset(|c00FFFF"..selectedPreset.."|r):")
     D("...CURRENT PRESET "..QSB.Settings.PresetName)
 
     -- update dependencies
-    ButtonSizeChanged()                 -- UI geometry
-    GameActionButtonHideHandler(true)   -- Apply selected preset choice
+    ButtonSizeChanged()                                 -- UI geometry
+    GameActionButtonHideHandler(true,"SelectPreset")    -- Apply selected preset choice
 
     Rebuild_LibAddonMenu()
 
@@ -482,6 +484,8 @@ D("Refresh()")
     if not QSB.Settings then return end
     if     QSB.Moving or QSB.Resizing then return end
 
+    GameActionButtonHideHandler(false,"Refresh") -- (160218)
+
     if(not Refresh_pending) then
         Refresh_pending = true
         zo_callLater(Refresh_delayed, 100)
@@ -490,8 +494,6 @@ end  --}}}
 function Refresh_delayed() --{{{
 D("...Refresh_delayed()")
     Refresh_pending = false
-
-    GameActionButtonHideHandler(false) -- Apply current user choice
 
     -- GEOMETRY --{{{
     GreymindQuickSlotBarUI:SetClampedToScreen(true)
@@ -886,12 +888,12 @@ D("BuildUIHandles():")
     end
 
 end --}}}
-function GameActionButtonHideHandler(just_changed) --{{{
---D("GameActionButtonHideHandler(just_changed="..tostring(just_changed).."):")
+function GameActionButtonHideHandler(just_changed,caller) --{{{
+D("|cAAFFBB GameActionButtonHideHandler(just_changed="..tostring(just_changed).."|cFFAAAA caller=[".. caller .."]):|r")
 
     if     QSB.Settings.GameActionButtonHide then
         if not ActionButton9:IsHidden() then
-            D("Settings: |c8800DD-HIDING Game Action Slot Button|r")
+            D("|c8800DD- @@@ HIDING Game Action Slot Button|cFFAAAA caller=[".. caller .."]|r")  --(160218)
             ActionButton9:SetHidden(true)
         end
 
@@ -899,7 +901,7 @@ function GameActionButtonHideHandler(just_changed) --{{{
         -- if asked not to handle button anymore, make it visible again in case it is hidden
         if just_changed then
             if ActionButton9:IsHidden() then
-                D("Settings: |c8800DD- RESTORING Game Action Slot Button|r")
+                D("|c8800DD- @@@ RESTORING Game Action Slot Button|cFFAAAA caller=[".. caller .."]|r")  --(160218)
                 ActionButton9:SetHidden(false)
             end
         end
@@ -2162,8 +2164,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.GameActionButtonHide = value;
-            -- Apply new user choice
-            GameActionButtonHideHandler(true)
+            GameActionButtonHideHandler(true,"Settings.control")    -- Apply new user choice
         end,
         width       = "full",
     }
@@ -2415,7 +2416,7 @@ D("RegisterEventHandlers()")
             end
         end
 
-        GameActionButtonHideHandler(false) -- Apply current user choice
+        GameActionButtonHideHandler(false,"RETICLE_HIDDEN_UPDATE")  -- Apply current user choice
 
     end)
 
@@ -2439,7 +2440,20 @@ D("RegisterEventHandlers()")
             end
         end
 
-        GameActionButtonHideHandler(false) -- Apply current user choice
+        GameActionButtonHideHandler(false,"PLAYER_COMBAT_STATE")    -- Apply current user choice
+
+    end)
+
+    --}}}
+    -- EVENT_RETICLE_TARGET_CHANGED --{{{
+    -- hide or show in sync with VIS_COMBAT state
+    EVENT_MANAGER:RegisterForEvent("GQSB.RETICLE_TARGET_CHANGED"
+    , EVENT_RETICLE_TARGET_CHANGED
+    , function(...)
+        D_EVENT("RETICLE_TARGET_CHANGED")
+        if not QSB.Settings then return end
+
+        GameActionButtonHideHandler(false,"RETICLE_TARGET_CHANGED") -- Apply current user choice
 
     end)
 
@@ -2473,7 +2487,6 @@ D("RegisterEventHandlers()")
         if not bagId == 1 then return end
         SelectNextAuto()
         Refresh()
-        GameActionButtonHideHandler(false) -- Apply current user choice
     end)
 
     --}}}
@@ -2615,7 +2628,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version..           "|r Update 2.2.4 : Orsinium (API 100013)")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160218) |r Update 2.2.4 : Orsinium (API 100013)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
@@ -2631,8 +2644,9 @@ function OnSlashCommand(arg)
     or (arg == "--h"   )
     then
         d(QSB_SLASH_COMMAND..    " p1-p5 ... select Presets "..PRESETNAMES[1].." to "..PRESETNAMES[5].." (current = "..QSB.Settings.PresetName..")")
-        d(QSB_SLASH_COMMAND.. " settings ... toggle Settings Panel")
-        d(QSB_SLASH_COMMAND..     " lock ... toggle UI lock")
+        d(QSB_SLASH_COMMAND.. " settings ... Settings Panel display (toggle)")
+        d(QSB_SLASH_COMMAND..     " lock ... UI lock (toggle)")
+        d(QSB_SLASH_COMMAND..  " qsbhide ... Hide Default Quick Slot Button (toggle)")
         d(QSB_SLASH_COMMAND.." clearchat ... clears all chat windows")
         d(QSB_SLASH_COMMAND..  " refresh ... rebuild and redisplay UI")
         d(QSB_SLASH_COMMAND..    " reset ... RESETS ALL SETTINGS TO DEFAULT")
@@ -2649,21 +2663,32 @@ function OnSlashCommand(arg)
     elseif(arg == "refresh") then Refresh()
     elseif(arg == "reset"  ) then Load_Defaults()
 
-    elseif(arg == "p1") then presetName = PRESETNAMES[1]
-    elseif(arg == "p2") then presetName = PRESETNAMES[2]
-    elseif(arg == "p3") then presetName = PRESETNAMES[3]
-    elseif(arg == "p4") then presetName = PRESETNAMES[4]
-    elseif(arg == "p5") then presetName = PRESETNAMES[5]
+    elseif(arg == "p1"     ) then presetName = PRESETNAMES[1]
+    elseif(arg == "p2"     ) then presetName = PRESETNAMES[2]
+    elseif(arg == "p3"     ) then presetName = PRESETNAMES[3]
+    elseif(arg == "p4"     ) then presetName = PRESETNAMES[4]
+    elseif(arg == "p5"     ) then presetName = PRESETNAMES[5]
 
     elseif(arg == "kbclr"  ) then ClearKeyBindings()
     elseif(arg == "kbmod"  ) then ApplyKeyBindingsModifier(); ApplyKeyBindingsModifier_SWAPS()
     --}}}
     -- lock {{{
-    elseif(arg == "lock"  ) then
+    elseif(arg == "lock"   ) then
         QSB.Settings.LockUI = not QSB.Settings.LockUI
         Rebuild_LibAddonMenu()
         Refresh()
         Show()
+
+    --}}}
+    -- gabhide (160218) {{{
+    elseif(arg == "qsbhide") then
+        QSB.Settings.GameActionButtonHide = not QSB.Settings.GameActionButtonHide
+        if (QSB.Settings.GameActionButtonHide) then
+            d("|cAAFFBB @@@ HIDING|r Default Quick Slot Button")
+        else
+            d("|cAAFFBB @@@ SHOWING|r Default Quick Slot Button")
+        end
+        GameActionButtonHideHandler(true,"OnSlashCommand")
 
     --}}}
     -- settings {{{
