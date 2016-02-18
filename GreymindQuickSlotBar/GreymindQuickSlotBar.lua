@@ -15,12 +15,19 @@
 -- OBSOLETE:
 --  /LAM:AddHeader
 
+<<<<<<< HEAD
 --[[ CHANGELOG  160218
 Version     "v2.2.2"
 Smarter handling of "Disable Default Quick Slot" option
 Added new slash command: "/gqsb qsbhide" to toggle this option
 APIVersion: 100013
 Update 2.2.4: Orsinium
+=======
+--[[ CHANGELOG  151108 // 150905
+APIVersion: 100013     // 100012
+Version     "v2.2.1"   // "v2.2.0"
+Checked against Update v2.1.9 ...still working, no change
+>>>>>>> c446cbf9e4b96fe47d1eb577c451fc863eaa5c5d
 --]]
 
 local DEBUG = false
@@ -156,7 +163,11 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
+<<<<<<< HEAD
     Version                             = "v2.2.2", --  [APIVersion 100013 - Update 2.2.4: Orsinium] 160218 previous: 151108 150905 150514 150406 150403 150330 150314 150311 150218
+=======
+    Version                             = "v2.2.1", --  [APIVersion 100013 - Update v2.1.9] previous: 150905 150514 150406 150403 150330 150314 150311 150218
+>>>>>>> c446cbf9e4b96fe47d1eb577c451fc863eaa5c5d
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2628,7 +2639,11 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
+<<<<<<< HEAD
   d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160218) |r Update 2.2.4 : Orsinium (API 100013)")
+=======
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version..           "|r Update v2.1.9 (API 100013)")
+>>>>>>> c446cbf9e4b96fe47d1eb577c451fc863eaa5c5d
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
