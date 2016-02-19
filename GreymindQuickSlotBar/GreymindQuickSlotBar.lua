@@ -16,9 +16,8 @@
 --  /LAM:AddHeader
 
 --[[ CHANGELOG  160218
-Version     "v2.2.2"
-Smarter handling of "Disable Default Quick Slot" option
-Added new slash command: "/gqsb qsbhide" to toggle this option
+Version     "v2.2.3"
+Prevented addon popup caused by WEAPON SWAP when SKILL WINDOW is showing
 APIVersion: 100013
 Update 2.2.4: Orsinium
 --]]
@@ -156,7 +155,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.2.2", --  [APIVersion 100013 - Update 2.2.4: Orsinium] 160218 previous: 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.2.3", --  [APIVersion 100013 - Update 2.2.4: Orsinium] 160219 previous: 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -483,6 +482,7 @@ function Refresh() --{{{
 D("Refresh()")
     if not QSB.Settings then return end
     if     QSB.Moving or QSB.Resizing then return end
+    if not ZO_Skills:IsHidden() then  D("|c00FFAA Refresh: not ZO_Skills:IsHidden()"); return end
 
     GameActionButtonHideHandler(false,"Refresh") -- (160218)
 
@@ -995,6 +995,7 @@ end --}}}
 function Show() --{{{
 D("Show()")
     if((QSB.Settings.Visibility == VIS_NEVER) and (not ForceBarVisibility)) then return end
+    if not ZO_Skills:IsHidden() then  D("|c00FFAA Show: not ZO_Skills:IsHidden()"); return end
 
     if(not Show_pending) then
         Show_pending = true
@@ -2628,7 +2629,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160218) |r Update 2.2.4 : Orsinium (API 100013)")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160219) |r Update 2.2.4 : Orsinium (API 100013)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
