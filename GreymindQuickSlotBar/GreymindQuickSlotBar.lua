@@ -15,11 +15,13 @@
 -- OBSOLETE:
 --  /LAM:AddHeader
 
---[[ CHANGELOG  160218
-Version     "v2.2.3"
-Prevented addon popup caused by WEAPON SWAP when SKILL WINDOW is showing
-APIVersion: 100013
-Update 2.2.4: Orsinium
+--[[ CHANGELOG 160309
+v2.2.4
+- [color="aaffaa"]160309[/color]
+- Cheked with Update 2.2.5: [color="00ff00"]Thieves Guild[/color] - APIVersion: 100014
+- Addon Settings of [b]Warning and Alert Quantity[/b] clamping working again: [i](Alert < Warning)[/i]
+- Works with [b]LibAddonMenu 2.0 r19[/b]
+- Works with [b]LibStub-1.0r4[/b]
 --]]
 
 local DEBUG = false
@@ -155,7 +157,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.2.3", --  [APIVersion 100013 - Update 2.2.4: Orsinium] 160219 previous: 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.2.4", --  [APIVersion 100014 - Update 2.2.5: Thieves Guild] 160309 previous: 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -295,6 +297,7 @@ local SelectButton
 local SelectNextAuto
 local SelectNextAuto_delayed
 local SelectNextAuto_pending = false
+local Rebuild_LibAddonMenu_pending = false
 local SelectPreset
 local SetUIHandlesVisibility
 local Settings_Locked
@@ -363,7 +366,7 @@ D("SelectPreset(|c00FFFF"..selectedPreset.."|r):")
     ButtonSizeChanged()                                 -- UI geometry
     GameActionButtonHideHandler(true,"SelectPreset")    -- Apply selected preset choice
 
-    Rebuild_LibAddonMenu()
+    if not QSB.Panel:IsHidden() then Rebuild_LibAddonMenu() end
 
 end --}}}
 function DeepCopy(orig) --{{{
@@ -1795,7 +1798,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             value = tonumber(value); if not value then return end
             local clamped = false
-            if(value <= QSB.Settings.SlotItem.QuantityAlert) then
+            if(value   <= QSB.Settings.SlotItem.QuantityAlert) then
                 value   = QSB.Settings.SlotItem.QuantityAlert+1
                 clamped = not QSB.Panel:IsHidden()
             end
@@ -1826,7 +1829,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             value = tonumber(value); if not value then return end
             local clamped = false
-            if(value >= QSB.Settings.SlotItem.QuantityWarning) then
+            if(value   >= QSB.Settings.SlotItem.QuantityWarning) then
                 value   = QSB.Settings.SlotItem.QuantityWarning-1
                 clamped = not QSB.Panel:IsHidden()
             end
@@ -2338,11 +2341,17 @@ end
 --}}}
 function Rebuild_LibAddonMenu() --{{{
 D("Rebuild_LibAddonMenu()")
-    if not QSB.Panel:IsHidden() then
-        ZO_OptionsWindow:SetHidden(true)
-        LAM:OpenToPanel( QSB.Panel )
-        ZO_OptionsWindow:SetHidden(false)
+    if(not Rebuild_LibAddonMenu_pending) then
+        Rebuild_LibAddonMenu_pending = true
+        LAM:OpenToPanel( nil )
+        zo_callLater(Rebuild_LibAddonMenu_delayed, 10)
     end
+end
+--}}}
+function Rebuild_LibAddonMenu_delayed() --{{{
+D("Rebuild_LibAddonMenu_delayed()")
+    LAM:OpenToPanel( QSB.Panel )
+    Rebuild_LibAddonMenu_pending = false
 end
 --}}}
 
@@ -2572,16 +2581,7 @@ D("OnClicked_handle("..tostring(handleName)..")")
         Show()
 
     elseif handleName == "S" then
-        local is_hidden = ZO_OptionsWindow:IsHidden()
-
-        ZO_GameMenu_InGame:SetHidden( not is_hidden )
-        ZO_OptionsWindow  :SetHidden( not is_hidden )
-
-        if is_hidden then
-            LAM:OpenToPanel( QSB.Panel )
-        else
-            QSB.Panel     :SetHidden( not is_hidden )
-        end
+        Rebuild_LibAddonMenu()
 
     elseif    string.match(handleName, "P([1-5])") then
         arg = string.match(handleName, "P([1-5])")
@@ -2629,7 +2629,8 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160219) |r Update 2.2.4 : Orsinium (API 100013)")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160309) |r Update 2.2.5 : Thieves Guild (API 100014)")
+--d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160219) |r Update 2.2.4 : Orsinium (API 100013)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
