@@ -16,12 +16,19 @@
 --  /LAM:AddHeader
 
 --[[ CHANGELOG 160309
+<<<<<<< HEAD
 v2.2.4
 - [color="aaffaa"]160309[/color]
 - Cheked with Update 2.2.5: [color="00ff00"]Thieves Guild[/color] - APIVersion: 100014
 - Addon Settings of [b]Warning and Alert Quantity[/b] clamping working again: [i](Alert < Warning)[/i]
 - Works with [b]LibAddonMenu 2.0 r19[/b]
 - Works with [b]LibStub-1.0r4[/b]
+=======
+Version "v2.2.4"
+Cheked with Update 2.2.5: Thieves Guild - APIVersion: 100014
+Addon Settings of Warning and Alert Quantity clamping working again: [Alert < Warning]
+Works with LibAddonMenu 2.0 r19
+>>>>>>> 264b072f5fe207899b525c09ffd59c730d3f9d33
 --]]
 
 local DEBUG = false
