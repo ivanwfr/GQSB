@@ -1,3 +1,4 @@
+
 --  Greymind Quick Slot Bar
 --  Author: Balki
 --  ESO NA Megaserver: @balki
@@ -15,20 +16,13 @@
 -- OBSOLETE:
 --  /LAM:AddHeader
 
---[[ CHANGELOG 160309
-<<<<<<< HEAD
-v2.2.4
-- [color="aaffaa"]160309[/color]
+--[[ CHANGELOG 160310
+v2.2.5
+- [color="aaffaa"]160310[/color]
 - Cheked with Update 2.2.5: [color="00ff00"]Thieves Guild[/color] - APIVersion: 100014
 - Addon Settings of [b]Warning and Alert Quantity[/b] clamping working again: [i](Alert < Warning)[/i]
 - Works with [b]LibAddonMenu 2.0 r19[/b]
 - Works with [b]LibStub-1.0r4[/b]
-=======
-Version "v2.2.4"
-Cheked with Update 2.2.5: Thieves Guild - APIVersion: 100014
-Addon Settings of Warning and Alert Quantity clamping working again: [Alert < Warning]
-Works with LibAddonMenu 2.0 r19
->>>>>>> 264b072f5fe207899b525c09ffd59c730d3f9d33
 --]]
 
 local DEBUG = false
@@ -164,7 +158,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.2.4", --  [APIVersion 100014 - Update 2.2.5: Thieves Guild] 160309 previous: 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.2.5", --  [APIVersion 100014 - Update 2.2.5: Thieves Guild] 160310 previous: 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2636,7 +2630,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160309) |r Update 2.2.5 : Thieves Guild (API 100014)")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160310) |r Update 2.2.5 : Thieves Guild (API 100014)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160219) |r Update 2.2.4 : Orsinium (API 100013)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
