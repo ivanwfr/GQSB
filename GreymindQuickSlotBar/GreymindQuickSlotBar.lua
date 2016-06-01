@@ -6,8 +6,9 @@
 --  Feature Author: ivanwfr
 
 -- ESOUI Developer Discussions - General Authoring Discussion - Changes on PTS 1.2.2
--- http://forums.elderscrollsonline.com/en/categories/add-ons-and-ui-mods
--- http://www.esoui.com/forums/showthread.php?t=1811
+-- https://forums.elderscrollsonline.com/en/discussion/261946/dark-brotherhood-api-patch-notes-change-log-pts
+-- https://forums.elderscrollsonline.com/en/categories/add-ons-and-ui-mods
+-- https://www.esoui.com/forums/showthread.php?t=1811
 --  ../../../../ARCHIVES/liveeu/Addons/GreymindQuickSlotBar/lib/LibAddonMenu-1.0
 --  lib/LibAddonMenu-2.0/LibAddonMenu-2.0.lua
 --  lib/exampleoptions.lua
@@ -16,7 +17,13 @@
 -- OBSOLETE:
 --  /LAM:AddHeader
 
---[[ CHANGELOG 160310
+--[[ CHANGELOG 160601
+
+v2.2.6
+- [color="aaffaa"]160601[/color]
+- Checked with Update 2.4.5: [color="00ff00"]Dark Brotherhood[/color] - APIVersion: 100015
+- no change required
+
 v2.2.5
 - [color="aaffaa"]160310[/color]
 - Cheked with Update 2.2.5: [color="00ff00"]Thieves Guild[/color] - APIVersion: 100014
@@ -158,7 +165,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.2.5", --  [APIVersion 100014 - Update 2.2.5: Thieves Guild] 160310 previous: 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.2.6", --  [APIVersion 100015 - Update 2.4.5: Dark Brotherhood] 160601 previous: 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2630,7 +2637,8 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160310) |r Update 2.2.5 : Thieves Guild (API 100014)")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160601) |r Update 2.4.5 : Dark Brotherhood (API 100015)")
+--d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160310) |r Update 2.2.5 : Thieves Guild (API 100014)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160219) |r Update 2.2.4 : Orsinium (API 100013)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
