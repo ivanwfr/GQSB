@@ -1,4 +1,3 @@
-
 --  Greymind Quick Slot Bar
 --  Author: Balki
 --  ESO NA Megaserver: @balki
@@ -8,7 +7,7 @@
 -- ESOUI Developer Discussions - General Authoring Discussion - Changes on PTS 1.2.2
 -- https://forums.elderscrollsonline.com/en/discussion/261946/dark-brotherhood-api-patch-notes-change-log-pts
 -- https://forums.elderscrollsonline.com/en/categories/add-ons-and-ui-mods
--- https://www.esoui.com/forums/showthread.php?t=1811
+-- http://www.elderscrollsonline.com/en-us/news/category/patch-notes
 --  ../../../../ARCHIVES/liveeu/Addons/GreymindQuickSlotBar/lib/LibAddonMenu-1.0
 --  lib/LibAddonMenu-2.0/LibAddonMenu-2.0.lua
 --  lib/exampleoptions.lua
@@ -17,7 +16,12 @@
 -- OBSOLETE:
 --  /LAM:AddHeader
 
---[[ CHANGELOG 160601
+--[[ CHANGELOG 160803
+
+v2.2.7
+- [color="aaffaa"]160803[/color]
+- Checked with Update 2.5.5: [color="00ff00"]Shadows of the Hist[/color] - APIVersion: 100016
+- no change required
 
 v2.2.6
 - [color="aaffaa"]160601[/color]
@@ -165,7 +169,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.2.6", --  [APIVersion 100015 - Update 2.4.5: Dark Brotherhood] 160601 previous: 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.2.7", --  [APIVersion 100016 - Update 2.5.5: Shadows of the Hist] 160803 previous: 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2637,7 +2641,8 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160601) |r Update 2.4.5 : Dark Brotherhood (API 100015)")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160803) |r Update 2.5.5 : Shadows of the Hist (API 100016)")
+--d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160601) |r Update 2.4.5 : Dark Brotherhood (API 100015)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160310) |r Update 2.2.5 : Thieves Guild (API 100014)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160219) |r Update 2.2.4 : Orsinium (API 100013)")
 --d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
