@@ -18,6 +18,10 @@
 
 --[[ CHANGELOG 160803
 
+v2.2.8
+- [color="aaffaa"]160823[/color]
+- Shortened a few displayed keyNames: BACKSPACE=[BKS] DELETE=[DEL] ENTER=[ENT]
+
 v2.2.7
 - [color="aaffaa"]160803[/color]
 - Checked with Update 2.5.5: [color="00ff00"]Shadows of the Hist[/color] - APIVersion: 100016
@@ -580,7 +584,8 @@ D("...Refresh_delayed()")
         local slotIndex  = Get_slotIndex_of_bNum( bNum )
         -- Buttons first build {{{
         if (QSB.Buttons[bNum] == nil) then
-            QSB.Buttons[bNum] = WINDOW_MANAGER:CreateControl("QuickSlotBarButton" .. tostring(bNum), GreymindQuickSlotBarUI, CT_BUTTON)
+            tostring_bNum = tostring(bNum)
+            QSB.Buttons[bNum] = WINDOW_MANAGER:CreateControl("QuickSlotBarButton" .. tostring_bNum, GreymindQuickSlotBarUI, CT_BUTTON)
             local button = QSB.Buttons[bNum]
             button:SetDimensions(buttonSize, buttonSize)
             button:SetState(BSTATE_NORMAL)
@@ -592,38 +597,38 @@ D("...Refresh_delayed()")
             button:SetHandler("OnMouseEnter", ZO_Options_OnMouseEnter)
             button:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
 
-            QSB.Basegrounds[bNum] = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBaseground" .. tostring(bNum), GreymindQuickSlotBarUI, CT_TEXTURE)
-            local baseground = QSB.Basegrounds[bNum]
-            baseground      :SetTexture(BASEBACKGROUNDTEXTURE)
-            baseground      :SetAnchorFill(button)
+            QSB.Basegrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBaseground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
+            local baseground            = QSB.Basegrounds[bNum]
+            baseground                  :SetTexture(BASEBACKGROUNDTEXTURE)
+            baseground                  :SetAnchorFill(button)
 
-            QSB.Backgrounds[bNum] = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBackground" .. tostring(bNum), GreymindQuickSlotBarUI, CT_TEXTURE)
-            local background = QSB.Backgrounds[bNum]
-            background      :SetTexture(BACKGROUNDTEXTURE)
-            background      :SetAnchorFill(button)
+            QSB.Backgrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBackground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
+            local background            = QSB.Backgrounds[bNum]
+            background                  :SetTexture(BACKGROUNDTEXTURE)
+            background                  :SetAnchorFill(button)
 
-            QSB.VisualCueBorders[bNum] = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonVisualCue" .. tostring(bNum), GreymindQuickSlotBarUI, CT_TEXTURE)
-            local visualCueBorder = QSB.VisualCueBorders[bNum]
-            visualCueBorder :SetTexture(VISUALCUEBORDERTEXTURE)
-            visualCueBorder :SetAnchorFill(button)
+            QSB.VisualCueBorders[bNum]  = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonVisualCue"        .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
+            local visualCueBorder       = QSB.VisualCueBorders[bNum]
+            visualCueBorder             :SetTexture(VISUALCUEBORDERTEXTURE)
+            visualCueBorder             :SetAnchorFill(button)
 
-            QSB.Borders[bNum] = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBorder" .. tostring(bNum), GreymindQuickSlotBarUI, CT_TEXTURE)
-            local border = QSB.Borders[bNum]
-            border          :SetTexture(BORDERTEXTURE)
-            border          :SetAnchorFill(button)
+            QSB.Borders[bNum]           = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBorder"           .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
+            local border                = QSB.Borders[bNum]
+            border                      :SetTexture(BORDERTEXTURE)
+            border                      :SetAnchorFill(button)
 
-            QSB.Overgrounds[bNum] = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonOverground" .. tostring(bNum), GreymindQuickSlotBarUI, CT_TEXTURE)
-            local overground = QSB.Overgrounds[bNum]
-            overground      :SetAnchorFill(button)
-            overground      :SetColor(0.0,0.0,0.0)
+            QSB.Overgrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonOverground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
+            local overground            = QSB.Overgrounds[bNum]
+            overground                  :SetAnchorFill(button)
+            overground                  :SetColor(0.0,0.0,0.0)
 
-            QSB.KeyLabels[bNum] = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonKeyName" .. tostring(bNum), GreymindQuickSlotBarUI, CT_LABEL)
-            local keyLabel = QSB.KeyLabels[bNum]
-            keyLabel        :SetAnchor(CENTER, button, CENTER, 0, -(buttonSize / 2) - QSB.ButtonPadding)
+            QSB.KeyLabels[bNum]         = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonKeyName"          .. tostring_bNum, GreymindQuickSlotBarUI, CT_LABEL)
+            local keyLabel              = QSB.KeyLabels[bNum]
+            keyLabel                    :SetAnchor(CENTER, button, CENTER, 0, -(buttonSize / 2) - QSB.ButtonPadding)
 
-            QSB.QuantityLabels[bNum] = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonQuantityLabel" .. tostring(bNum), GreymindQuickSlotBarUI, CT_LABEL)
-            local quantityLabel = QSB.QuantityLabels[bNum]
-            quantityLabel   :SetAnchor(CENTER, button, CENTER, 0, -(buttonSize / 2) - QSB.ButtonPadding)
+            QSB.QuantityLabels[bNum]    = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonQuantityLabel"    .. tostring_bNum, GreymindQuickSlotBarUI, CT_LABEL)
+            local quantityLabel         = QSB.QuantityLabels[bNum]
+            quantityLabel               :SetAnchor(CENTER, button, CENTER, 0, -(buttonSize / 2) - QSB.ButtonPadding)
 
         end --}}}
 
@@ -1285,6 +1290,12 @@ function GetSlotItemKeyName( bNum ) --{{{
             end
 
             keyName = keyName .. GetKeyName( kbi.keyCode )
+
+            -- Request by Eloora (160823)
+            if     keyName == "BACKSPACE" then keyName = "BKS"
+            elseif keyName == "DELETE"    then keyName = "DEL"
+            elseif keyName == "ENTER"     then keyName = "ENT"
+            end
 
             break   -- return first defined (from Primary or Secondary keybinding)
         end
