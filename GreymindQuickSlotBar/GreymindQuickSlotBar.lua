@@ -18,6 +18,11 @@
 
 --[[ CHANGELOG 160803
 
+v2.2.9
+- [color="aaffaa"]160824[/color]
+- Checked with Update 12 (2.6.4): [color="00ff00"]One Tamriel[/color] - APIVersion: 100017
+- Shortened a few more keyNames: Insert=[INS] Caps Lock=[Caps] Page Down=[PgDn] Page Up=[PgUp]
+
 v2.2.8
 - [color="aaffaa"]160823[/color]
 - Shortened a few displayed keyNames: BACKSPACE=[BKS] DELETE=[DEL] ENTER=[ENT]
@@ -174,7 +179,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.2.8", --  [APIVersion 100016 - Update 2.5.5: Shadows of the Hist] 160823 previous: 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.2.9", --  [APIVersion 100017 - Update 2.6.4: One Tamriel] 161007 previous: 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1285,18 +1290,46 @@ function GetSlotItemKeyName( bNum ) --{{{
         local kbi = keyBindInfo[ bindingIndex ]
         if kbi.keyCode ~= 0 then
 
-            if    (kbi.mod1 == MOD_SHIFT_KEYCODE  ) then keyName = "+"
-            elseif(kbi.mod1 == MOD_CONTROL_KEYCODE) then keyName = "^"
-            elseif(kbi.mod1 == MOD_ALT_KEYCODE    ) then keyName = "!"
-            end
-
             keyName = keyName .. GetKeyName( kbi.keyCode )
 
             -- Request by Eloora (160823)
-            if     keyName == "Backspace" then keyName = "BKS"
-            elseif keyName == "Delete"    then keyName = "DEL"
-            elseif keyName == "Enter"     then keyName = "ENT"
+            if     keyName == "Backspace"   then keyName = "BKS"
+            elseif keyName == "BACKSPACE"   then keyName = "BKS"
+
+            elseif keyName == "Delete"      then keyName = "DEL"
+            elseif keyName == "DELETE"      then keyName = "DEL"
+
+            elseif keyName == "Enter"       then keyName = "ENT"
+            elseif keyName == "ENTER"       then keyName = "ENT"
+
+            -- Request by Eloora (160824)
+            elseif keyName == "Insert"      then keyName = "INS"
+            elseif keyName == "INSERT"      then keyName = "INS"
+
+            elseif keyName == "CAPSLOCK"    then keyName = "Caps"
+            elseif keyName == "Caps Lock"   then keyName = "Caps"
+
+            elseif keyName == "Scroll Lock" then keyName = "SLCK"
+            elseif keyName == "SCROLL LOCK" then keyName = "SLCK"
+
+            elseif keyName == "Page Down"   then keyName = "PgDn"
+            elseif keyName == "PGDOWN"      then keyName = "PgDn"
+
+            elseif keyName == "Page Up"     then keyName = "PgUp"
+            elseif keyName == "PGUP"        then keyName = "PgUp"
             end
+
+            if    (kbi.mod1 == MOD_ALT_KEYCODE    ) then keyName = "!" .. keyName end
+            if    (kbi.mod1 == MOD_CONTROL_KEYCODE) then keyName = "^" .. keyName end
+            if    (kbi.mod1 == MOD_SHIFT_KEYCODE  ) then keyName = "+" .. keyName end
+
+            if    (kbi.mod2 == MOD_ALT_KEYCODE    ) then keyName = "!" .. keyName end
+            if    (kbi.mod2 == MOD_CONTROL_KEYCODE) then keyName = "^" .. keyName end
+            if    (kbi.mod2 == MOD_SHIFT_KEYCODE  ) then keyName = "+" .. keyName end
+
+            if    (kbi.mod3 == MOD_ALT_KEYCODE    ) then keyName = "!" .. keyName end
+            if    (kbi.mod3 == MOD_CONTROL_KEYCODE) then keyName = "^" .. keyName end
+            if    (kbi.mod3 == MOD_SHIFT_KEYCODE  ) then keyName = "+" .. keyName end
 
             break   -- return first defined (from Primary or Secondary keybinding)
         end
@@ -2790,4 +2823,3 @@ end --}}}
 
 GreymindQuickSlotBar = QSB
 EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, Initialize)
-
