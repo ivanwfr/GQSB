@@ -19,7 +19,7 @@
 --[[ CHANGELOG 160803
 
 v2.2.9
-- [color="aaffaa"]160824[/color]
+- [color="aaffaa"]161007[/color]
 - Checked with Update 12 (2.6.4): [color="00ff00"]One Tamriel[/color] - APIVersion: 100017
 - Shortened a few more keyNames: Insert=[INS] Caps Lock=[Caps] Page Down=[PgDn] Page Up=[PgUp]
 
@@ -2824,3 +2824,4 @@ end --}}}
 
 GreymindQuickSlotBar = QSB
 EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, Initialize)
+
