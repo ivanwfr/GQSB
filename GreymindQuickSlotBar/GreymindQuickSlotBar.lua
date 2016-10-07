@@ -22,6 +22,8 @@ v2.2.9
 - [color="aaffaa"]161007[/color]
 - Checked with Update 12 (2.6.4): [color="00ff00"]One Tamriel[/color] - APIVersion: 100017
 - Shortened a few more keyNames: Insert=[INS] Caps Lock=[Caps] Page Down=[PgDn] Page Up=[PgUp]
+- [color="ee00ee"]changed lua file format from dos to unix (maybe the cause of some release issue in the comments)[/color]
+- [color="ee00ee"]added the missing GreymindQuickSlotBar.xml[/color]
 
 v2.2.8
 - [color="aaffaa"]160823[/color]
