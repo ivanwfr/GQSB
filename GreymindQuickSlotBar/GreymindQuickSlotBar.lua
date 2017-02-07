@@ -5,7 +5,7 @@
 --  Feature Author: ivanwfr
 
 -- ESOUI Developer Discussions - General Authoring Discussion - Changes on PTS 1.2.2
--- https://forums.elderscrollsonline.com/en/discussion/261946/dark-brotherhood-api-patch-notes-change-log-pts
+-- https://forums.elderscrollsonline.com/en/discussion/318838/pc-mac-patch-notes-v2-7-5
 -- https://forums.elderscrollsonline.com/en/categories/add-ons-and-ui-mods
 -- http://www.elderscrollsonline.com/en-us/news/category/patch-notes
 --  ../../../../ARCHIVES/liveeu/Addons/GreymindQuickSlotBar/lib/LibAddonMenu-1.0
@@ -17,6 +17,11 @@
 --  /LAM:AddHeader
 
 --[[ CHANGELOG 160803
+
+v2.3.0
+- [color="aaffaa"]170207[/color]
+- Checked with Update 13 (2.7.5): [color="00ff00"]Homestead[/color] - APIVersion: 100018
+- (typo -= 1) (vertical->horizontal) (thx zasy99)
 
 v2.2.9
 - [color="aaffaa"]161007[/color]
@@ -181,7 +186,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.2.9", --  [APIVersion 100017 - Update 2.6.4: One Tamriel] 161007 previous: 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.0", --  [APIVersion 100018 - Update 2.7.5: Homestead] 170206 previous: 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2023,7 +2028,7 @@ D("BuildSettingsMenu()")
     control = {
         type        = "dropdown",
         reference   = "QSB_SlotItem_QuantityLabelPositionHorizontal",
-        name        = KW_Label.."Quantity Position (Vertical)",
+        name        = KW_Label.."Quantity Position (horizontal)",
         tooltip     = "Select where you'd like the quantity label displayed in relation to the slot item horizontally",
         choices     = ALIGNH,
         getFunc     = function()
@@ -2688,7 +2693,9 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (161007) |r Update 12 (2.6.4): One Tamriel (API 100017)")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170207) |r Update 13 (2.7.5): Homestead   (API 100018)")
+--d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (161128) |r Update 12 (2.6.4): One Tamriel (API 100017)")
+--d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (161007) |r Update 12 (2.6.4): One Tamriel (API 100017)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160803) |r Update 2.5.5 : Shadows of the Hist (API 100016)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160601) |r Update 2.4.5 : Dark Brotherhood (API 100015)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160310) |r Update 2.2.5 : Thieves Guild (API 100014)")
