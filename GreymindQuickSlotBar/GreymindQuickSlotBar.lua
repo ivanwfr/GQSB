@@ -18,6 +18,10 @@
 
 --[[ CHANGELOG 160803
 
+v2.3.1
+- [color="aaffaa"]170524[/color]
+- Checked with Update 14 (3.0.5): [color="00ff00"]Morrowind[/color] - APIVersion: 100019
+
 v2.3.0
 - [color="aaffaa"]170207[/color]
 - Checked with Update 13 (2.7.5): [color="00ff00"]Homestead[/color] - APIVersion: 100018
@@ -186,7 +190,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.0", --  [APIVersion 100018 - Update 2.7.5: Homestead] 170206 previous: 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.1", --  [APIVersion 100019 - Update 3.0.5: Morrowind] 170524 previous: 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2693,7 +2697,8 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170207) |r Update 13 (2.7.5): Homestead   (API 100018)")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170524) |r Update 14 (3.0.5): Morrowind   (API 100019)")
+--d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170207) |r Update 13 (2.7.5): Homestead   (API 100018)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (161128) |r Update 12 (2.6.4): One Tamriel (API 100017)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (161007) |r Update 12 (2.6.4): One Tamriel (API 100017)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160803) |r Update 2.5.5 : Shadows of the Hist (API 100016)")
