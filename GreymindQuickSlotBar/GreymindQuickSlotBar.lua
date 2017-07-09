@@ -12,6 +12,10 @@ v2.3.2
 - Each preset saves and restores its own Quick Slot Items Set.
 ...can be used to setup ACTIVITY-SPECIFIC-ITEM-SETS (i.e. PvP, PvE or some other ativities)
 - A new BIG TOOLTIP stating you have to click the red-pin when the Addon-UI is UNLOCKED during layout.
+* IMPORTANT NOTE ABOUT "EXCESSIVE MESSAGE WARNING"
+* Item swap adds up in the count of message spamming.
+* If you get this warning, be sure to wait a few seconds before your next preset swap.
+* (...it look like chances to get this warning are low when the Item bag is showing)
 
 between: v2.3.1 - 170524
 ....and: v2.3.2 - 170709
@@ -543,29 +547,44 @@ function loadItemSlots() --{{{
 D_ITEM("|cBBBBFF loadItemSlots: |cFF0000 (QSB.Settings.SlotItemTable == nil)|r")
         return
     end
-D_ITEM("|cBBBBFF loadItemSlots....................:")
-
     if is_SlotItemTable_empty() then
 D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
         return
     end
 
 
+    local itemName
+    local slotId
+    local slotIndex
+    local slotName
+    local emptySlot
+
     QSB_BAG_BACKPACK_UPDATE_mutex = true -- cleared by Refresh_delayed
+    local msg = ""
     for bNum = 1, QSB.ButtonCountMax do
+        -- DO NOT CLEAR TO EQUIP THE SAME ITEM
+        itemName  = tostring(QSB.Settings.SlotItemTable[bNum].itemName)
+        emptySlot = (itemName == nil) or (itemName == "")
 
-        clear_bNum(bNum)
+        slotIndex = Get_slotIndex_of_bNum(   bNum      )
+        slotName  = GetSlotName(             slotIndex )
+        slotId    = get_BAG_BACKPACK_slotId( slotName  )
 
-        local itemName  = QSB.Settings.SlotItemTable[bNum].itemName
-        local slotId    = QSB.Settings.SlotItemTable[bNum].slotId
-        if  ( itemName ~= nil)
-        and ( itemName ~= "" )
-        then
-            equip_bNum_item_slotId(bNum, itemName, slotId)
+        if(slotId == QSB.Settings.SlotItemTable[bNum].slotId) then
+            if DEBUG_ITEM and not emptySlot then
+                msg = msg.."\n|c888888.UNCHANGED [|c8888FF"..bNum.."=="..slotIndex.."|r] ID["..tostring(slotId).."] [|cCCCCFF["..tostring(itemName).."|r]"
+            end
+        else
+            if emptySlot then
+                clear_bNum(bNum)
+            else
+                slotId   = QSB.Settings.SlotItemTable[bNum].slotId
+                equip_bNum_item_slotId(bNum, itemName, slotId)
+            end
         end
     end
 
-D_ITEM("|cBBBBFF loadItemSlots................DONE")
+if(msg) then D_ITEM(msg) end
 end --}}}
 function is_SlotItemTable_empty() --{{{
 
