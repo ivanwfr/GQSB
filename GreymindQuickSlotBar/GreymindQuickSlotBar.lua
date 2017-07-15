@@ -43,8 +43,34 @@ between: v2.3.1 - 170524
  
 [color="00DD00"]- is_SlotItemTable_empty:[/color]
  . ON FIRST USE OF THE NEW FEATURE:
- . 1/2 refrain from clearing current Quick Slot Bar (a NON-EXISTENT-PRESET is not the same as an EMPTY-PRESET)
- . 2/2 capture current Quick Slot Bar content into the empty PRESET before switching to a new PRESET.
+ . refrain from clearing current Quick Slot Bar (a NON-EXISTENT-PRESET is not the same as an EMPTY-PRESET)
+ 
+[color="00DD00"]- populate_an_empty_SlotItemTable:[/color]
+ . ON FIRST USE OF THE NEW FEATURE:
+ . capture current Quick Slot Bar content into an empty PRESET before SAVING OR USING it.
+ 
+[color="00DD00"]- clear_bNum:[/color]
+ . Clears a Quick Slot Bar entry based on intentionally-left-empty PRESET slot.
+ 
+[color="00DD00"]- equip_bNum_item_slotId:[/color]
+ . Equip a Quick Slot Bar entry based on an configured PRESET slot.
+ 
+[color="00DD00"]- handle_ACTION_SLOT_UPDATED:[/color]
+ . Save the item added to a Quick Slot Bar entry.
+ . ON FIRST USE OF THE NEW FEATURE:
+ . save all current Quick Slot Bar entries to update the Addon UI.
+ 
+[color="00DD00"]- save_QSB_to_SlotItemTable:[/color]
+ . save one of the CURRENT PRESET slot item: [item-name] [BACK_PACK slotID] [button texture]
+ 
+[color="00DD00"]- get_BAG_BACKPACK_slotId:[/color]
+ . Search the BACK_PACK to get the Item ID passed to equip_bNum_item_slotId.
+ 
+[color="00DD00"]- get_tooltipText:[/color]
+ . get information about currently EQUIPPED or SAVED item name.
+ 
+--}}}
+-- HISTORY --{{{
  
 [color="00DD00"]- clear_bNum:[/color]
  . Clears a Quick Slot Bar entry based on intentionally-left-empty PRESET slot.
@@ -245,7 +271,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.2", --  [APIVersion 100019 - Update 3.0.5: Morrowind] 170709 previous: 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.2", --  [APIVersion 100019 - Update 3.0.5: Morrowind] 170715 previous: 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -405,6 +431,7 @@ local  check_QSB_BAG_BACKPACK_slotId_to_check
 local  get_slotId_itemName
 local  loadItemSlots
 local  is_SlotItemTable_empty
+local  populate_an_empty_SlotItemTable
 local  clear_bNum
 local  equip_bNum_item_slotId
 local  handle_ACTION_SLOT_UPDATED
@@ -449,23 +476,21 @@ D("SelectPreset(|c00FFFF"..selectedPreset.."|r):")
     -- @see ../../SavedVariables/GreymindQuickSlotBar.lua
 
     if string.match(selectedPreset, QSB.Settings.PresetName) then
-        D("...|cFF00FF.SelectedPreset matches QSB.Settings.PresetName|r")
+D("...|cFF00FF.SelectedPreset matches QSB.Settings.PresetName|r")
         return
     end
 
-    -- populate an empty SlotItemTable
-    if is_SlotItemTable_empty() then
-D_ITEM("|cBBBBFF".."SelectedPreset: |c666666 POPULATING an empty SlotItemTable|r")
-        for bNum = 1, QSB.ButtonCountMax do
-            save_QSB_to_SlotItemTable(bNum)
-        end
-    end
-
-    -- currentPreset from default settings
+    -- SAVE CURRENT PRESET
     local currentPreset = QSB.Settings.PresetName
+D("...PRESET __SAVING:".. currentPreset)
+
+    -- DEFAULTS SETTINGS
     QSB.Settings.Presets[currentPreset] = DeepCopy(QSB.SettingsDefaults)
 
-    -- currentPreset with current settings
+    -- SAVING CURRENT QUICK SLOT BAR CONTENT
+    if is_SlotItemTable_empty() then populate_an_empty_SlotItemTable("SAVING CURRENT QUICK SLOT BAR CONTENT") end
+
+    -- CURRENT SETTINGS
     local from, to
     from = QSB.Settings
     to   = QSB.Settings.Presets[currentPreset]
@@ -473,6 +498,7 @@ D_ITEM("|cBBBBFF".."SelectedPreset: |c666666 POPULATING an empty SlotItemTable|r
     to.PresetName = nil
     to.Presets    = nil
 
+    -- SELECTED PRESET
     if not QSB.Settings.Presets[selectedPreset].MainWindow then
         QSB   .Settings.Presets[selectedPreset] = DeepCopy(QSB.SettingsDefaults)
     end
@@ -480,16 +506,20 @@ D_ITEM("|cBBBBFF".."SelectedPreset: |c666666 POPULATING an empty SlotItemTable|r
     to   = QSB.Settings
     CopyNotNilSettingsFromTo(from, to)
 
-    D("...PRESET ___SAVED:"..QSB.Settings.PresetName)
     QSB.Settings.PresetName = selectedPreset
-    D("...PRESET SELECTED:"..QSB.Settings.PresetName)
+D("...PRESET SELECTED:"..QSB.Settings.PresetName)
 
+    -- USING CURRENT QUICK SLOT BAR CONTENT
+    if is_SlotItemTable_empty() then populate_an_empty_SlotItemTable("USING CURRENT QUICK SLOT BAR CONTENT") end
+
+    -- ITEMS TO QUICK SLOT BAR
     loadItemSlots()
 
-    -- update dependencies
+    -- UPDATE DEPENDENCIES
     ButtonSizeChanged()                                 -- UI geometry
     GameActionButtonHideHandler(true,"SelectPreset")    -- Apply selected preset choice
 
+    -- UPDATE SETTINGS PANEL
     if not QSB.Panel:IsHidden() then Rebuild_LibAddonMenu() end
 
 end --}}}
@@ -515,6 +545,7 @@ Functions -- An alphabetical listing of all 50331 Lua functions.
 --]] --}}}
 local QSB_BAG_BACKPACK_UPDATE_slotId = -1
 local QSB_BAG_BACKPACK_UPDATE_mutex  = false
+-- ITEM EQUIP
 function check_QSB_BAG_BACKPACK_slotId_to_check() --{{{
 D_ITEM( "check_QSB_BAG_BACKPACK_slotId_to_check:")
 
@@ -536,12 +567,6 @@ D_ITEM(".["..itemName_updated.."] [slot "..slotId.."] [bNum "..bNum .."] [x"..co
 
     end
 end --}}}
-function get_slotId_itemName(slotId) --{{{
-    local      data = SHARED_INVENTORY.bagCache[BAG_BACKPACK][slotId]
-    local  itemName = GetItemName(BAG_BACKPACK, data.slotIndex)
-    return itemName
-end
---}}}
 function loadItemSlots() --{{{
     if (QSB.Settings.SlotItemTable == nil) then
 D_ITEM("|cBBBBFF loadItemSlots: |cFF0000 (QSB.Settings.SlotItemTable == nil)|r")
@@ -586,23 +611,6 @@ D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
 
 if(msg) then D_ITEM(msg) end
 end --}}}
-function is_SlotItemTable_empty() --{{{
-
-    if (QSB.Settings.SlotItemTable == nil) then
-        return true
-    end
-
-    for bNum = 1, QSB.ButtonCountMax do
-        local itemName  = QSB.Settings.SlotItemTable[bNum].itemName
-        if  ( itemName ~= nil)
-        and ( itemName ~= "" )
-        then
-            return false
-        end
-    end
-
-    return true
-end --}}}
 function clear_bNum(bNum) --{{{
 --D_ITEM("|cBBBBFF clear_bNum("..bNum.."):")
 
@@ -620,21 +628,40 @@ function equip_bNum_item_slotId(bNum, itemName, slotId) --{{{
 D_ITEM(".SELECTING [|c8888FF"..bNum.."=="..slotIndex.."|r] ID["..tostring(slotId).."] [|cCCCCFF["..tostring(itemName).."|r]")
         CallSecureProtected("SelectSlotItem", BAG_BACKPACK, slotId, slotIndex)
 end --}}}
+-- ITEM SETTINGS
+function is_SlotItemTable_empty() --{{{
+
+    if (QSB.Settings.SlotItemTable == nil) then
+        return true
+    end
+
+    for bNum = 1, QSB.ButtonCountMax do
+        local itemName  = QSB.Settings.SlotItemTable[bNum].itemName
+        if  ( itemName ~= nil)
+        and ( itemName ~= "" )
+        then
+            return false
+        end
+    end
+
+    return true
+end --}}}
+function populate_an_empty_SlotItemTable(msg) --{{{
+D_ITEM("|cBBBBFF".."populate_an_empty_SlotItemTable:\n|c666666 ".. msg .."|r")
+
+    for bNum = 1, QSB.ButtonCountMax do
+        save_QSB_to_SlotItemTable(bNum)
+    end
+
+end --}}}
 function handle_ACTION_SLOT_UPDATED(bNum) --{{{
     if(QSB_BAG_BACKPACK_UPDATE_mutex) then
 --D_ITEM("|cFF0000".."handle_ACTION_SLOT_UPDATED MUTEXED".."|r")
         return
     end
 
-    if is_SlotItemTable_empty() then
-D_ITEM("|cBBBBFF".."handle_ACTION_SLOT_UPDATED: |c666666 SlotItemTable is EMPTY |r")
-        for bNum = 1, QSB.ButtonCountMax do
-            save_QSB_to_SlotItemTable(bNum)
-        end
-    else
 D_ITEM("|cFFBBBB".."handle_ACTION_SLOT_UPDATED(bNum="..bNum.."):|r")
-        save_QSB_to_SlotItemTable(bNum)
-    end
+    save_QSB_to_SlotItemTable(bNum)
 
 end --}}}
 function save_QSB_to_SlotItemTable(bNum) --{{{
@@ -653,6 +680,7 @@ function save_QSB_to_SlotItemTable(bNum) --{{{
 D_ITEM("save_QSB_to_SlotItemTable:\n"..get_tooltipText(bNum))
 
 end --}}}
+-- ITEM INFO
 function get_BAG_BACKPACK_slotId(itemName) --{{{
     for _, data in pairs(SHARED_INVENTORY.bagCache[BAG_BACKPACK]) do
         if data ~= nil then
@@ -707,6 +735,12 @@ function get_tooltipText(bNum) --{{{
     return tt
 
 end --}}}
+function get_slotId_itemName(slotId) --{{{
+    local      data = SHARED_INVENTORY.bagCache[BAG_BACKPACK][slotId]
+    local  itemName = GetItemName(BAG_BACKPACK, data.slotIndex)
+    return itemName
+end
+--}}}
 
 -- COPY
 function DeepCopy(orig) --{{{
@@ -3065,7 +3099,8 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170709) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FFNew feature: Item Presets|r")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170715) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF.Item Presets|r")
+--d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170709) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF.New feature: Item Presets|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170524) |r Update 14 (3.0.5): Morrowind   (API 100019)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170207) |r Update 13 (2.7.5): Homestead   (API 100018)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (161128) |r Update 12 (2.6.4): One Tamriel (API 100017)")
