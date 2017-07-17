@@ -271,7 +271,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.2", --  [APIVersion 100019 - Update 3.0.5: Morrowind] 170715 previous: 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.2", --  [APIVersion 100019 - Update 3.0.5: Morrowind] 170717 previous: 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -701,7 +701,7 @@ function get_tooltipText(bNum) --{{{
     local texture   = tostring( QSB.Settings.SlotItemTable[bNum].texture  )
 
     local slotIndex = Get_slotIndex_of_bNum( bNum )
-    local count     = GetSlotItemCount( slotIndex )
+    local count     = GetSlotItemCount( slotIndex ) or 0
 
     local color
     if(count  > 0) then
@@ -3099,7 +3099,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170715) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF.Item Presets|r")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170717) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF.Item Presets|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170709) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF.New feature: Item Presets|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170524) |r Update 14 (3.0.5): Morrowind   (API 100019)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170207) |r Update 13 (2.7.5): Homestead   (API 100018)")
