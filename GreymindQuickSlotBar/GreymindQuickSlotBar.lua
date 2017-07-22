@@ -4,7 +4,7 @@
 --[[ --{{{
 
 v2.3.2
-- [color="aaffaa"]170719[/color]
+- [color="aaffaa"]170722[/color]
 - [color="ee00ee"] Works with [b]LibAddonMenu 2.0 r24[/b] and [b]LibStub-1.0r4[/b][/color]
 
 [color="00DD00"]5x SlotItemTable (one per PRESET):[/color]
@@ -244,7 +244,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.2", --  [APIVersion 100019 - Update 3.0.5: Morrowind] 170720 previous: 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.2", --  [APIVersion 100019 - Update 3.0.5: Morrowind] 170722 previous: 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -502,6 +502,7 @@ end --}}}
 GreymindQuickSlotBar Comments:
     :!start explorer "http://www.esoui.com/downloads/fileinfo.php?id=258#comments"
     :!start explorer "http://www.esoui.com/forums/showthread.php?p=31752"
+    :!start explorer "http://www.esoui.com/forums/showthread.php?p=31942"
 
 Lua Source Code -- Browse the 857 Lua source code files starting at the root directory.
     :!start explorer "http://esoapi.uesp.net/100019/src/luadir.html"
@@ -554,32 +555,38 @@ D_ITEM("...bNum=["..bNum .."]: unchanged itemLevel")
 D_ITEM("---")
 end --}}}
 function loadItemSlots() --{{{
+    -- FIRST TIME USING SlotItemTable {{{
     if (QSB.Settings.SlotItemTable == nil) then
 D_ITEM("|cBBBBFF loadItemSlots: |cFF0000 (QSB.Settings.SlotItemTable == nil)|r")
         return
     end
+    --}}}
+    -- EMPTY SlotItemTable .. leave Quick Slot Bar as is {{{
     if is_SlotItemTable_empty() then
 D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
         return
     end
-
-
-    local itemName
-    local slotId
-    local slotIndex
-    local slotName
-    local emptySlot
-
+    --}}}
+    -- MUTEX: to ignore self-induced ACTION_SLOT_UPDATED events {{{
     QSB_BAG_BACKPACK_UPDATE_mutex = true -- cleared by Refresh_delayed
-
+    -- 1/2 CLEAR slots containing UNSELECTED or DIFFERENT ITEMS {{{
+    local itemName, slotId, slotIndex, slotName, emptySlot
     for bNum = 1, QSB.ButtonCountMax do
         itemName  = tostring(QSB.Settings.SlotItemTable[bNum].itemName)
         emptySlot = (itemName == nil) or (itemName == "")
         if emptySlot then
             clear_bNum(bNum)
+        else
+            slotIndex = Get_slotIndex_of_bNum( bNum      )
+            slotName  = GetSlotName          ( slotIndex )
+            if(slotName ~= QSB.Settings.SlotItemTable[bNum].itemName) then
+                clear_bNum(bNum)
+            end
         end
     end
+    --}}}
 
+    -- 2/2 EQUIP SELECTED ITEMS (possibly available in BAG_BACKPACK) {{{
     local msg = ""
     for bNum = 1, QSB.ButtonCountMax do
         itemName  = tostring(QSB.Settings.SlotItemTable[bNum].itemName)
@@ -604,6 +611,7 @@ D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
             end
         end
     end
+    --}}}
 
 if(msg ~= "") then D_ITEM(msg) end
 end --}}}
@@ -685,13 +693,17 @@ D_ITEM("   GetSlotName        ["..tostring( GetSlotName       (slotIndex) ).."]"
 
     local  slotName  = GetSlotName              ( slotIndex )
 
-    local  slotId = -1
-    if (slotName ~= nil) and (slotName ~= "") then
-        slotId = get_BAG_BACKPACK_slotId(slotName , itemLevel)
+    local  slotId    = -1
+    if (slotName    ~= nil) and (slotName ~= "") then
+        slotId       = get_BAG_BACKPACK_slotId(slotName , itemLevel)
     end
 
-    local itemLevel = QSB.Settings.SlotItemTable[bNum].itemLevel                -- retain check_QSB_BAG_BACKPACK_slotId_to_check
-    if(   itemLevel == nil) then itemLevel = get_slotId_itemLevel( slotId ) end -- fallback to first found slotId for slotName
+    -- TODO GET SLOTTED ITEM LEVEL FROM QUICK SLOT BAR
+    -- retain check_QSB_BAG_BACKPACK_slotId_to_check (may be nil)
+    local itemLevel  = QSB.Settings.SlotItemTable[bNum].itemLevel
+    -- fallback to first found slotId for slotName
+    if(   itemLevel == nil) then itemLevel = get_slotId_itemLevel( slotId ) end
+    -- TODO GET SLOTTED ITEM LEVEL FROM QUICK SLOT BAR
 
     -- SINGLE-POINT-INITIALIZATION
     QSB.Settings.SlotItemTable[bNum].itemName  = slotName
@@ -3143,7 +3155,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170720) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF Item Presets|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170722) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF Item Presets|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170709) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF New feature: Item Presets|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170524) |r Update 14 (3.0.5): Morrowind   (API 100019)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170207) |r Update 13 (2.7.5): Homestead   (API 100018)")
