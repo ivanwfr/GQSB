@@ -4,7 +4,8 @@
 --[[ --{{{
 
 v2.3.2
-- [color="aaffaa"]170722[/color]
+- [color="aaffaa"]170814[/color]
+- Checked with Update 15 (3.1.5): [color="00ff00"]Horns of the Reach[/color] - APIVersion: 100020
 - [color="ee00ee"] Works with [b]LibAddonMenu 2.0 r24[/b] and [b]LibStub-1.0r4[/b][/color]
 
 [color="00DD00"]5x SlotItemTable (one per PRESET):[/color]
@@ -244,7 +245,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.2", --  [APIVersion 100019 - Update 3.0.5: Morrowind] 170722 previous: 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.2", --  [APIVersion 100020 - Update 3.1.5: Horns of the Reach] 170722 previous: 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -508,16 +509,19 @@ Lua Source Code -- Browse the 857 Lua source code files starting at the root dir
     :!start explorer "http://esoapi.uesp.net/100019/src/luadir.html"
 
 Global Objects -- All 23507 global objects as exported from the game.
-    :!start explorer "http://esoapi.uesp.net/100019/globals.html"
+    :!start explorer "http://esoapi.uesp.net/100020/globals.html"
 
 Functions -- An alphabetical listing of all 50331 Lua functions.
-    :!start explorer "http://esoapi.uesp.net/100019/functions.html"
+    :!start explorer "http://esoapi.uesp.net/100020/functions.html"
 
     :!start explorer "http://esoapi.uesp.net/100016/src/ingame/actionbar/luadir.html"
     :!start explorer "http://esoapi.uesp.net/100016/src/ingame/quickslot/luadir.html"
     :!start explorer "http://esoapi.uesp.net/100016/src/ingame/tooltip/luadir.html"
-    :!start explorer "http://esoapi.uesp.net/100019/src/ingame/hud/luadir.html"
-    :!start explorer "http://esoapi.uesp.net/100019/src/ingame/inventory/luadir.html"
+    :!start explorer "http://esoapi.uesp.net/100020/src/ingame/hud/luadir.html"
+    :!start explorer "http://esoapi.uesp.net/100020/src/ingame/inventory/luadir.html"
+
+ADDON WIKI -- APIVersion
+    :!start explorer "http://wiki.esoui.com/APIVersion#100020"
 
 --]] --}}}
 local QSB_BAG_BACKPACK_UPDATE_slotId    = -1
@@ -3155,7 +3159,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170722) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF Item Presets|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170814) |r Update 14 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170709) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF New feature: Item Presets|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170524) |r Update 14 (3.0.5): Morrowind   (API 100019)")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170207) |r Update 13 (2.7.5): Homestead   (API 100018)")
