@@ -3,10 +3,11 @@
 --}}}
 --[[ --{{{
 
-v2.3.2
+v2.3.2.1
 - [color="aaffaa"]170814[/color]
 - Checked with Update 15 (3.1.5): [color="00ff00"]Horns of the Reach[/color] - APIVersion: 100020
 - [color="ee00ee"]Works with [b]LibAddonMenu 2.0 r24[/b] and [b]LibStub-1.0r4[/b][/color]
+- correction for error message: [536: operator .. is not supported for nil .. string]
 
 [color="ee00ee"]5x SlotItemTable (one per PRESET):[/color]
 .. a new table to save and restore 8x [Quick Slot Bar itemName] [BAG_BACKPACK slotID] [button texture]
@@ -533,7 +534,7 @@ D_ITEM("check_QSB_BAG_BACKPACK_slotId_to_check:")
     local slotId    = QSB_BAG_BACKPACK_UPDATE_slotId   ; QSB_BAG_BACKPACK_UPDATE_slotId    = -1
     local itemLevel = QSB_BAG_BACKPACK_UPDATE_itemLevel; QSB_BAG_BACKPACK_UPDATE_itemLevel = -1
     local itemName  = get_slotId_itemName ( slotId )
-D_ITEM("..."..COLOR1.." [slotId "..slotId.."] "..COLOR2.."["..itemName.."] "..COLOR3.."(level "..itemLevel..")")
+D_ITEM("..."..COLOR1.." [slotId "..slotId.."] "..COLOR2.."["..tostring(itemName).."] "..COLOR3.."(level "..itemLevel..")")
 
     QSB_BAG_BACKPACK_UPDATE_mutex = true -- cleared by Refresh_delayed
     for bNum = 1, QSB.ButtonCountMax do
