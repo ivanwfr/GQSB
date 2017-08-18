@@ -7,7 +7,8 @@ v2.3.3 {{{
 - [color="aaffaa"]170818[/color]
 [color="ee00ee"]Changed from Account-wide to Per-character Preset[/color]
 ...meaning each character will save and restore its own full-preset
-[color="ee00ee"]Activating an EMPTY PRESET will clone the CURRENT PRESET (Layout and Content) [/color]
+[color="ee00ee"]Activating an EMPTY PRESET will clone the CURRENT PRESET (Layout and Content)[/color]
+[color="ee00ee"]Instant UI update when [b]Weapon Swap Colors[/b] is changed[/color]
 
 }}}
 v2.3.2.1 {{{
@@ -1318,6 +1319,7 @@ end
             -- background f(GetActiveWeaponPairInfo) -- 150329 {{{
             if QSB.Settings.SwapBackgroundColors then
                 local activeWeaponPair = GetActiveWeaponPairInfo()
+--d("Refresh: activeWeaponPair=["..tostring( activeWeaponPair ).."]")
                 if(activeWeaponPair == 1) then
                     color   = COLORACTIVEWEAPONPAIR1
                 else
@@ -3090,11 +3092,12 @@ D_ITEM(COLOR1.."ITEM UPDATED: itemName=["..tostring(itemName).."] (level "..tost
     , EVENT_ACTIVE_WEAPON_PAIR_CHANGED
     , function(eventCode, activeWeaponPair, locked)
         D_EVENT("ACTIVE_WEAPON_PAIR_CHANGED")
-    --  d("ACTIVE_WEAPON_PAIR_CHANGED: activeWeaponPair "..tostring(activeWeaponPair).." - locked "..tostring(locked))
+--d("ACTIVE_WEAPON_PAIR_CHANGED: activeWeaponPair "..tostring(activeWeaponPair).." - locked "..tostring(locked))
         if(not locked) then
             D("|cFF00FFActive Weapon Pair: |c00FFFF".. tostring(activeWeaponPair).."|r")
         end
-    --  d("GetActiveWeaponPairInfo() returns ["..tostring(GetActiveWeaponPairInfo()).."]")
+        Refresh()
+--d("GetActiveWeaponPairInfo() returns ["..tostring(GetActiveWeaponPairInfo()).."]")
     end)
 
     --}}}
