@@ -1,14 +1,16 @@
---  Greymind Quick Slot Bar --{{{
+-- Greymind Quick Slot Bar --{{{
 --  Feature Author: ivanwfr
 --}}}
---[[ --{{{
+-- CHANGELOG --{{{
+--[[
+v2.3.3 {{{
+- [color="aaffaa"]170818[/color]
+[color="ee00ee"]Changed from Account-wide to Per-character Preset[/color]
+...meaning each character will save and restore its own full-preset
+[color="ee00ee"]Activating an EMPTY PRESET will clone the CURRENT PRESET (Layout and Content) [/color]
 
-v2.3.3
-- [color="aaffaa"]170817[/color]
-[color="ee00ee"]Changed from Account-wide to Per-character Preset [/color]
-...meaning each alt will save and restore its own full-preset
-
-v2.3.2.1
+}}}
+v2.3.2.1 {{{
 - [color="aaffaa"]170814[/color]
 - Checked with Update 15 (3.1.5): [color="00ff00"]Horns of the Reach[/color] - APIVersion: 100020
 - [color="ee00ee"]Works with [b]LibAddonMenu 2.0 r24[/b] and [b]LibStub-1.0r4[/b][/color]
@@ -71,53 +73,84 @@ v2.3.2.1
 [color="00DD00"]- get_tooltipText:[/color]
  . get information about currently EQUIPPED or SAVED item name.
 
---]] --}}}
---[[ HISTORY --{{{
-
-v2.3.1
+}}}
+v2.3.1 {{{
 - [color="aaffaa"]170524[/color]
 - Checked with Update 14 (3.0.5): [color="00ff00"]Morrowind[/color] - APIVersion: 100019
 
-v2.3.0
+}}}
+v2.3.0 {{{
 - [color="aaffaa"]170207[/color]
 - Checked with Update 13 (2.7.5): [color="00ff00"]Homestead[/color] - APIVersion: 100018
 - (typo -= 1) (vertical->horizontal) (thx zasy99)
 
-v2.2.9
+}}}
+v2.2.9 {{{
 - [color="aaffaa"]161007[/color]
 - Checked with Update 12 (2.6.4): [color="00ff00"]One Tamriel[/color] - APIVersion: 100017
 - Shortened a few more keyNames: Insert=[INS] Caps Lock=[Caps] Page Down=[PgDn] Page Up=[PgUp]
 - [color="ee00ee"]changed lua file format from dos to unix (maybe the cause of some release issue in the comments)[/color]
 - [color="ee00ee"]added the missing GreymindQuickSlotBar.xml[/color]
 
-v2.2.8
+}}}
+v2.2.8 {{{
 - [color="aaffaa"]160823[/color]
 - Shortened a few displayed keyNames: BACKSPACE=[BKS] DELETE=[DEL] ENTER=[ENT]
 ...with the right caps such as......: Backspace=[BKS] Delete=[DEL] Enter=[ENT]
 
-v2.2.7
+}}}
+v2.2.7 {{{
 - [color="aaffaa"]160803[/color]
 - Checked with Update 2.5.5: [color="00ff00"]Shadows of the Hist[/color] - APIVersion: 100016
 - no change required
 
-v2.2.6
+}}}
+v2.2.6 {{{
 - [color="aaffaa"]160601[/color]
 - Checked with Update 2.4.5: [color="00ff00"]Dark Brotherhood[/color] - APIVersion: 100015
 - no change required
 
-v2.2.5
+}}}
+v2.2.5 {{{
 - [color="aaffaa"]160310[/color]
 - Cheked with Update 2.2.5: [color="00ff00"]Thieves Guild[/color] - APIVersion: 100014
 - Addon Settings of [b]Warning and Alert Quantity[/b] clamping working again: [i](Alert < Warning)[/i]
 - Works with [b]LibAddonMenu 2.0 r19[/b]
 - Works with [b]LibStub-1.0r4[/b]
 
---]] --}}}
+}}}
+--]]
+--}}}
+-- LINKS --{{{
+--[[
+GreymindQuickSlotBar Comments:
+    :!start explorer "http://www.esoui.com/downloads/fileinfo.php?id=258#comments"
+    :!start explorer "http://www.esoui.com/forums/showthread.php?p=31752"
+    :!start explorer "http://www.esoui.com/forums/showthread.php?p=31942"
 
+Lua Source Code -- Browse the 857 Lua source code files starting at the root directory.
+    :!start explorer "http://esoapi.uesp.net/100020/src/luadir.html"
+
+Global Objects -- All 23507 global objects as exported from the game.
+    :!start explorer "http://esoapi.uesp.net/100020/globals.html"
+
+Functions -- An alphabetical listing of all 50331 Lua functions.
+    :!start explorer "http://esoapi.uesp.net/100020/functions.html"
+
+    :!start explorer "http://esoapi.uesp.net/100016/src/ingame/actionbar/luadir.html"
+    :!start explorer "http://esoapi.uesp.net/100016/src/ingame/quickslot/luadir.html"
+    :!start explorer "http://esoapi.uesp.net/100016/src/ingame/tooltip/luadir.html"
+    :!start explorer "http://esoapi.uesp.net/100020/src/ingame/hud/luadir.html"
+    :!start explorer "http://esoapi.uesp.net/100020/src/ingame/inventory/luadir.html"
+
+ADDON WIKI -- APIVersion
+    :!start explorer "http://wiki.esoui.com/APIVersion#100020"
+
+--]]
+--}}}
 local DEBUG       = false
 local DEBUG_ITEM  = false
 local DEBUG_EVENT = false
-
 -- LOCAL
 -- CONSTANTS --{{{
 
@@ -251,7 +284,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.3", --  [APIVersion 100020 - Update 3.1.5: Horns of the Reach] 170817 previous: 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.3", --  [APIVersion 100020 - Update 3.1.5: Horns of the Reach] 170818 previous: 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -431,7 +464,6 @@ local ForceBarVisibility = false
 local Reticle_isHidden   = false
 
 --}}}
-
 -- PRESETS
 function Load_Defaults() --{{{
 D("Load_Defaults()")
@@ -468,7 +500,7 @@ D("...PRESET __SAVING:".. currentPreset)
     QSB.Settings.Presets[currentPreset] = DeepCopy(QSB.SettingsDefaults)
 
     -- SAVING CURRENT QUICK SLOT BAR CONTENT
-    if is_SlotItemTable_empty() then populate_an_empty_SlotItemTable("SAVING CURRENT QUICK SLOT BAR CONTENT") end
+    if is_SlotItemTable_empty() then populate_an_empty_SlotItemTable("SAVING CURRENT QUICK SLOT BAR") end
 
     -- CURRENT SETTINGS
     local from, to
@@ -486,13 +518,33 @@ D("...PRESET __SAVING:".. currentPreset)
     to   = QSB.Settings
     CopyNotNilSettingsFromTo(from, to)
 
+    -- DEFAULT TO CLONING CURRENT QUICK SLOT BAR CONTENT -- AND LAYOUT (170818)
+    if is_SlotItemTable_empty() then
+d(SETTINGSPANELNAME)
+d(COLOR3.." Preset"  ..COLOR2.." "..selectedPreset.." "..COLOR3.."is EMPTY .. CLONING "..COLOR2.." "..currentPreset .." "..COLOR3.." (layout and content)")
+
+        from = QSB.Settings.Presets[currentPreset]
+        to   = QSB.Settings
+        populate_an_empty_SlotItemTable("EMPTY PRESET: CLONING CURRENT QUICK SLOT BAR")
+--d(".ButtonColumns"    .." from [".. to.ButtonColumns    .."] to [".. from.ButtonColumns    .."]")
+--d(".ButtonFontSize"   .." from [".. to.ButtonFontSize   .."] to [".. from.ButtonFontSize   .."]")
+--d(".ButtonSize"       .." from [".. to.ButtonSize       .."] to [".. from.ButtonSize       .."]")
+--d(".ButtonsDisplayed" .." from [".. to.ButtonsDisplayed .."] to [".. from.ButtonsDisplayed .."]")
+--d(".MainWindow.X"     .." from [".. to.MainWindow.X     .."] to [".. from.MainWindow.X     .."]")
+--d(".MainWindow.Y"     .." from [".. to.MainWindow.Y     .."] to [".. from.MainWindow.Y     .."]")
+        to.ButtonColumns    = from.ButtonColumns
+        to.ButtonFontSize   = from.ButtonFontSize
+        to.ButtonSize       = from.ButtonSize
+        to.ButtonsDisplayed = from.ButtonsDisplayed
+        to.MainWindow.X     = from.MainWindow.X
+        to.MainWindow.Y     = from.MainWindow.Y
+    end
+
+    -- PRESET SELECTED
     QSB.Settings.PresetName = selectedPreset
 D("...PRESET SELECTED:"..QSB.Settings.PresetName)
 
-    -- USING CURRENT QUICK SLOT BAR CONTENT
-    if is_SlotItemTable_empty() then populate_an_empty_SlotItemTable("USING CURRENT QUICK SLOT BAR CONTENT") end
-
-    -- ITEMS TO QUICK SLOT BAR
+    -- EQUIP ITEMS TO QUICK SLOT BAR
     loadItemSlots()
 
     -- UPDATE DEPENDENCIES
@@ -503,37 +555,10 @@ D("...PRESET SELECTED:"..QSB.Settings.PresetName)
     if not QSB.Panel:IsHidden() then Rebuild_LibAddonMenu() end
 
 end --}}}
-
--- SETS
---[[ LINKS {{{
-GreymindQuickSlotBar Comments:
-    :!start explorer "http://www.esoui.com/downloads/fileinfo.php?id=258#comments"
-    :!start explorer "http://www.esoui.com/forums/showthread.php?p=31752"
-    :!start explorer "http://www.esoui.com/forums/showthread.php?p=31942"
-
-Lua Source Code -- Browse the 857 Lua source code files starting at the root directory.
-    :!start explorer "http://esoapi.uesp.net/100020/src/luadir.html"
-
-Global Objects -- All 23507 global objects as exported from the game.
-    :!start explorer "http://esoapi.uesp.net/100020/globals.html"
-
-Functions -- An alphabetical listing of all 50331 Lua functions.
-    :!start explorer "http://esoapi.uesp.net/100020/functions.html"
-
-    :!start explorer "http://esoapi.uesp.net/100016/src/ingame/actionbar/luadir.html"
-    :!start explorer "http://esoapi.uesp.net/100016/src/ingame/quickslot/luadir.html"
-    :!start explorer "http://esoapi.uesp.net/100016/src/ingame/tooltip/luadir.html"
-    :!start explorer "http://esoapi.uesp.net/100020/src/ingame/hud/luadir.html"
-    :!start explorer "http://esoapi.uesp.net/100020/src/ingame/inventory/luadir.html"
-
-ADDON WIKI -- APIVersion
-    :!start explorer "http://wiki.esoui.com/APIVersion#100020"
-
---]] --}}}
+-- ITEM EQUIP
 local QSB_BAG_BACKPACK_UPDATE_slotId    = -1
 local QSB_BAG_BACKPACK_UPDATE_itemLevel = -1
 local QSB_BAG_BACKPACK_UPDATE_mutex     = false
--- ITEM EQUIP
 function check_QSB_BAG_BACKPACK_slotId_to_check() --{{{
 D_ITEM("check_QSB_BAG_BACKPACK_slotId_to_check:")
     local slotId    = QSB_BAG_BACKPACK_UPDATE_slotId   ; QSB_BAG_BACKPACK_UPDATE_slotId    = -1
@@ -2028,7 +2053,7 @@ D("Initialize()")
     -- CHAT SLASH_COMMANDS
     SLASH_COMMANDS[QSB_SLASH_COMMAND] = OnSlashCommand
 
-    -- LOAD SAVED SETTINGS --  (170817: changed from [NewAccountWide] to [New])
+    -- LOAD SAVED SETTINGS --  (170818: changed from [NewAccountWide] to [New])
     QSB.Settings = ZO_SavedVars:New(
     "GreymindQuickSlotBarSettings"
     , QSB.SettingsVersion
@@ -3162,7 +3187,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170817) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170818) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170815) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170709) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF New feature: Item Presets|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170524) |r Update 14 (3.0.5): Morrowind   (API 100019)")
@@ -3194,7 +3219,7 @@ function OnSlashCommand(arg)
         d(QSB_SLASH_COMMAND..  " qsbhide ... Hide Default Quick Slot Button (toggle)")
         d(QSB_SLASH_COMMAND.." clearchat ... clears all chat windows")
         d(QSB_SLASH_COMMAND..  " refresh ... rebuild and redisplay UI")
-        d(QSB_SLASH_COMMAND..    " reset ... RESETS ALL SETTINGS TO DEFAULT")
+        d(QSB_SLASH_COMMAND..    " reset ... RESETS ALL CHARACTER SETTINGS TO DEFAULT")
         d(QSB_SLASH_COMMAND..    " debug")
         d(QSB_SLASH_COMMAND..    " debug_item")
         d(QSB_SLASH_COMMAND..    " debug_event")
