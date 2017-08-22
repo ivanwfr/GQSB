@@ -3,6 +3,11 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.3.3.1 {{{
+- [color="aaffaa"]170818[/color]
+[color="ee00ee"]Preset selection: 5 more Keyboard Shortcuts[/color]
+
+}}}
 v2.3.3 {{{
 - [color="aaffaa"]170818[/color]
 [color="ee00ee"]Changed from Account-wide to Per-character Preset[/color]
@@ -201,6 +206,12 @@ local MOD_ALT_KEYCODE         = 5
 
 local KEYBINDINGS_PREFIX      = "SI_BINDING_NAME_"
 
+local KBNAME_P1               = COLOR5.."Preset P1"
+local KBNAME_P2               = COLOR5.."Preset P2"
+local KBNAME_P3               = COLOR5.."Preset P3"
+local KBNAME_P4               = COLOR5.."Preset P4"
+local KBNAME_P5               = COLOR5.."Preset P5"
+
 local KBNAME_FORCE            = COLOR1.."Force Bar Visibility"
 local KBNAME_PREVIOUS         = COLOR2.."Previous Quick Slot Item"
 local KBNAME_NEXT             = COLOR3.."Next Quick Slot Item"
@@ -258,6 +269,12 @@ local KEYBINDINGS = {
     { name=KBNAME_PREVIOUS            , id="GREYMIND_QUICK_SLOT_BAR_PREVIOUS_ITEM"       }, -- QSB_PreviousItem
     { name=KBNAME_NEXT                , id="GREYMIND_QUICK_SLOT_BAR_NEXT_ITEM"           }, -- QSB_NextItem
 
+    { name=KBNAME_P1                  , id="GREYMIND_QUICK_SLOT_BAR_P_1"                 }, -- QSB_P1
+    { name=KBNAME_P2                  , id="GREYMIND_QUICK_SLOT_BAR_P_2"                 }, -- QSB_P2
+    { name=KBNAME_P3                  , id="GREYMIND_QUICK_SLOT_BAR_P_3"                 }, -- QSB_P3
+    { name=KBNAME_P4                  , id="GREYMIND_QUICK_SLOT_BAR_P_4"                 }, -- QSB_P4
+    { name=KBNAME_P5                  , id="GREYMIND_QUICK_SLOT_BAR_P_5"                 }, -- QSB_P5
+
     { name=KBNAME_RELOADUI            , id="GREYMIND_QUICK_SLOT_BAR_RELOADUI"            }, -- QSB_ReloadUI
     { name=KBNAME_CLEARCHAT           , id="GREYMIND_QUICK_SLOT_BAR_CLEARCHAT"           }, -- QSB_ClearChat
 }
@@ -285,7 +302,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.3", --  [APIVersion 100020 - Update 3.1.5: Horns of the Reach] 170818 previous: 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.3.1", --  [APIVersion 100020 - Update 3.1.5: Horns of the Reach] 170822 previous: 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1842,7 +1859,6 @@ function ApplyKeyBindingsModifier_SWAPS() --{{{
     end
 
 end --}}}
-
 function ClearKeyBindings() --{{{
 
     -- XXX wont work (protected)
@@ -1858,8 +1874,9 @@ function ClearKeyBindings() --{{{
         end
     end
 
-end --}}}
--- QSB.Item1() .. QSB.Item8() {{{
+end  --}}}
+-- KEYBOARD-SHORTCUTS: Item[1..8] {{{
+
 function QSB_Item1() SelectButton(1) end
 function QSB_Item2() SelectButton(2) end
 function QSB_Item3() SelectButton(3) end
@@ -1868,7 +1885,17 @@ function QSB_Item5() SelectButton(5) end
 function QSB_Item6() SelectButton(6) end
 function QSB_Item7() SelectButton(7) end
 function QSB_Item8() SelectButton(8) end
+
 --}}}
+-- KEYBOARD-SHORTCUTS: P[1..5] {{{
+function QSB_P1()    SelectPreset( PRESETNAMES[1]) end
+function QSB_P2()    SelectPreset( PRESETNAMES[2]) end
+function QSB_P3()    SelectPreset( PRESETNAMES[3]) end
+function QSB_P4()    SelectPreset( PRESETNAMES[4]) end
+function QSB_P5()    SelectPreset( PRESETNAMES[5]) end
+
+--}}}
+
 function SelectNextAuto() --{{{
 D("SelectNextAuto()")
     if not QSB.Settings.NextAuto              then return end
@@ -3190,7 +3217,8 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170818) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170822) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF Preset Keyboard Shortcuts|r")
+--d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170818) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170815) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170709) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF New feature: Item Presets|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170524) |r Update 14 (3.0.5): Morrowind   (API 100019)")

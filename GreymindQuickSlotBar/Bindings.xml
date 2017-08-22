@@ -15,6 +15,12 @@
    <Action name="GREYMIND_QUICK_SLOT_BAR_PREVIOUS_ITEM"       > <Down>QSB_PreviousItem()      </Down> </Action>
    <Action name="GREYMIND_QUICK_SLOT_BAR_NEXT_ITEM"           > <Down>QSB_NextItem()          </Down> </Action>
 
+   <Action name="GREYMIND_QUICK_SLOT_BAR_P_1"                 > <Down>QSB_P1()                </Down> </Action>
+   <Action name="GREYMIND_QUICK_SLOT_BAR_P_2"                 > <Down>QSB_P2()                </Down> </Action>
+   <Action name="GREYMIND_QUICK_SLOT_BAR_P_3"                 > <Down>QSB_P3()                </Down> </Action>
+   <Action name="GREYMIND_QUICK_SLOT_BAR_P_4"                 > <Down>QSB_P4()                </Down> </Action>
+   <Action name="GREYMIND_QUICK_SLOT_BAR_P_5"                 > <Down>QSB_P5()                </Down> </Action>
+
    <Action name="GREYMIND_QUICK_SLOT_BAR_RELOADUI"            > <Down>QSB_ReloadUI()          </Down> </Action>
    <Action name="GREYMIND_QUICK_SLOT_BAR_CLEARCHAT"           > <Down>QSB_ClearChat()         </Down> </Action>
 
