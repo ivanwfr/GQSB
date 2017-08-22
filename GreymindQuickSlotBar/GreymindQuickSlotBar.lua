@@ -4,7 +4,7 @@
 -- CHANGELOG --{{{
 --[[
 v2.3.3.1 {{{
-- [color="aaffaa"]170818[/color]
+- [color="aaffaa"]170822[/color]
 [color="ee00ee"]Preset selection: 5 more Keyboard Shortcuts[/color]
 
 }}}
