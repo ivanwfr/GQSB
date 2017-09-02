@@ -4,8 +4,9 @@
 -- CHANGELOG --{{{
 --[[
 v2.3.4   {{{
-- [color="aaffaa"]170901[/color]
-[color="ee00ee"]Collectible Items.[/color]
+- [color="aaffaa"]170902[/color]
+[color="ee00ee"]Collectible Items Support.[/color]
+[color="808080"]Collectible tooltip active state missing (Found no sync capable EVENT_XXX).[/color]
 
 }}}
 v2.3.3.2 {{{
@@ -145,32 +146,32 @@ v2.2.5 {{{
 -- LINKS --{{{
 --[[
 [COMMENTS] GreymindQuickSlotBar:
-    :!start explorer "http://www.esoui.com/downloads/fileinfo.php?id=258#comments"
-    :!start explorer "http://www.esoui.com/forums/showthread.php?p=31752"
-    :!start explorer "http://www.esoui.com/forums/showthread.php?p=31942"
+ :!start explorer "http://www.esoui.com/downloads/fileinfo.php?id=258#comments"
+ :!start explorer "http://www.esoui.com/forums/showthread.php?p=31752"
+ :!start explorer "http://www.esoui.com/forums/showthread.php?p=31942"
 
 [WIKI] APIVersion
-    :!start explorer "http://wiki.esoui.com/APIVersion#100020"
+ :!start explorer "http://wiki.esoui.com/APIVersion#100020"
 
 [OBJECTS] All 23507 GLOBAL objects as exported from the game
-    :!start explorer "http://esoapi.uesp.net/100020/globals.html"
+ :!start explorer "http://esoapi.uesp.net/100020/globals.html"
 
 [SOURCE] Browse the 857 Lua source code files starting at the root directory
-    :!start explorer "http://esoapi.uesp.net/100020/src/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100020/src/luadir.html"
 
 [FUNCTIONS] An alphabetical listing of all 50331 Lua functions
-    :!start explorer "http://esoapi.uesp.net/100020/functions.html"
+ :!start explorer "http://esoapi.uesp.net/100020/functions.html"
 
 [actionbar quickslot tooltip hud inventory]
-    :!start explorer "http://esoapi.uesp.net/100016/src/ingame/actionbar/luadir.html"
-    :!start explorer "http://esoapi.uesp.net/100016/src/ingame/quickslot/luadir.html"
-    :!start explorer "http://esoapi.uesp.net/100016/src/ingame/tooltip/luadir.html"
-    :!start explorer "http://esoapi.uesp.net/100020/src/ingame/hud/luadir.html"
-    :!start explorer "http://esoapi.uesp.net/100020/src/ingame/inventory/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100016/src/ingame/actionbar/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100016/src/ingame/quickslot/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100016/src/ingame/tooltip/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100020/src/ingame/hud/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100020/src/ingame/inventory/luadir.html"
 
 [COLLECTIONS_INVENTORY_SINGLETON]
-    :!start explorer "ingame/collections/collectionsinventorysingleton.lua"
-    :!start explorer "http://esodata.uesp.net/100017/src/ingame/inventory/inventoryslot.lua.html"
+ :!start explorer "http://esodata.uesp.net/100017/src/ingame/collections/collectionsinventorysingleton.lua.html"
+ :!start explorer "http://esodata.uesp.net/100017/src/ingame/inventory/inventoryslot.lua.html"
 
 --]]
 --}}}
@@ -322,7 +323,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.4"  , --  [APIVersion 100020 - Update 3.1.5: Horns of the Reach] 170901 previous: 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.4"  , --  [APIVersion 100020 - Update 3.1.5: Horns of the Reach] 170902 previous: 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -489,7 +490,8 @@ local  handle_ACTION_SLOT_UPDATED
 local  save_QSB_to_SlotItemTable
 local  getItem_slotId
 local   getItem_bag_slotId
-local   getItem_collectibleId
+local   getItem_collId_and_activeState
+local   get_collId_itemName
 local  get_tooltipText
 
 local SetUIHandlesVisibility
@@ -596,10 +598,11 @@ D("...PRESET SELECTED:"..QSB.Settings.PresetName)
 
 end --}}}
 -- ITEM EQUIP
+--{{{
 local QSB_BAG_BACKPACK_UPDATE_slotId    = -1
 local QSB_BAG_BACKPACK_UPDATE_itemLevel = -1
 local QSB_BAG_BACKPACK_UPDATE_mutex     = false
-
+--}}}
 function check_QSB_BAG_BACKPACK_slotId_to_check() --{{{
 D_ITEM("check_QSB_BAG_BACKPACK_slotId_to_check:")
 
@@ -695,7 +698,7 @@ function equip_bNum_item_slotId(bNum, itemName, slotId) --{{{
     local slotIndex = Get_slotIndex_of_bNum( bNum      )
 D_ITEM(".EQUIPPING [|c8888FF"..bNum.."=="..slotIndex.."|r] slotId["..tostring(slotId).."] [|cCCCCFF"..tostring(itemName).."]")
 
-    local from_bag = (getItem_bag_slotId(itemName , BAG_BACKPACK, "BAG_BACKPACK") >= 0)
+    local from_bag = (getItem_bag_slotId(itemName) >= 0)
 D_ITEM("from_bag: "..tostring(from_bag))
 
     if( from_bag ) then
@@ -705,7 +708,7 @@ D_ITEM("SelectSlotItem.......(slotId=["..tostring(slotId).."], slotIndex=["..tos
             CallSecureProtected("SelectSlotItem"       , BAG_BACKPACK, slotId, slotIndex)
         end
     else
-        -- TODO check available / active
+        -- TODO check if available
 D_ITEM("SelectSlotCollectible(slotId=["..tostring(slotId).."], slotIndex=["..tostring(slotIndex).."])")
         CallSecureProtected("SelectSlotCollectible",                   slotId, slotIndex)
     end
@@ -786,7 +789,6 @@ D_ITEM("   GetSlotName        ["..tostring( GetSlotName       (slotIndex) ).."]"
     local itemLevel  = QSB.Settings.SlotItemTable[bNum].itemLevel
     -- fallback to first found slotId for slotName
     if(   itemLevel == nil) then itemLevel = get_slotId_itemLevel( slotId ) end
-    -- TODO GET SLOTTED ITEM LEVEL FROM QUICK SLOT BAR
 
     -- SINGLE-POINT-INITIALIZATION
     QSB.Settings.SlotItemTable[bNum].itemName  = slotName
@@ -800,91 +802,77 @@ end --}}}
 -- ITEM INFO
 function get_tooltipText(bNum) --{{{
 
-    local itemName  = QSB.Settings.SlotItemTable[bNum].itemName
-    local itemLevel = QSB.Settings.SlotItemTable[bNum].itemLevel
-    local qsb_Id    = QSB.Settings.SlotItemTable[bNum].slotId
-    local texture   = QSB.Settings.SlotItemTable[bNum].texture
+    local  itemName   = QSB.Settings.SlotItemTable[bNum].itemName
+    local  slotIndex  = Get_slotIndex_of_bNum( bNum )
 
-    local slotIndex = Get_slotIndex_of_bNum( bNum )
-    local count     = GetSlotItemCount( slotIndex ) or 0
+    -- FROM [BAG_BACKPACK]
+    local  count      = GetSlotItemCount( slotIndex ) or 0
 
-    local color
-    if(count  > 0) then
-        color = COLOR4
+    -- FROM [COLLECTIONS_INVENTORY]
+    local collId  = 0
+    local active  = false
+    if(    count <= 0) then collId, active = getItem_collId_and_activeState(itemName) end
+
+    -- COLOR .. f(count or collId)
+    local  color
+    if    (count     >  0) then color = COLOR4
+    elseif(collId    >= 0) then color = COLOR3
+    else                        color = COLORG
+    end
+
+    -- LABEL [COLLECTIBLE] OR [ITEM]
+    local label
+    if(itemName ~= nil) and (itemName ~= "") then
+        -- ITEM NAME
+        label = tostring(itemName)
+
+        -- ITEM DETAILS
+        if(collId > 0) then
+            -- [active]
+            -- TODO (170902)
+            -- ...find an [QUICK SLOT ITEM IS USED EVENT]
+            -- ...that would call Refresh() to synchronize [active] state
+            -- if(active) then label = label ..COLOR2.." (active)" end
+        else
+            -- [itemLevel]
+            local itemLevel  = QSB.Settings.SlotItemTable[bNum].itemLevel
+            if(   itemLevel ~= nil    ) then label = label .." (level ".. tostring(itemLevel) ..")" end
+        end
+
+    -- LABEL [EMPTY]
     else
+        label = "empty"
         color = COLORG
     end
 
-    local label
-    if(itemName ~= nil) and (itemName ~= "") then
-        label = tostring(itemName)
-        if(itemLevel ~= nil) then label = label .." (level ".. tostring(itemLevel) ..")" end
-    else
-        label = "empty"
-    end
+    -- [TOOLTIP]
+    local  tt = color  .. label .."|r"
 
-    local slotId = -1
-    if (itemName ~= nil) and (itemName ~= "") then
-        slotId = getItem_slotId(itemName)
-    end
-
-    local     tt = color  .. label .."|r"
-
+    -- DEBUG
     if(DEBUG or DEBUG_ITEM) then
+        local tt_Id
+        if    (collId   >  0  )                      then tt_Id = "\n- collId " ..COLOR3..tostring( collId                   ) .."|r"
+        elseif(itemName ~= nil) and (itemName ~= "") then tt_Id = "\n- slotId " ..COLOR4..tostring( getItem_slotId(itemName) ) .."|r"
+        else                                              tt_Id = "\n...empty " ..COLOR2.."itemName|r"
+        end
+
         tt = tt
-        .."\n- qsb_Id ".. color  .. tostring( qsb_Id  ) .."|r"
-        .."\n- slotId ".. COLORG .. tostring( slotId  ) .."|r"
-        .."\n- texture".. COLORG .. tostring( texture ) .."|r"
+        ..tt_Id
+        .."\n- qsb_Id ".. color  .. tostring( QSB.Settings.SlotItemTable[bNum].slotId  ) .."|r"
+        .."\n- texture".. COLORG .. tostring( QSB.Settings.SlotItemTable[bNum].texture ) .."|r"
     end
 
+D_ITEM("get_tooltipText("..tostring(bNum).."):\n"..tt)
     return tt
 
 end --}}}
+
+-- BAG OR COLLECTIONS
 function getItem_slotId(itemName) --{{{
 
-    local slotId   = getItem_bag_slotId(itemName , BAG_BACKPACK, "BAG_BACKPACK")
-    if(slotId < 0) then
-        slotId     = getItem_collectibleId(itemName)
-    end
-
-    return slotId
-end --}}}
-function getItem_bag_slotId(itemName, bag, bag_name) --{{{
-
-    for _, data in pairs(SHARED_INVENTORY.bagCache[bag]) do
-        if data ~= nil then
-            local slotName  = GetItemName(bag, data.slotIndex)
-            if(   slotName == itemName) then
-D_ITEM("getItem_bag_slotId("..COLOR1..tostring(itemName)..", "..COLOR3..bag_name.."): return ["..tostring(data.slotIndex).."]")
-                  return data.slotIndex
-            end
-        end
-    end
-
-D_ITEM("getItem_bag_slotId("..COLOR2..tostring(itemName)..", "..COLOR3..bag_name.."): return [-1]")
-    return -1
-end --}}}
-function getItem_collectibleId(itemName) --{{{
-
-    local active = false
-    local collectibleId
-    local   data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
-    for i = 1, #data do
-        local slotName  = data[i].name
-        if(   slotName == itemName) then
---[[ {{{
-D_ITEM(COLOR1.."name.........=[".. tostring(data[i].name         ) .."]")
-D_ITEM(COLOR1.."active.......=[".. tostring(data[i].active       ) .."]")
-D_ITEM(COLOR1.."categoryType.=[".. tostring(data[i].categoryType ) .."]")
-D_ITEM(COLOR1.."collectibleId=[".. tostring(data[i].collectibleId) .."]")
-D_ITEM(COLOR1.."iconFile.....=[".. tostring(data[i].iconFile     ) .."]")
-}}} --]]
-D_ITEM("getItem_collectibleId("..COLOR1..tostring(itemName).."): return ["..tostring(data[i].collectibleId).."] active=["..tostring(data[i].active).."]")
-            return data[i].collectibleId
-        end
-    end
-D_ITEM("getItem_collectibleId("..COLOR2..tostring(itemName).."): return [-1]")
-    return -1
+    local  itemId = getItem_bag_slotId            ( itemName )
+    or              getItem_collId_and_activeState( itemName )
+    return itemId
 end --}}}
 function get_slotId_itemName(slotId) --{{{
     local itemName = nil
@@ -892,15 +880,50 @@ function get_slotId_itemName(slotId) --{{{
     if(      data ~= nil) then
         itemName   = GetItemName(BAG_BACKPACK, data.slotIndex)
     else
-        itemName   = get_slotId_collectible_name(slotId)
+        itemName   = get_collId_itemName(slotId)
     end
 D_ITEM("get_slotId_itemName("..tostring(slotId).."): return ["..tostring(itemName).."]")
     return nil
 end
 --}}}
-function get_slotId_collectible_name(slotId) --{{{
+-- BAG_BACKPACK
+function getItem_bag_slotId(itemName) --{{{
+
+    for _, data in pairs(SHARED_INVENTORY.bagCache[BAG_BACKPACK]) do
+        if data ~= nil then
+            local slotName  = GetItemName(BAG_BACKPACK, data.slotIndex)
+            if(   slotName == itemName) then
+D_ITEM("getItem_bag_slotId("..COLOR1..tostring(itemName)..", "..COLOR3.."BAG_BACKPACK): return ["..tostring(data.slotIndex).."]")
+                  return data.slotIndex
+            end
+        end
+    end
+
+D_ITEM("getItem_bag_slotId("..COLOR2..tostring(itemName)..", "..COLOR3.."BAG_BACKPACK): return [-1]")
+    return -1
+end --}}}
+function get_slotId_itemLevel(slotId) --{{{
+    local  data  = SHARED_INVENTORY.bagCache[BAG_BACKPACK][slotId]
+    if(    data == nil) then return nil end
+    return data.requiredLevel
+end
+--}}}
+-- COLLECTIONS_INVENTORY_SINGLETON
+function getItem_collId_and_activeState(itemName) --{{{
+
+    local data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
+    for i = 1, #data do
+        local slotName  = data[i].name
+        if(   slotName == itemName) then
+D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName).."): return ["..tostring(data[i].collectibleId).."] active=["..tostring(data[i].active).."]")
+            return data[i].collectibleId, data[i].active
+        end
+    end
+D_ITEM("getItem_collId_and_activeState("..COLOR2..tostring(itemName).."): return [-1]")
+    return -1, false
+end --}}}
+function get_collId_itemName(slotId) --{{{
     local itemName = nil
-    local active   = false
     local     data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
     for i = 1, #data do
         if(   data[i].collectibleId == slotId) then
@@ -910,18 +933,11 @@ D_ITEM(COLOR1.."categoryType.=[".. tostring(data[i].categoryType ) .."]")
 D_ITEM(COLOR1.."collectibleId=[".. tostring(data[i].collectibleId) .."]")
 D_ITEM(COLOR1.."iconFile.....=[".. tostring(data[i].iconFile     ) .."]")
             itemName = data[i].name
-            active   = data[i].active
         end
     end
-D_ITEM("get_slotId_collectible_name("..tostring(slotId).."): return ["..tostring(itemName).."]")
+D_ITEM("get_collId_itemName("..tostring(slotId).."): return ["..tostring(itemName).."]")
     return itemName
 end --}}}
-function get_slotId_itemLevel(slotId) --{{{
-    local  data  = SHARED_INVENTORY.bagCache[BAG_BACKPACK][slotId]
-    if(    data == nil) then return nil end
-    return data.requiredLevel
-end
---}}}
 
 -- COPY
 function DeepCopy(orig) --{{{
@@ -1069,18 +1085,18 @@ D("...Refresh_delayed()")
         BuildUIHandles()
     end
 
-    if(QSB.Settings.MainWindow.X == 0) and (QSB.Settings.MainWindow.Y == 0) then
+    if( QSB.Settings.MainWindow.X == 0) and (QSB.Settings.MainWindow.Y == 0) then
         QSB.Settings.MainWindow.X = math.floor(GuiRoot:GetWidth()  / 2)
         QSB.Settings.MainWindow.Y = math.floor(GuiRoot:GetHeight() / 2)
 
-        if     QSB.Settings.PresetName == "P1" then
-            QSB.Settings.MainWindow.X   = QSB.Settings.MainWindow.X - 32
-        elseif QSB.Settings.PresetName == "P2" then
-            QSB.Settings.MainWindow.X   = QSB.Settings.MainWindow.X - 64
-        elseif QSB.Settings.PresetName == "P3" then
-            QSB.Settings.MainWindow.X   = QSB.Settings.MainWindow.X - 96
-        elseif QSB.Settings.PresetName == "P4" then
-            QSB.Settings.MainWindow.X   = QSB.Settings.MainWindow.X - 128
+        if     QSB.Settings.PresetName  == "P1" then
+            QSB   .Settings.MainWindow.X = QSB.Settings.MainWindow.X -  32
+        elseif QSB.Settings.PresetName  == "P2" then
+            QSB   .Settings.MainWindow.X = QSB.Settings.MainWindow.X -  64
+        elseif QSB.Settings.PresetName  == "P3" then
+            QSB   .Settings.MainWindow.X = QSB.Settings.MainWindow.X -  96
+        elseif QSB.Settings.PresetName  == "P4" then
+            QSB   .Settings.MainWindow.X = QSB.Settings.MainWindow.X - 128
         end
 
     end
@@ -2998,11 +3014,12 @@ end
 function RegisterEventHandlers() --{{{
 D("RegisterEventHandlers()")
 
-    -- EVENT_ACTION_SLOT_UPDATED --{{{ (slotIndex)
+    -- ACTION_SLOT_UPDATED --{{{ (slotIndex)
     -- update from quickslot wheel
     EVENT_MANAGER:RegisterForEvent("GQSB.ACTION_SLOT_UPDATED"
     , EVENT_ACTION_SLOT_UPDATED
     , function(eventCode, slotIndex)
+D_ITEM("ACTION_SLOT_UPDATED: slotIndex=["..slotIndex.."]")
 
         -- Quick Slot Bar item added or removed
         -- Or weapons swapped QSB.Settings.SwapBackgroundColors
@@ -3010,9 +3027,9 @@ D("RegisterEventHandlers()")
         if(bNum == 0) then return end
 
         if(QSB_BAG_BACKPACK_UPDATE_mutex) then
-            --D_ITEM("|cFF0000".."handle_ACTION_SLOT_UPDATED MUTEXED".."|r")
+--D_ITEM("|cFF0000".."handle_ACTION_SLOT_UPDATED MUTEXED".."|r")
         else
-            --D_ITEM("ACTION_SLOT_UPDATED: bNum=["..bNum.."]")
+--D_ITEM("ACTION_SLOT_UPDATED: bNum=["..bNum.."]")
             handle_ACTION_SLOT_UPDATED(bNum)
         end
 
@@ -3022,7 +3039,7 @@ D("RegisterEventHandlers()")
     end)
 
     --}}}
-    -- EVENT_ACTIVE_QUICKSLOT_CHANGED --{{{ (slotIndex)
+    -- ACTIVE_QUICKSLOT_CHANGED --{{{ (slotIndex)
     EVENT_MANAGER:RegisterForEvent("GQSB.ACTIVE_QUICKSLOT_CHANGED"
     , EVENT_ACTIVE_QUICKSLOT_CHANGED
     , function(event, slotIndex)
@@ -3034,7 +3051,7 @@ D_ITEM("ACTIVE_QUICKSLOT_CHANGED: slotIndex=["..slotIndex.."]")
     end)
 
     --}}}
-    -- EVENT_INVENTORY_SINGLE_SLOT_UPDATE --{{{ (bagId, slotId)
+    -- INVENTORY_SINGLE_SLOT_UPDATE --{{{ (bagId, slotId)
     EVENT_MANAGER:RegisterForEvent("GQSB.INVENTORY_SINGLE_SLOT_UPDATE"
     , EVENT_INVENTORY_SINGLE_SLOT_UPDATE
     , function(event, bagId, slotId)
@@ -3063,7 +3080,7 @@ D_ITEM(COLOR1.."ITEM UPDATED: itemName=["..tostring(itemName).."] (level "..tost
 
     --}}}
 
-    -- EVENT_RETICLE_HIDDEN_UPDATE --{{{
+    -- RETICLE_HIDDEN_UPDATE --{{{
     -- hide or show in sync with VIS_RETICLE
     EVENT_MANAGER:RegisterForEvent("GQSB.RETICLE_HIDDEN_UPDATE"
     , EVENT_RETICLE_HIDDEN_UPDATE
@@ -3111,8 +3128,20 @@ D_ITEM(COLOR1.."ITEM UPDATED: itemName=["..tostring(itemName).."] (level "..tost
     end)
 
     --}}}
+    -- RETICLE_TARGET_CHANGED --{{{
+    -- hide or show in sync with VIS_COMBAT state
+    EVENT_MANAGER:RegisterForEvent("GQSB.RETICLE_TARGET_CHANGED"
+    , EVENT_RETICLE_TARGET_CHANGED
+    , function(...)
+        D_EVENT("RETICLE_TARGET_CHANGED")
+        if not QSB.Settings then return end
 
-    -- EVENT_PLAYER_COMBAT_STATE --{{{
+        GameActionButtonHideHandler(false,"RETICLE_TARGET_CHANGED") -- Apply current user choice
+
+    end)
+
+    --}}}
+    -- PLAYER_COMBAT_STATE --{{{
     -- hide or show in sync with VIS_COMBAT state
     EVENT_MANAGER:RegisterForEvent("GQSB.PLAYER_COMBAT_STATE"
     , EVENT_PLAYER_COMBAT_STATE
@@ -3135,59 +3164,8 @@ D_ITEM(COLOR1.."ITEM UPDATED: itemName=["..tostring(itemName).."] (level "..tost
     end)
 
     --}}}
-    -- EVENT_RETICLE_TARGET_CHANGED --{{{
-    -- hide or show in sync with VIS_COMBAT state
-    EVENT_MANAGER:RegisterForEvent("GQSB.RETICLE_TARGET_CHANGED"
-    , EVENT_RETICLE_TARGET_CHANGED
-    , function(...)
-        D_EVENT("RETICLE_TARGET_CHANGED")
-        if not QSB.Settings then return end
 
-        GameActionButtonHideHandler(false,"RETICLE_TARGET_CHANGED") -- Apply current user choice
-
-    end)
-
-    --}}}
-    -- EVENT_KEYBINDING_SET --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.KEYBINDING_SET"
-    , EVENT_KEYBINDING_SET
-    , function(self)
-        D_EVENT("KEYBINDING_SET")
-        Refresh()
-        Show()
-    end)
-
-    --}}}
-    -- EVENT_KEYBINDING_CLEARED --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.KEYBINDING_CLEARED"
-    , EVENT_KEYBINDING_CLEARED
-    , function(self)
-        D_EVENT("KEYBINDING_CLEARED")
-        Refresh()
-        Show()
-    end)
-
-    --}}}
-
-    -- EVENT_END_FAST_TRAVEL_INTERACTION --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.END_FAST_TRAVEL_INTERACTION"
-    , EVENT_END_FAST_TRAVEL_INTERACTION
-    , function(self)
-        D_EVENT("END_FAST_TRAVEL_INTERACTION")
-        Refresh()
-    end)
-
-    --}}}
-    -- EVENT_END_FAST_TRAVEL_KEEP_INTERACTION --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.END_FAST_TRAVEL_KEEP_INTERACTION"
-    , EVENT_END_FAST_TRAVEL_KEEP_INTERACTION
-    , function(self)
-        D_EVENT("END_FAST_TRAVEL_KEEP_INTERACTION")
-        Refresh()
-    end)
-
-    --}}}
-    -- EVENT_PLAYER_ACTIVATED --{{{
+    -- PLAYER_ACTIVATED --{{{
     EVENT_MANAGER:RegisterForEvent("GQSB.PLAYER_ACTIVATED"
     , EVENT_PLAYER_ACTIVATED
     , function(self)
@@ -3196,7 +3174,7 @@ D_ITEM(COLOR1.."ITEM UPDATED: itemName=["..tostring(itemName).."] (level "..tost
     end)
 
     --}}}
-    -- EVENT_ACTIVE_WEAPON_PAIR_CHANGED (integer eventCode, integer activeWeaponPair, bool locked) --{{{
+    -- ACTIVE_WEAPON_PAIR_CHANGED (integer eventCode, integer activeWeaponPair, bool locked) --{{{
     EVENT_MANAGER:RegisterForEvent("GQSB.ACTIVE_WEAPON_PAIR_CHANGED"
     , EVENT_ACTIVE_WEAPON_PAIR_CHANGED
     , function(eventCode, activeWeaponPair, locked)
@@ -3207,6 +3185,46 @@ D_ITEM(COLOR1.."ITEM UPDATED: itemName=["..tostring(itemName).."] (level "..tost
         end
         Refresh()
 --d("GetActiveWeaponPairInfo() returns ["..tostring(GetActiveWeaponPairInfo()).."]")
+    end)
+
+    --}}}
+
+    -- KEYBINDING_SET --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.KEYBINDING_SET"
+    , EVENT_KEYBINDING_SET
+    , function(self)
+        D_EVENT("KEYBINDING_SET")
+        Refresh()
+        Show()
+    end)
+
+    --}}}
+    -- KEYBINDING_CLEARED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.KEYBINDING_CLEARED"
+    , EVENT_KEYBINDING_CLEARED
+    , function(self)
+        D_EVENT("KEYBINDING_CLEARED")
+        Refresh()
+        Show()
+    end)
+
+    --}}}
+
+    -- END_FAST_TRAVEL_INTERACTION --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.END_FAST_TRAVEL_INTERACTION"
+    , EVENT_END_FAST_TRAVEL_INTERACTION
+    , function(self)
+        D_EVENT("END_FAST_TRAVEL_INTERACTION")
+        Refresh()
+    end)
+
+    --}}}
+    -- END_FAST_TRAVEL_KEEP_INTERACTION --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.END_FAST_TRAVEL_KEEP_INTERACTION"
+    , EVENT_END_FAST_TRAVEL_KEEP_INTERACTION
+    , function(self)
+        D_EVENT("END_FAST_TRAVEL_KEEP_INTERACTION")
+        Refresh()
     end)
 
     --}}}
@@ -3299,7 +3317,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170901) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support|r")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170902) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170829) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF Preset Keyboard Shortcuts|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170822) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF Preset Keyboard Shortcuts|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170818) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
