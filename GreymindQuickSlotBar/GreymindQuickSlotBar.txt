@@ -1,8 +1,8 @@
 ## Title: |c4477FFGreymind|r Quick Slot Bar
-## APIVersion: 100020
+## APIVersion: 100021
 ## SavedVariables: GreymindQuickSlotBarSettings
-## Author:  ivanwfr (based on balki's)
-## Feature Author: Ivan
+## Author:  ivanwfr
+## Feature Author: Ivan Wellesz
 
 # Cette Extension n’est pas créée par, liée à, ni sponsorisée
 # par ZeniMax Media Inc. ou ses sociétés affiliées.

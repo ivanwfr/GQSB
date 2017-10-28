@@ -3,6 +3,12 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.3.4.2 {{{
+- [color="aaffaa"]171028[/color]
+- Checked with Update 16 (3.2.6): [color="00ff00"]Clockwork City[/color] - APIVersion: 100021
+- [color="ee00ee"]Works with [b]LibAddonMenu 2.0 r25[/b][/color]
+
+}}}
 v2.3.4.1 {{{
 - [color="aaffaa"]170917[/color]
 [color="ee00ee"]Collectible Presets properly saved and restored.[/color]
@@ -150,13 +156,16 @@ v2.2.5 {{{
 --}}}
 -- LINKS --{{{
 --[[
+[PATCH NOTES]:
+ :!start explorer "https://forums.elderscrollsonline.com/en/discussion/377432/pc-mac-patch-notes-v3-2-6"
+
 [COMMENTS] GreymindQuickSlotBar:
- :!start explorer "http://www.esoui.com/downloads/fileinfo.php?id=258#comments"
+ :!start explorer "http://www.esoui.com/downloads/fileinfo.php?id=258"
  :!start explorer "http://www.esoui.com/forums/showthread.php?p=31752"
  :!start explorer "http://www.esoui.com/forums/showthread.php?p=31942"
 
 [WIKI] APIVersion
- :!start explorer "http://wiki.esoui.com/APIVersion#100020"
+ :!start explorer "http://wiki.esoui.com/APIVersion"
 
 [OBJECTS] All 23507 GLOBAL objects as exported from the game
  :!start explorer "http://esoapi.uesp.net/100020/globals.html"
@@ -328,7 +337,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.4.1", --  [APIVersion 100020 - Update 3.1.5: Horns of the Reach] 170917 previous: 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.4.2", --  [APIVersion 100021 - Update 3.2.6: Clockwork City] 171028 previous: 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -3322,7 +3331,8 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170917) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support(+)|r")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171028) |r Update 16 (3.2.6): Clockwork City (API 100021)|r")
+--d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170917) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support(+)|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170902) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170829) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF Preset Keyboard Shortcuts|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170822) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF Preset Keyboard Shortcuts|r")
