@@ -3,6 +3,12 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.3.4.3 {{{
+- [color="aaffaa"]171128[/color]
+- [color="ee00ee"]New option........: Auto-Clone previous-to-empty preset (ON OFF) ...whether to copy the CURRENT PRESET LAYOUT AND CONTENT When selecting an EMPTY PRESET.[/color]
+- [color="ee00ee"]New slash-command.: /gqsb clear ...to clear Current-Preset-Items.[/color]
+
+}}}
 v2.3.4.2 {{{
 - [color="aaffaa"]171028[/color]
 - Checked with Update 16 (3.2.6): [color="00ff00"]Clockwork City[/color] - APIVersion: 100021
@@ -337,7 +343,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.4.2", --  [APIVersion 100021 - Update 3.2.6: Clockwork City] 171028 previous: 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.4.3", --  [APIVersion 100021 - Update 3.2.6: Clockwork City] 171128 previous: 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -368,6 +374,7 @@ local QSB = {
     Presets                             = { P1={}, P2={}, P3={}, P4={}, P5={} },
 
     SomeSlotItemChanged                 = false,
+    CloneCurrentToEmtpyPreset           = true,
 
     -- small helper windows
     UIHandleNames    = { "L", "P1", "P2", "P3", "P4", "P5", "S" },
@@ -575,7 +582,7 @@ D("...PRESET __SAVING:".. currentPreset)
     CopyNotNilSettingsFromTo(from, to)
 
     -- DEFAULT TO CLONING CURRENT QUICK SLOT BAR CONTENT -- AND LAYOUT (170818)
-    if is_SlotItemTable_empty() then
+    if QSB.CloneCurrentToEmtpyPreset and is_SlotItemTable_empty() then
 d(SETTINGSPANELNAME)
 d(COLOR3.." Preset"  ..COLOR2.." "..selectedPreset.." "..COLOR3.."is EMPTY .. CLONING "..COLOR2.." "..currentPreset .." "..COLOR3.." (layout and content)")
 
@@ -647,7 +654,9 @@ D_ITEM("|cBBBBFF loadItemSlots: |cFF0000 (QSB.Settings.SlotItemTable == nil)|r")
     -- EMPTY SlotItemTable .. leave Quick Slot Bar as is {{{
     if is_SlotItemTable_empty() then
 D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
+--[[
         return
+--]]
     end
     --}}}
     -- MUTEX: to ignore self-induced ACTION_SLOT_UPDATED events
@@ -704,8 +713,10 @@ function clear_bNum(bNum) --{{{
     local slotName  = GetSlotName          ( slotIndex )
     if(   slotName ~= "") then
 D_ITEM("..CLEARING [|c8888BB"..Get_bNum_of_slotIndex(slotIndex).."=="..slotIndex.."|r] [|cCCCCFF"..tostring( slotName).."|r]")
-        CallSecureProtected("ClearSlot", slotIndex)
+    else
+D_ITEM("..CLEARING [|c8888BB"..Get_bNum_of_slotIndex(slotIndex).."=="..slotIndex.."|r]")
     end
+    CallSecureProtected("ClearSlot", slotIndex)
 end --}}}
 function equip_bNum_item_slotId(bNum, itemName, slotId) --{{{
 
@@ -2954,7 +2965,7 @@ D("BuildSettingsMenu()")
 
     control = {
         type        = "checkbox",
-        reference   = "QSB_ShowBackgroundColors",
+        reference   = "QSB_SwapBackgroundColors",
         name        = "Weapon Swap Colors",
         tooltip     = "Whether to change buttons background colors on Weapon Swap\n"
         .."|cFF0000when Hide buttons background is OFF",
@@ -2963,6 +2974,27 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SwapBackgroundColors = value
+            Refresh()
+            Show()
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- CloneCurrentToEmtpyPreset (Checkbox) --{{{
+
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_ClonePreviousToEmtpyPreset",
+        name        = "Auto-Clone previous-to-empty preset",
+        tooltip     = "Whether to copy the CURRENT PRESET LAYOUT AND CONTENT\n"
+        .."|cFF0000When selecting an EMPTY PRESET",
+        getFunc     = function()
+            return QSB.CloneCurrentToEmtpyPreset
+        end,
+        setFunc     = function(value)
+            QSB.CloneCurrentToEmtpyPreset = value
             Refresh()
             Show()
         end,
@@ -3331,7 +3363,8 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171028) |r Update 16 (3.2.6): Clockwork City (API 100021)|r")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171128) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new slash-command:|r /gqsb clear ...to clear Current-Preset-Items")
+--d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171028) |r Update 16 (3.2.6): Clockwork City (API 100021)|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170917) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support(+)|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170902) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170829) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF Preset Keyboard Shortcuts|r")
@@ -3362,19 +3395,22 @@ function OnSlashCommand(arg)
     or (arg ==  "-h"   )
     or (arg == "--h"   )
     then
-        d(QSB_SLASH_COMMAND..    " p1-p5 ... select Presets "..PRESETNAMES[1].." to "..PRESETNAMES[5].." (current = "..QSB.Settings.PresetName..")")
-        d(QSB_SLASH_COMMAND.. " settings ... Settings Panel display (toggle)")
-        d(QSB_SLASH_COMMAND..     " lock ... UI lock (toggle)")
-        d(QSB_SLASH_COMMAND..  " qsbhide ... Hide Default Quick Slot Button (toggle)")
-        d(QSB_SLASH_COMMAND.." clearchat ... clears all chat windows")
-        d(QSB_SLASH_COMMAND..  " refresh ... rebuild and redisplay UI")
-        d(QSB_SLASH_COMMAND..    " reset ... RESETS ALL CHARACTER SETTINGS TO DEFAULT")
-        d(QSB_SLASH_COMMAND..    " debug")
-        d(QSB_SLASH_COMMAND..    " debug_item")
-        d(QSB_SLASH_COMMAND..    " debug_event")
-        d(QSB_SLASH_COMMAND..  " _G[...] ... dumps global variable")
-        --d(QSB_SLASH_COMMAND.." kbclr ... Clear all KeyBindings (protected, wont work)")
-        --d(QSB_SLASH_COMMAND.." kbmod ... Apply KeyBindings Modifier")
+        d(QSB_SLASH_COMMAND..     " p1-p5 .. select Presets "..PRESETNAMES[1].." to "..PRESETNAMES[5].." (current = "..QSB.Settings.PresetName..")")
+        d(QSB_SLASH_COMMAND..  " settings .. Settings Panel display (toggle)")
+        d(QSB_SLASH_COMMAND..      " lock .. UI lock (toggle)")
+        d(QSB_SLASH_COMMAND..   " qsbhide .. Hide Default Quick Slot Button (toggle)")
+        d(QSB_SLASH_COMMAND.. " clearchat .. clears all chat windows")
+        d(QSB_SLASH_COMMAND..   " refresh .. rebuild and redisplay UI")
+        d(QSB_SLASH_COMMAND..     " clone .. auto-clone previous-to-empty preset (toggle)")
+        d(QSB_SLASH_COMMAND..     " clear .. to clear Current-Preset-Items")
+        d(QSB_SLASH_COMMAND..     " reset .. RESETS ALL CHARACTER SETTINGS TO DEFAULT")
+
+      --d(QSB_SLASH_COMMAND.. " debug")
+      --d(QSB_SLASH_COMMAND.. " debug_item")
+      --d(QSB_SLASH_COMMAND.. " debug_event")
+      --d(QSB_SLASH_COMMAND.. " _G[...] ... dumps global variable")
+      --d(QSB_SLASH_COMMAND.. " kbclr ... Clear all KeyBindings (protected, wont work)")
+      --d(QSB_SLASH_COMMAND.. " kbmod ... Apply KeyBindings Modifier")
 
     --}}}
     -- hide show refresh reset p1-5 kbclr kbmod {{{
@@ -3392,13 +3428,39 @@ function OnSlashCommand(arg)
     elseif(arg == "kbclr"  ) then ClearKeyBindings()
     elseif(arg == "kbmod"  ) then ApplyKeyBindingsModifier(); ApplyKeyBindingsModifier_SWAPS()
     --}}}
+    -- clone {{{
+    elseif(arg == "clone") then
+        QSB.CloneCurrentToEmtpyPreset = not QSB.CloneCurrentToEmtpyPreset
+        if (QSB.CloneCurrentToEmtpyPreset) then
+            d("|cAAFFBB @@@ AUTO-CLONING|r IS ON")
+        else
+            d("|cAAFFBB @@@ AUTO-CLONING|r IS OFF")
+        end
+      --Rebuild_LibAddonMenu()
+
+    --}}}
+    -- clear {{{
+    elseif(arg == "clear"       ) then
+        for bNum = 1, QSB.ButtonCountMax do
+            clear_bNum(bNum)
+            QSB.Settings.SlotItemTable[bNum].itemName  = nil
+            QSB.Settings.SlotItemTable[bNum].itemLevel = nil
+            QSB.Settings.SlotItemTable[bNum].slotId    = nil
+            QSB.Settings.SlotItemTable[bNum].texture   = nil
+       end
+
+       loadItemSlots()
+
+        d("...|CFF0000QSB.Settings.SlotItemTable CLEARED|r\n")
+
+        ui_may_have_changed = true
+    --}}}
     -- lock {{{
     elseif(arg == "lock"   ) then
         QSB.Settings.LockUI = not QSB.Settings.LockUI
-        Rebuild_LibAddonMenu()
-        Refresh()
-        Show()
+      --Rebuild_LibAddonMenu()
 
+        ui_may_have_changed = true
     --}}}
     -- gabhide (160218) {{{
     elseif(arg == "qsbhide") then
@@ -3423,19 +3485,10 @@ function OnSlashCommand(arg)
         QSB_ClearChat()
 
     --}}}
-    -- DEBUG DEBUG_EVENT DEBUG_ITEM clearitems -- {{{
+    -- DEBUG DEBUG_EVENT DEBUG_ITEM clear -- {{{
     elseif(arg == "debug"       ) then DEBUG       = not DEBUG      ; d("...DEBUG......=[" ..tostring( DEBUG       ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_event" ) then DEBUG_EVENT = not DEBUG_EVENT; d("...DEBUG_EVENT=[" ..tostring( DEBUG_EVENT ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_item"  ) then DEBUG_ITEM  = not DEBUG_ITEM ; d("...DEBUG_ITEM.=[" ..tostring( DEBUG_ITEM  ).. "]"); ui_may_have_changed = true
-    elseif(arg == "clearitems"  ) then
-        for bNum = 1, QSB.ButtonCountMax do
-            QSB.Settings.SlotItemTable[bNum].itemName  = nil
-            QSB.Settings.SlotItemTable[bNum].itemLevel = nil
-            QSB.Settings.SlotItemTable[bNum].slotId    = nil
-        end
-        d("...|CFF0000QSB.Settings.SlotItemTable CLEARED|r\n")
-
-        ui_may_have_changed = true
     --}}}
     -- LUA -- (/script-like commands) --{{{
     else
@@ -3483,14 +3536,14 @@ function OnSlashCommand(arg)
         end
         --}}}
     end --}}}
-
     -- CHANGE PRESET {{{
     if presetName ~= "" then
         SelectPreset( presetName )
-        Refresh();
-        Show()
+
+        ui_may_have_changed = true
     end
     --}}}
+
     if(ui_may_have_changed) then
         Refresh()
         Show()
