@@ -7,6 +7,7 @@ v2.3.4.3 {{{
 - [color="aaffaa"]171128[/color]
 - [color="ee00ee"]New option........: Auto-Clone previous-to-empty preset (ON OFF) ...whether to copy the CURRENT PRESET LAYOUT AND CONTENT When selecting an EMPTY PRESET.[/color]
 - [color="ee00ee"]New slash-command.: /gqsb clear ...to clear Current-Preset-Items.[/color]
+- [color="ee00ee"]Addon-Version added into the Settings Menu Display Name.[/color]
 
 }}}
 v2.3.4.2 {{{
@@ -583,7 +584,7 @@ D("...PRESET __SAVING:".. currentPreset)
 
     -- DEFAULT TO CLONING CURRENT QUICK SLOT BAR CONTENT -- AND LAYOUT (170818)
     if QSB.CloneCurrentToEmtpyPreset and is_SlotItemTable_empty() then
-d(SETTINGSPANELNAME)
+--d(SETTINGSPANELNAME)
 d(COLOR3.." Preset"  ..COLOR2.." "..selectedPreset.." "..COLOR3.."is EMPTY .. CLONING "..COLOR2.." "..currentPreset .." "..COLOR3.." (layout and content)")
 
         from = QSB.Settings.Presets[currentPreset]
@@ -2243,7 +2244,7 @@ D("BuildSettingsMenu()")
         type                = "panel",
         reference           = "QSB_Settings",
         name                = "G Quick Slot Bar",
-        displayName         = SETTINGSPANELNAME,
+        displayName         = SETTINGSPANELNAME..COLORG.." - "..QSB.Version,
         author              = "ivanwfr",
         version             = QSB.version,
         slashCommand        = nil,              --(optional) will register a keybind to open to this panel
