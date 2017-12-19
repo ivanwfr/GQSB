@@ -1669,7 +1669,7 @@ function Hide_delayed() --{{{
 D("...Hide_delayed()")
     Hide_pending = false
 
-    if ForceBarVisibility then return end
+    if ForceBarVisibility and not BlockBarVisibility then return end
 
     QSB.IsVisible = false
     GreymindQuickSlotBarUI:SetHidden(true)
