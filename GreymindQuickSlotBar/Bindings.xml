@@ -12,6 +12,7 @@
    <Action name="GREYMIND_QUICK_SLOT_BAR_ITEM_8"              > <Down>QSB_Item8()             </Down> </Action>
 
    <Action name="GREYMIND_QUICK_SLOT_BAR_FORCE_BAR_VISIBILITY"> <Down>QSB_ForceBarVisibility()</Down> </Action>
+   <Action name="GREYMIND_QUICK_SLOT_BAR_BLOCK_BAR_VISIBILITY"> <Down>QSB_BlockBarVisibility()</Down> </Action>
    <Action name="GREYMIND_QUICK_SLOT_BAR_PREVIOUS_ITEM"       > <Down>QSB_PreviousItem()      </Down> </Action>
    <Action name="GREYMIND_QUICK_SLOT_BAR_NEXT_ITEM"           > <Down>QSB_NextItem()          </Down> </Action>
 

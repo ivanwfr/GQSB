@@ -3,11 +3,18 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.3.4.4 {{{
+- [color="aaffaa"]171219[/color]
+- [color="ee00ee"]QSB Bar visibility: 2 more Keyboard Shortcuts and slash-commands:[/color]
+- [color="ee00ee"]New slash-command.: /gqsb force[/color] .. to force Bar Visiblity
+- [color="ee00ee"]New slash-command.: /gqsb block[/color] .. to block Bar Visiblity (overrides force)
+
+}}}
 v2.3.4.3 {{{
 - [color="aaffaa"]171128[/color]
-- [color="ee00ee"]New option........: Auto-Clone previous-to-empty preset (ON OFF) ...whether to copy the CURRENT PRESET LAYOUT AND CONTENT When selecting an EMPTY PRESET.[/color]
-- [color="ee00ee"]New slash-command.: /gqsb clear ...to clear Current-Preset-Items.[/color]
 - [color="ee00ee"]Addon-Version added into the Settings Menu Display Name.[/color]
+- [color="ee00ee"]New option........: Auto-Clone previous-to-empty preset (ON OFF) ...whether to copy the CURRENT PRESET LAYOUT AND CONTENT When selecting an EMPTY PRESET.[/color]
+- [color="ee00ee"]New slash-command.: /gqsb clear[/color] ...to clear Current-Preset-Items.
 
 }}}
 v2.3.4.2 {{{
@@ -255,6 +262,7 @@ local KBNAME_P4               = COLOR5.."Preset P4"
 local KBNAME_P5               = COLOR5.."Preset P5"
 
 local KBNAME_FORCE            = COLOR1.."Force Bar Visibility"
+local KBNAME_BLOCK            = COLOR1.."Block Bar Visibility"
 local KBNAME_PREVIOUS         = COLOR2.."Previous Quick Slot Item"
 local KBNAME_NEXT             = COLOR3.."Next Quick Slot Item"
 local KBNAME_RELOADUI         = COLOR4.."Reload UI"
@@ -308,6 +316,7 @@ local KEYBINDINGS = {
     { name="Quick Slot Item 8"        , id="GREYMIND_QUICK_SLOT_BAR_ITEM_8"              }, -- QSB_Item8
 
     { name=KBNAME_FORCE               , id="GREYMIND_QUICK_SLOT_BAR_FORCE_BAR_VISIBILITY"}, -- QSB_ForceBarVisibility
+    { name=KBNAME_BLOCK               , id="GREYMIND_QUICK_SLOT_BAR_BLOCK_BAR_VISIBILITY"}, -- QSB_BlockBarVisibility
     { name=KBNAME_PREVIOUS            , id="GREYMIND_QUICK_SLOT_BAR_PREVIOUS_ITEM"       }, -- QSB_PreviousItem
     { name=KBNAME_NEXT                , id="GREYMIND_QUICK_SLOT_BAR_NEXT_ITEM"           }, -- QSB_NextItem
 
@@ -524,6 +533,7 @@ local Show_pending = false
 local ShowUIHandles
 local UIWindowChanged
 
+local BlockBarVisibility = false
 local ForceBarVisibility = false
 local Reticle_isHidden   = false
 
@@ -1641,6 +1651,8 @@ function Show_delayed() --{{{
 D("...Show_delayed()")
     Show_pending = false
 
+    if BlockBarVisibility then return end
+
     QSB.IsVisible = true
     GreymindQuickSlotBarUI:SetHidden(false)
 
@@ -1657,9 +1669,8 @@ function Hide_delayed() --{{{
 D("...Hide_delayed()")
     Hide_pending = false
 
-    if ForceBarVisibility then
-        return
-    end
+    if ForceBarVisibility and not BlockBarVisibility then return end
+
     QSB.IsVisible = false
     GreymindQuickSlotBarUI:SetHidden(true)
 end --}}}
@@ -2109,13 +2120,51 @@ D("PreviousItem()")
     end
 end --}}}
 function QSB_ForceBarVisibility() --{{{
-D("QSB_ForceBarVisibility()")
 
     ForceBarVisibility = not ForceBarVisibility
-    if ForceBarVisibility then
+
+    local keyName      = ""
+    local keyBindInfo  = GetKeyBindInfo("GREYMIND_QUICK_SLOT_BAR_FORCE_BAR_VISIBILITY")
+    local kbi          = keyBindInfo[1]
+    local keyName = (kbi.keyCode ~= 0)
+    and              "|r ["..GetKeyName( kbi.keyCode ).."]"
+    or               ""
+
+    local state = ForceBarVisibility
+    and            COLOR2.." ON"
+    or             COLOR4.." OFF"
+
+d(keyName..COLOR1.." GQSB: Bar Visibility "..COLOR3.." FORCED "..state)
+
+    if ForceBarVisibility and not BlockBarVisibility then
         Show()
     else
         Hide("QSB_ForceBarVisibility")
+    end
+
+end --}}}
+function QSB_BlockBarVisibility() --{{{
+
+    BlockBarVisibility = not BlockBarVisibility
+
+    local keyName      = ""
+    local keyBindInfo  = GetKeyBindInfo("GREYMIND_QUICK_SLOT_BAR_BLOCK_BAR_VISIBILITY")
+    local kbi          = keyBindInfo[1]
+    local keyName = (kbi.keyCode ~= 0)
+    and              "|r ["..GetKeyName( kbi.keyCode ).."]"
+    or               ""
+
+    local state = BlockBarVisibility
+    and            COLOR2.." ON"
+    or             COLOR4.." OFF"
+
+d(keyName..COLOR1.." GQSB: Bar Visibility "..COLOR5.." BLOCKED "..state)
+
+
+    if BlockBarVisibility then
+        Hide("QSB_BlockBarVisibility")
+    else
+        Show()
     end
 
 end --}}}
@@ -3405,6 +3454,8 @@ function OnSlashCommand(arg)
         d(QSB_SLASH_COMMAND..     " clone .. auto-clone previous-to-empty preset (toggle)")
         d(QSB_SLASH_COMMAND..     " clear .. to clear Current-Preset-Items")
         d(QSB_SLASH_COMMAND..     " reset .. RESETS ALL CHARACTER SETTINGS TO DEFAULT")
+        d(QSB_SLASH_COMMAND..     " force .. to force Bar Visiblity")
+        d(QSB_SLASH_COMMAND..     " block .. to block Bar Visiblity (overrides force)")
 
       --d(QSB_SLASH_COMMAND.. " debug")
       --d(QSB_SLASH_COMMAND.. " debug_item")
@@ -3484,6 +3535,16 @@ function OnSlashCommand(arg)
     -- clear -- thanks to SkOODaT's ClearChat {{{
     elseif(arg == "clearchat"  ) then
         QSB_ClearChat()
+
+    --}}}
+    -- force {{{
+    elseif(arg == "force") then
+        QSB_ForceBarVisibility()
+
+    --}}}
+    -- block {{{
+    elseif(arg == "block") then
+        QSB_BlockBarVisibility()
 
     --}}}
     -- DEBUG DEBUG_EVENT DEBUG_ITEM clear -- {{{
