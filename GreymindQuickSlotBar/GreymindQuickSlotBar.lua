@@ -4,10 +4,12 @@
 -- CHANGELOG --{{{
 --[[
 v2.3.4.4 {{{
-- [color="aaffaa"]171219[/color]
+- [color="aaffaa"]171230[/color]
 - [color="ee00ee"]QSB Bar visibility: 2 more Keyboard Shortcuts and slash-commands:[/color]
 - [color="ee00ee"]New slash-command.: /gqsb force[/color] .. to force Bar Visiblity
 - [color="ee00ee"]New slash-command.: /gqsb block[/color] .. to block Bar Visiblity (overrides force)
+- [color="ee00ee"]Controls-Keybind and Chat-Report colors .. to better spot what's ON and what's OFF
+- [color="ee00ee"]Events bursts handling shorter .. to update UI faster
 
 }}}
 v2.3.4.3 {{{
@@ -209,6 +211,11 @@ local DEBUG_EVENT = false
 -- LOCAL
 -- CONSTANTS --{{{
 
+-- DELAYS
+local ZO_CALLLATER_DELAY_1    = 10 -- Refresh Show Hide
+local ZO_CALLLATER_DELAY_S    = 10 -- PlaySound
+local ZO_CALLLATER_DELAY_N    = 200 -- NextAuto
+
 -- COLORS
 local COLOR1                  = "|c4477FF"
 local COLOR2                  = "|cFF5555"
@@ -261,8 +268,8 @@ local KBNAME_P3               = COLOR5.."Preset P3"
 local KBNAME_P4               = COLOR5.."Preset P4"
 local KBNAME_P5               = COLOR5.."Preset P5"
 
-local KBNAME_FORCE            = COLOR1.."Force Bar Visibility"
-local KBNAME_BLOCK            = COLOR1.."Block Bar Visibility"
+local KBNAME_FORCE            = COLOR1.."Bar Visibility "..COLOR3.."FORCED"
+local KBNAME_BLOCK            = COLOR1.."Bar Visibility "..COLOR5.."BLOCKED"
 local KBNAME_PREVIOUS         = COLOR2.."Previous Quick Slot Item"
 local KBNAME_NEXT             = COLOR3.."Next Quick Slot Item"
 local KBNAME_RELOADUI         = COLOR4.."Reload UI"
@@ -353,7 +360,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.4.4", --  [APIVersion 100021 - Update 3.2.6: Clockwork City] 171219 previous: 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.4.4", --  [APIVersion 100021 - Update 3.2.6: Clockwork City] 171230 previous: 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1100,7 +1107,7 @@ D("Refresh()")
 
     if(not Refresh_pending) then
         Refresh_pending = true
-        zo_callLater(Refresh_delayed, 250)
+        zo_callLater(Refresh_delayed, ZO_CALLLATER_DELAY_1)
     end
 end  --}}}
 function Refresh_delayed() --{{{
@@ -1644,7 +1651,7 @@ D("Show()")
 
     if(not Show_pending) then
         Show_pending = true
-        zo_callLater(Show_delayed, 100)
+        zo_callLater(Show_delayed, ZO_CALLLATER_DELAY_1)
     end
 end  --}}}
 function Show_delayed() --{{{
@@ -1662,7 +1669,7 @@ function Hide(caller) --{{{
 D("Hide(caller=["..caller.."])")
     if(not Hide_pending) then
         Hide_pending = true
-        zo_callLater(Hide_delayed, 100)
+        zo_callLater(Hide_delayed, ZO_CALLLATER_DELAY_1)
     end
 end  --}}}
 function Hide_delayed() --{{{
@@ -1812,7 +1819,7 @@ function PlaySoundAlert(caller) --{{{
 D("PlaySoundAlert(|cFF00FF"..caller.."|r)")
     if(not PlaySoundAlert_pending) then
         PlaySoundAlert_pending = true
-        zo_callLater(PlaySoundAlert_delayed, 20)
+        zo_callLater(PlaySoundAlert_delayed, ZO_CALLLATER_DELAY_S)
     end
 end  --}}}
 function PlaySoundAlert_delayed() --{{{
@@ -1828,7 +1835,7 @@ function PlaySoundSlotted(caller) --{{{
 D("PlaySoundSlotted(|cFF00FF"..caller.."|r)")
     if(not PlaySoundSlotted_pending) then
         PlaySoundSlotted_pending = true
-        zo_callLater(PlaySoundSlotted_delayed, 100)
+        zo_callLater(PlaySoundSlotted_delayed, ZO_CALLLATER_DELAY_S)
     end
 end  --}}}
 function PlaySoundSlotted_delayed() --{{{
@@ -2038,7 +2045,7 @@ D("SelectNextAuto()")
 
     if(not SelectNextAuto_pending) then
         SelectNextAuto_pending = true
-        zo_callLater(SelectNextAuto_delayed, 100)
+        zo_callLater(SelectNextAuto_delayed, ZO_CALLLATER_DELAY_N)
     end
 end  --}}}
 function SelectNextAuto_delayed() --{{{
@@ -3095,7 +3102,7 @@ D("Rebuild_LibAddonMenu()")
     if(not Rebuild_LibAddonMenu_pending) then
         Rebuild_LibAddonMenu_pending = true
         LAM:OpenToPanel( nil )
-        zo_callLater(Rebuild_LibAddonMenu_delayed, 10)
+        zo_callLater(Rebuild_LibAddonMenu_delayed, ZO_CALLLATER_DELAY_1)
     end
 end
 --}}}
@@ -3413,7 +3420,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171219) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171219) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171128) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new slash-command:|r /gqsb clear ...to clear Current-Preset-Items")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171028) |r Update 16 (3.2.6): Clockwork City (API 100021)|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170917) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support(+)|r")
