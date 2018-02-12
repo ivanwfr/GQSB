@@ -4,12 +4,12 @@
 -- CHANGELOG --{{{
 --[[
 v2.3.4.4 {{{
-- [color="aaffaa"]171230[/color]
+- [color="aaffaa"]180212[/color]
 - [color="ee00ee"]QSB Bar visibility: 2 more Keyboard Shortcuts and slash-commands:[/color]
 - [color="ee00ee"]New slash-command.: /gqsb force[/color] .. to force Bar Visiblity
 - [color="ee00ee"]New slash-command.: /gqsb block[/color] .. to block Bar Visiblity (overrides force)
-- [color="ee00ee"]Controls-Keybind and Chat-Report colors .. to better spot what's ON and what's OFF
-- [color="ee00ee"]Events bursts handling shorter .. to update UI faster
+- [color="ee00ee"]Controls-Keybind and Chat-Report colors[/color] .. to better spot what's ON and what's OFF
+- [color="ee00ee"]Events bursts handling shorter[/color] .. to update UI faster
 
 }}}
 v2.3.4.3 {{{
@@ -360,7 +360,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.4.4", --  [APIVersion 100021 - Update 3.2.6: Clockwork City] 171230 previous: 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.4.4", --  [APIVersion 100021 - Update 3.2.6: Clockwork City] 180212 previous: 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
