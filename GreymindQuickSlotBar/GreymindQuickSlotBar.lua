@@ -5,6 +5,7 @@
 --[[
 v2.3.4.4 {{{
 - [color="aaffaa"]180212[/color]
+- Checked with (3.2.5): [color="00ff00"]Dragon Bones[/color] - APIVersion: 100022
 - [color="ee00ee"]QSB Bar visibility: 2 more Keyboard Shortcuts and slash-commands:[/color]
 - [color="ee00ee"]New slash-command.: /gqsb force[/color] .. to force Bar Visiblity
 - [color="ee00ee"]New slash-command.: /gqsb block[/color] .. to block Bar Visiblity (overrides force)
@@ -3420,7 +3421,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171219) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171219) |r Update 16 (3.3.5): Dragon Bones (API 100022)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171128) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new slash-command:|r /gqsb clear ...to clear Current-Preset-Items")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171028) |r Update 16 (3.2.6): Clockwork City (API 100021)|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170917) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support(+)|r")
