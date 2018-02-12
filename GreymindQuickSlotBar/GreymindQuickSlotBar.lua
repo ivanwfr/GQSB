@@ -4,8 +4,9 @@
 -- CHANGELOG --{{{
 --[[
 v2.3.4.4 {{{
-- [color="aaffaa"]180212[/color]
-- Checked with (3.2.5): [color="00ff00"]Dragon Bones[/color] - APIVersion: 100022
+- [color="aaffaa"]180213[/color]
+- Checked with Update 17 (3.3.5): [color="00ff00"]Dragon Bones[/color] - APIVersion: 100022
+- [color="ffffee"]TODO:[/color] find a replacement for missing [color="dd0000"]COLLECTIONS_INVENTORY_SINGLETON[/color] to synchronize collectibles
 - [color="ee00ee"]QSB Bar visibility: 2 more Keyboard Shortcuts and slash-commands:[/color]
 - [color="ee00ee"]New slash-command.: /gqsb force[/color] .. to force Bar Visiblity
 - [color="ee00ee"]New slash-command.: /gqsb block[/color] .. to block Bar Visiblity (overrides force)
@@ -201,8 +202,8 @@ v2.2.5 {{{
  :!start explorer "http://esoapi.uesp.net/100020/src/ingame/inventory/luadir.html"
 
 [COLLECTIONS_INVENTORY_SINGLETON]
- :!start explorer "http://esodata.uesp.net/100017/src/ingame/collections/collectionsinventorysingleton.lua.html"
- :!start explorer "http://esodata.uesp.net/100017/src/ingame/inventory/inventoryslot.lua.html"
+ :!start explorer "http://esodata.uesp.net/100021/src/ingame/collections/collectionsinventorysingleton.lua.html"
+ :!start explorer "http://esodata.uesp.net/100021/src/ingame/inventory/inventoryslot.lua.html"
 
 --]]
 --}}}
@@ -361,7 +362,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.4.4", --  [APIVersion 100021 - Update 3.2.6: Clockwork City] 180212 previous: 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.4.4", --  [APIVersion 100021 - Update 3.2.6: Clockwork City] 180213 previous: 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -955,14 +956,21 @@ end
 -- COLLECTIONS_INVENTORY_SINGLETON
 function getItem_collId_and_activeState(itemName) --{{{
 
-    local data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
-    for i = 1, #data do
-        local slotName  = data[i].name
-        if(   slotName == itemName) then
-D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName).."): return ["..tostring(data[i].collectibleId).."] active=["..tostring(data[i].active).."]")
-            return data[i].collectibleId, data[i].active
+    if(COLLECTIONS_INVENTORY_SINGLETON == nil) then
+D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName).."):\n"..COLOR2.."*** (COLLECTIONS_INVENTORY_SINGLETON == nil) ***")
+-- TODO (180213) .. (find a replacement)
+    else
+        local data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
+        for i = 1, #data do
+            local slotName  = data[i].name
+            if(   slotName == itemName) then
+D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName)..")\n: return ["..tostring(data[i].collectibleId).."] active=["..tostring(data[i].active).."]")
+
+                return data[i].collectibleId, data[i].active
+            end
         end
     end
+
 D_ITEM("getItem_collId_and_activeState("..COLOR2..tostring(itemName).."): return [-1]")
     return -1, false
 end --}}}
@@ -3421,7 +3429,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171219) |r Update 16 (3.3.5): Dragon Bones (API 100022)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (180213) |r Update 17 (3.3.5): Dragon Bones (API 100022)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171128) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new slash-command:|r /gqsb clear ...to clear Current-Preset-Items")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171028) |r Update 16 (3.2.6): Clockwork City (API 100021)|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170917) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support(+)|r")
