@@ -3,6 +3,12 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.3.6 {{{
+- [color="aaffaa"]180226[/color]
+- Checked with Patch 3.3.7
+- [color="ffffee"]FIXED GreymindQuickSlotBar.lua:984 error message:[/color] - missing again [color="dd0000"]COLLECTIONS_INVENTORY_SINGLETON[/color]
+
+}}}
 v2.3.5 {{{
 - [color="aaffaa"]180214[/color]
 - [color="ffffee"]WORAROUND:[/color] version tag for the missing [color="dd0000"]COLLECTIONS_INVENTORY_SINGLETON[/color]
@@ -367,7 +373,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.5", -- Update 17 (3.3.5): Dragon Bones (APIVersion 100022) - 180214 previous: 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.6", -- Update 17 (3.3.7): Dragon Bones (APIVersion 100022) - 180226 previous: 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -960,40 +966,47 @@ end
 --}}}
 -- COLLECTIONS_INVENTORY_SINGLETON
 function getItem_collId_and_activeState(itemName) --{{{
+-- TODO (180213) .. (find a replacement to COLLECTIONS_INVENTORY_SINGLETON)
 
     if(COLLECTIONS_INVENTORY_SINGLETON == nil) then
-D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName).."):\n"..COLOR2.."*** (COLLECTIONS_INVENTORY_SINGLETON == nil) ***")
--- TODO (180213) .. (find a replacement)
+        D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName).."):\n"..COLOR2.."*** (COLLECTIONS_INVENTORY_SINGLETON == nil) ***")
     else
         local data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
         for i = 1, #data do
             local slotName  = data[i].name
             if(   slotName == itemName) then
-D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName)..")\n: return ["..tostring(data[i].collectibleId).."] active=["..tostring(data[i].active).."]")
+                D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName)..")\n: return ["..tostring(data[i].collectibleId).."] active=["..tostring(data[i].active).."]")
 
-                return data[i].collectibleId, data[i].active
+            return data[i].collectibleId, data[i].active
+        end
+    end
+end
+
+D_ITEM("getItem_collId_and_activeState("..COLOR2..tostring(itemName).."): return [-1]")
+return -1, false
+end --}}}
+function get_collId_itemName(slotId) --{{{
+-- TODO (180226) .. (find a replacement to COLLECTIONS_INVENTORY_SINGLETON)
+
+    local itemName = nil
+    if(COLLECTIONS_INVENTORY_SINGLETON == nil) then
+        D_ITEM("get_collId_itemName("..COLOR1..tostring(slotId).."):\n"..COLOR2.."*** (COLLECTIONS_INVENTORY_SINGLETON == nil) ***")
+    else
+        local     data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
+        for i = 1, #data do
+            if(   data[i].collectibleId == slotId) then
+                D_ITEM(COLOR1.."name.........=[".. tostring(data[i].name         ) .."]")
+                D_ITEM(COLOR1.."active.......=[".. tostring(data[i].active       ) .."]")
+                D_ITEM(COLOR1.."categoryType.=[".. tostring(data[i].categoryType ) .."]")
+                D_ITEM(COLOR1.."collectibleId=[".. tostring(data[i].collectibleId) .."]")
+                D_ITEM(COLOR1.."iconFile.....=[".. tostring(data[i].iconFile     ) .."]")
+                itemName = data[i].name
             end
         end
     end
 
-D_ITEM("getItem_collId_and_activeState("..COLOR2..tostring(itemName).."): return [-1]")
-    return -1, false
-end --}}}
-function get_collId_itemName(slotId) --{{{
-    local itemName = nil
-    local     data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
-    for i = 1, #data do
-        if(   data[i].collectibleId == slotId) then
-D_ITEM(COLOR1.."name.........=[".. tostring(data[i].name         ) .."]")
-D_ITEM(COLOR1.."active.......=[".. tostring(data[i].active       ) .."]")
-D_ITEM(COLOR1.."categoryType.=[".. tostring(data[i].categoryType ) .."]")
-D_ITEM(COLOR1.."collectibleId=[".. tostring(data[i].collectibleId) .."]")
-D_ITEM(COLOR1.."iconFile.....=[".. tostring(data[i].iconFile     ) .."]")
-            itemName = data[i].name
-        end
-    end
 D_ITEM("get_collId_itemName("..tostring(slotId).."): return ["..tostring(itemName).."]")
-    return itemName
+return itemName
 end --}}}
 
 -- COPY
@@ -2044,11 +2057,12 @@ function QSB_Item8() SelectButton(8) end
 
 --}}}
 -- KEYBOARD-SHORTCUTS: P[1..5] {{{
-function QSB_P1()    SelectPreset( PRESETNAMES[1]) end
-function QSB_P2()    SelectPreset( PRESETNAMES[2]) end
-function QSB_P3()    SelectPreset( PRESETNAMES[3]) end
-function QSB_P4()    SelectPreset( PRESETNAMES[4]) end
-function QSB_P5()    SelectPreset( PRESETNAMES[5]) end
+function QSB_P1()    SelectPreset( PRESETNAMES[1] ); Refresh(); Show(); end
+function QSB_P1()    SelectPreset( PRESETNAMES[1] ); Refresh(); Show(); end
+function QSB_P2()    SelectPreset( PRESETNAMES[2] ); Refresh(); Show(); end
+function QSB_P3()    SelectPreset( PRESETNAMES[3] ); Refresh(); Show(); end
+function QSB_P4()    SelectPreset( PRESETNAMES[4] ); Refresh(); Show(); end
+function QSB_P5()    SelectPreset( PRESETNAMES[5] ); Refresh(); Show(); end
 
 --}}}
 
@@ -3434,7 +3448,7 @@ end --}}}
 -- OnSlashCommand --{{{
 local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (180214) |r Update 17 (3.3.5): Dragon Bones (API 100022)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
+  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (180226) |r Update 17 (3.3.7): Dragon Bones (API 100022)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171128) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new slash-command:|r /gqsb clear ...to clear Current-Preset-Items")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171028) |r Update 16 (3.2.6): Clockwork City (API 100021)|r")
 --d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170917) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support(+)|r")
@@ -3572,7 +3586,7 @@ function OnSlashCommand(arg)
     -- DEBUG DEBUG_EVENT DEBUG_ITEM clear -- {{{
     elseif(arg == "debug"       ) then DEBUG       = not DEBUG      ; d("...DEBUG......=[" ..tostring( DEBUG       ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_event" ) then DEBUG_EVENT = not DEBUG_EVENT; d("...DEBUG_EVENT=[" ..tostring( DEBUG_EVENT ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_item"  ) then DEBUG_ITEM  = not DEBUG_ITEM ; d("...DEBUG_ITEM.=[" ..tostring( DEBUG_ITEM  ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_item"  ) then DEBUG_ITEM  = not DEBUG_ITEM ; d("...DEBUG_ITEM.=[" ..tostring( DEBUG_ITEM  ).. "]"); ui_may_have_changed = true; get_collId_itemName(0)
     --}}}
     -- LUA -- (/script-like commands) --{{{
     else
