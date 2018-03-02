@@ -3,6 +3,11 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.3.7 {{{
+- [color="aaffaa"]180302[/color]
+- [color="ffffee"]FIXED Collections Issue since API 100022[/color] - [i]GetCollectibleIdFromLink did the trick[/i][/color]
+
+}}}
 v2.3.6 {{{
 - [color="aaffaa"]180226[/color]
 - Checked with Patch 3.3.7
@@ -197,20 +202,20 @@ v2.2.5 {{{
  :!start explorer "http://wiki.esoui.com/APIVersion"
 
 [OBJECTS] All 23507 GLOBAL objects as exported from the game
- :!start explorer "http://esoapi.uesp.net/100020/globals.html"
+ :!start explorer "http://esoapi.uesp.net/100022/globals.html"
 
 [SOURCE] Browse the 857 Lua source code files starting at the root directory
- :!start explorer "http://esoapi.uesp.net/100020/src/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100022/src/luadir.html"
 
 [FUNCTIONS] An alphabetical listing of all 50331 Lua functions
- :!start explorer "http://esoapi.uesp.net/100020/functions.html"
+ :!start explorer "http://esoapi.uesp.net/100022/functions.html"
 
 [actionbar quickslot tooltip hud inventory]
  :!start explorer "http://esoapi.uesp.net/100016/src/ingame/actionbar/luadir.html"
  :!start explorer "http://esoapi.uesp.net/100016/src/ingame/quickslot/luadir.html"
  :!start explorer "http://esoapi.uesp.net/100016/src/ingame/tooltip/luadir.html"
- :!start explorer "http://esoapi.uesp.net/100020/src/ingame/hud/luadir.html"
- :!start explorer "http://esoapi.uesp.net/100020/src/ingame/inventory/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100022/src/ingame/hud/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100022/src/ingame/inventory/luadir.html"
 
 [COLLECTIONS_INVENTORY_SINGLETON]
  :!start explorer "http://esodata.uesp.net/100021/src/ingame/collections/collectionsinventorysingleton.lua.html"
@@ -373,7 +378,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.6", -- Update 17 (3.3.7): Dragon Bones (APIVersion 100022) - 180226 previous: 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.7", -- Update 17 (3.3.7): Dragon Bones (APIVersion 100022 Collectible working again) - 180302 previous: 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -540,7 +545,8 @@ local  equip_bNum_item_slotId
 local  handle_ACTION_SLOT_UPDATED
 local  save_QSB_to_SlotItemTable
 local  getItem_slotId
-local   getItem_bag_slotId
+local   getItem_BAG_BACKPACK_slotId
+local   getItem_bagId_slotId
 local   getItem_collId_and_activeState
 local   get_collId_itemName
 local  get_tooltipText
@@ -712,25 +718,37 @@ D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
     -- 2/2 EQUIP SELECTED ITEMS (possibly available in BAG_BACKPACK) {{{
     local msg = ""
     local slotId
+D_ITEM("loadItemSlots:")
+
     for bNum = 1, QSB.ButtonCountMax do
         itemName  = tostring(QSB.Settings.SlotItemTable[bNum].itemName)
+D_ITEM("."..bNum.." itemName=["..itemName.."]")
+
         emptySlot = (itemName == nil) or (itemName == "")
         if not emptySlot then
             slotIndex    = Get_slotIndex_of_bNum  ( bNum      )
+D_ITEM("..slotIndex=["..slotIndex.."]")
+
             slotName     = GetSlotName            ( slotIndex )
+D_ITEM("...slotName=["..slotName.."]")
+
             if(slotName ~= "") then
                 slotId   = getItem_slotId(slotName)
             else
                 slotId   = -1
             end
---D_ITEM(" slotId=["..tostring(slotId).."] .. qsb_Id=["..tostring(QSB.Settings.SlotItemTable[bNum].slotId).."]")
+D_ITEM("....slotId=["..slotId.."]")
 
-            if( slotId  == QSB.Settings.SlotItemTable[bNum].slotId) then
+--FIXME D_ITEM(" slotId=["..tostring(slotId).."] .. qsb_Id=["..tostring(QSB.Settings.SlotItemTable[bNum].slotId).."]")
+
+            if((slotId ~= -1) and (slotId == QSB.Settings.SlotItemTable[bNum].slotId)) then
                 if DEBUG_ITEM then
                     msg  = msg.."\n|c888888.UNCHANGED [|c8888FF"..bNum.."=="..slotIndex.."|r] ID["..tostring(slotId).."] [|cCCCCFF["..tostring(itemName).."|r]"
                 end
+D_ITEM(".....UNCHANGED")
             else
                 slotId   = QSB.Settings.SlotItemTable[bNum].slotId
+D_ITEM("=====EQUIP bNum=["..bNum.."] .. itemName=["..itemName.."] .. slotId=["..slotId.."]")
                 equip_bNum_item_slotId(bNum, itemName, slotId)
             end
         end
@@ -754,7 +772,7 @@ function equip_bNum_item_slotId(bNum, itemName, slotId) --{{{
     local slotIndex = Get_slotIndex_of_bNum( bNum      )
 D_ITEM(".EQUIPPING [|c8888FF"..bNum.."=="..slotIndex.."|r] slotId["..tostring(slotId).."] [|cCCCCFF"..tostring(itemName).."]")
 
-    local from_bag = (getItem_bag_slotId(itemName) >= 0)
+    local from_bag = (getItem_BAG_BACKPACK_slotId(itemName) >= 0)
 D_ITEM("from_bag: "..tostring(from_bag))
 
     if( from_bag ) then
@@ -806,31 +824,6 @@ D_ITEM("save_QSB_to_SlotItemTable("..bNum.."):")
 
     local  slotIndex = Get_slotIndex_of_bNum    ( bNum      )
 
---{{{
---[[
-D_ITEM("QUICKSLOT_WINDOW.quickSlots=["..tostring(QUICKSLOT_WINDOW.quickSlots).."]")
-local k, v
-for slotNum, quickSlot in pairs( QUICKSLOT_WINDOW.quickSlots ) do
-    k = "button.slotNum"; v=quickSlot:GetNamedChild("Button"     ).slotNum; D_ITEM("  ["..slotNum.."] k=["..tostring(k).."]=["..tostring(v).."]")
-    k = "DropCallout"   ; v=quickSlot:GetNamedChild("DropCallout")        ; D_ITEM("  ["..slotNum.."] k=["..tostring(k).."]=["..tostring(v).."]")
-end
---]]
---[[
-D_ITEM("ZO_QuickslotManager=["..tostring(ZO_QuickslotManager).."]")
-for k,v in pairs( ZO_QuickslotManager ) do
-    D_ITEM("...|CFFFFFF"..k.."|r=|CFF0000"..tostring(v).."|r (|CC000FFFF"..type(v).."|r)\n")
-end
---]]
---[[
-D_ITEM("   GetSlotItemQuality ["..tostring( GetSlotItemQuality(slotIndex) ).."]")
-D_ITEM("   GetSlotItemLink    ["..tostring( GetSlotItemLink   (slotIndex) ).."]")
-D_ITEM("   GetSlotIType       ["..tostring( GetSlotType       (slotIndex) ).."]")
-D_ITEM("   GetSlotItemCount   ["..tostring( GetSlotItemCount  (slotIndex) ).."]")
-D_ITEM("   GetSlotTexture     ["..tostring( GetSlotTexture    (slotIndex) ).."]")
-D_ITEM("   GetSlotName        ["..tostring( GetSlotName       (slotIndex) ).."]")
---]]
---}}}
-
     local  texture   = GetSlotTexture           ( slotIndex )
 
     local  slotName  = GetSlotName              ( slotIndex )
@@ -843,8 +836,12 @@ D_ITEM("   GetSlotName        ["..tostring( GetSlotName       (slotIndex) ).."]"
     -- TODO GET SLOTTED ITEM LEVEL FROM QUICK SLOT BAR
     -- retain check_QSB_BAG_BACKPACK_slotId_to_check (may be nil)
     local itemLevel  = QSB.Settings.SlotItemTable[bNum].itemLevel
+
     -- fallback to first found slotId for slotName
     if(   itemLevel == nil) then itemLevel = get_slotId_itemLevel( slotId ) end
+
+    if(slotId == -1) then slotId = GetCollectibleIdFromLink( GetSlotItemLink(slotIndex) ) end
+D_ITEM("+++slotId...f(slotIndex).=["..tostring( slotId    ).."]")
 
     -- SINGLE-POINT-INITIALIZATION
     QSB.Settings.SlotItemTable[bNum].itemName  = slotName
@@ -926,7 +923,7 @@ end --}}}
 -- BAG OR COLLECTIONS
 function getItem_slotId(itemName) --{{{
 
-    local               itemId = getItem_bag_slotId            ( itemName )
+    local               itemId = getItem_BAG_BACKPACK_slotId   ( itemName )
     if(itemId < 0) then itemId = getItem_collId_and_activeState( itemName ) end
     return itemId
 end --}}}
@@ -943,19 +940,28 @@ D_ITEM("get_slotId_itemName("..tostring(slotId).."): return ["..tostring(itemNam
 end
 --}}}
 -- BAG_BACKPACK
-function getItem_bag_slotId(itemName) --{{{
+function getItem_BAG_BACKPACK_slotId(itemName) --{{{
 
-    for _, data in pairs(SHARED_INVENTORY.bagCache[BAG_BACKPACK]) do
+    return getItem_bagId_slotId(BAG_BACKPACK, itemName)
+
+end --}}}
+function getItem_bagId_slotId(bagId, itemName) --{{{
+
+    bagId    = tonumber(bagId)
+    itemName = tostring(itemName)
+D_ITEM("getItem_bagId_slotId("..bagId..","..itemName..")")
+
+    for _, data in pairs(SHARED_INVENTORY.bagCache[bagId]) do
         if data ~= nil then
-            local slotName  = GetItemName(BAG_BACKPACK, data.slotIndex)
+            local slotName  = GetItemName(bagId, data.slotIndex)
             if(   slotName == itemName) then
-D_ITEM("getItem_bag_slotId("..COLOR1..tostring(itemName)..", "..COLOR3.."BAG_BACKPACK): return ["..tostring(data.slotIndex).."]")
+D_ITEM(            "...return ["..tostring(data.slotIndex).."]")
                   return data.slotIndex
             end
         end
     end
 
-D_ITEM("getItem_bag_slotId("..COLOR2..tostring(itemName)..", "..COLOR3.."BAG_BACKPACK): return [-1]")
+D_ITEM("getItem_bagId_slotId("..COLOR2..bagId..", "..COLOR3..tostring(itemName).."): return [-1]")
     return -1
 end --}}}
 function get_slotId_itemLevel(slotId) --{{{
@@ -964,18 +970,19 @@ function get_slotId_itemLevel(slotId) --{{{
     return data.requiredLevel
 end
 --}}}
+
 -- COLLECTIONS_INVENTORY_SINGLETON
 function getItem_collId_and_activeState(itemName) --{{{
 -- TODO (180213) .. (find a replacement to COLLECTIONS_INVENTORY_SINGLETON)
 
     if(COLLECTIONS_INVENTORY_SINGLETON == nil) then
-        D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName).."):\n"..COLOR2.."*** (COLLECTIONS_INVENTORY_SINGLETON == nil) ***")
+D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName).."):\n"..COLOR2.."*** (COLLECTIONS_INVENTORY_SINGLETON == nil) ***")
     else
         local data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
         for i = 1, #data do
             local slotName  = data[i].name
             if(   slotName == itemName) then
-                D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName)..")\n: return ["..tostring(data[i].collectibleId).."] active=["..tostring(data[i].active).."]")
+D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName)..")\n: return ["..tostring(data[i].collectibleId).."] active=["..tostring(data[i].active).."]")
 
             return data[i].collectibleId, data[i].active
         end
@@ -986,7 +993,6 @@ D_ITEM("getItem_collId_and_activeState("..COLOR2..tostring(itemName).."): return
 return -1, false
 end --}}}
 function get_collId_itemName(slotId) --{{{
--- TODO (180226) .. (find a replacement to COLLECTIONS_INVENTORY_SINGLETON)
 
     local itemName = nil
     if(COLLECTIONS_INVENTORY_SINGLETON == nil) then
@@ -1008,6 +1014,11 @@ function get_collId_itemName(slotId) --{{{
 D_ITEM("get_collId_itemName("..tostring(slotId).."): return ["..tostring(itemName).."]")
 return itemName
 end --}}}
+-- COLLECTIONS_BOOK_SINGLETON
+--[[
+ :!start explorer "http://esoapi.uesp.net/100017/src/ingame/collections/collectionsinventorysingleton.lua.html"
+ :!start explorer "http://esoapi.uesp.net/100022/src/ingame/collections/collectionsbook_manager.lua.html"
+--]]
 
 -- COPY
 function DeepCopy(orig) --{{{
@@ -3446,29 +3457,31 @@ function OnClicked_bNum(bNum) --{{{
 end --}}}
 
 -- OnSlashCommand --{{{
-local o
 function OnSlashCommand(arg)
-  d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (180226) |r Update 17 (3.3.7): Dragon Bones (API 100022)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171128) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new slash-command:|r /gqsb clear ...to clear Current-Preset-Items")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (171028) |r Update 16 (3.2.6): Clockwork City (API 100021)|r")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170917) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support(+)|r")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170902) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support|r")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170829) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF Preset Keyboard Shortcuts|r")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170822) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF Preset Keyboard Shortcuts|r")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170818) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170815) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170709) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF New feature: Item Presets|r")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170524) |r Update 14 (3.0.5): Morrowind   (API 100019)")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (170207) |r Update 13 (2.7.5): Homestead   (API 100018)")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (161128) |r Update 12 (2.6.4): One Tamriel (API 100017)")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (161007) |r Update 12 (2.6.4): One Tamriel (API 100017)")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160803) |r Update 2.5.5 : Shadows of the Hist (API 100016)")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160601) |r Update 2.4.5 : Dark Brotherhood (API 100015)")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160310) |r Update 2.2.5 : Thieves Guild (API 100014)")
---d("GQSB("..arg..") |c00FFFF" ..QSB.Version.. " (160219) |r Update 2.2.4 : Orsinium (API 100013)")
---d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
---d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
---d("GQSB("..arg..") |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
+  d("GQSB |c888888"..arg.."|c00FFFF " ..QSB.Version.. " (180302) |r Collectible handling is back")
+--{{{
+--d("GQSB     ("..arg..")\n|c00FFFF" ..QSB.Version.. " (180226) |r Update 17 (3.3.7): Dragon Bones (API 100022)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (171128) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new slash-command:|r /gqsb clear ...to clear Current-Preset-Items")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (171028) |r Update 16 (3.2.6): Clockwork City (API 100021)|r")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (170917) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support(+)|r")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (170902) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FFKeyboard Shortcuts|r + |cFF00FFCollectible support|r")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (170829) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF Preset Keyboard Shortcuts|r")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (170822) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF Preset Keyboard Shortcuts|r")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (170818) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets (for each char)|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (170815) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n|cFF00FF Item Presets|r + |cFF00FF LibAddonMenu-2.0 r24 |r")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (170709) |r Update 14 (3.0.5): Morrowind   (API 100019)\n|cFF00FF New feature: Item Presets|r")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (170524) |r Update 14 (3.0.5): Morrowind   (API 100019)")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (170207) |r Update 13 (2.7.5): Homestead   (API 100018)")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (161128) |r Update 12 (2.6.4): One Tamriel (API 100017)")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (161007) |r Update 12 (2.6.4): One Tamriel (API 100017)")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (160803) |r Update 2.5.5 : Shadows of the Hist (API 100016)")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (160601) |r Update 2.4.5 : Dark Brotherhood (API 100015)")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (160310) |r Update 2.2.5 : Thieves Guild (API 100014)")
+--d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (160219) |r Update 2.2.4 : Orsinium (API 100013)")
+--d("GQSB     ("..arg..")  |c00FFFF["..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
+--d("GQSB     ("..arg..")  |c00FFFF["..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
+--d("GQSB     ("..arg..")  |c00FFFF["..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
+--}}}
 
     local ui_may_have_changed = false
     local presetName = ""
@@ -3492,6 +3505,10 @@ function OnSlashCommand(arg)
         d(QSB_SLASH_COMMAND..     " reset .. RESETS ALL CHARACTER SETTINGS TO DEFAULT")
         d(QSB_SLASH_COMMAND..     " force .. to force Bar Visiblity")
         d(QSB_SLASH_COMMAND..     " block .. to block Bar Visiblity (overrides force)")
+        if DEBUG_ITEM then
+            d(QSB_SLASH_COMMAND.. '    _G["ZO_ChatWindowTemplate1Buffer"]')
+            d(QSB_SLASH_COMMAND.. 'lua _G["ZO_ChatWindowTemplate1Buffer"]:Clear()')
+        end
 
       --d(QSB_SLASH_COMMAND.. " debug")
       --d(QSB_SLASH_COMMAND.. " debug_item")
@@ -3501,6 +3518,13 @@ function OnSlashCommand(arg)
       --d(QSB_SLASH_COMMAND.. " kbmod ... Apply KeyBindings Modifier")
 
     --}}}
+
+    elseif(string.match(arg,                "%s*bag%s+(%d)%s*,%s*(.*)")) then
+        local bag, name = string.match(arg, "%s*bag%s+(%d)%s*,%s*(.*)")
+        bag  = tonumber(bag)
+        name = tostring(name)
+        getItem_bagId_slotId(bag, name)
+
     -- hide show refresh reset p1-5 kbclr kbmod {{{
     elseif(arg == "hide"   ) then Hide("OnSlashCommand")
     elseif(arg == "show"   ) then Show()
@@ -3590,45 +3614,46 @@ function OnSlashCommand(arg)
     --}}}
     -- LUA -- (/script-like commands) --{{{
     else
-        local f, e, r
-        -- _G[...] --{{{
-        lua_expr = string.match(arg, "_G%[(.*)%]")
+        -- _G --{{{
+        lua_expr = string.match(arg, "^%s*_G%[\"(.*)\"%]") -- as a global var name
         if lua_expr then
-            o = _G[lua_expr]
-
-            if(type( o ) == 'table') then
+        --QSB_ClearChat()
+            local   o  =  _G[lua_expr]
+            if(type(o) == 'table') then
                 for k,v in pairs( o ) do
                     d("...|CFFFFFF"..k..'|r=|CFF0000'..tostring(v)..'|r (|CC000FFFF'..type(v)..'|r)\n')
                 end
             end
-
-            d("o=_G[|c00FF00"..          lua_expr   .."|r]\n"
-            .." =|C00FFFF".. tostring(_G[lua_expr]) .."|r\n")
+            d("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+            d("@ o=_G[|c00FF00"..lua_expr.."|r]")
+            d("@ " .."|C00FFFF"..tostring(o)    )
+            d("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
         end
         --}}}
-        -- o=... --{{{
-        lua_expr = string.match(arg, "^o%s*=%s*(.*)")
+        -- lua --{{{
+        lua_expr = string.match(arg, "^%s*lua%s*(.*)")
         if lua_expr then
-
-            f = assert( zo_loadstring("o="..lua_expr.."; return o;") )
+        --QSB_ClearChat()
+            d(               "zo_loadstring(|c00FF00".."return "..lua_expr.."|r)\n")
+            local f = assert( zo_loadstring(           "return "..lua_expr     )   )
             if f then
-                local r = f(lua_expr)
-                if(r) then d("...f()=[|C00FF00"..tostring(r).."|r]\n") end
-            end
+                local r1, r2, r3, r4, r5 = f()
+                d("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+                if(   r1) then d("@ |C00FF00r1: "..tostring(r1).."\n")
+                else           d("@ |CFF0000*** NO RESULT ***\n")
+                end
+                if(   r2) then d("@ |C00FF00r2: "..tostring(r2).."\n") end
+                if(   r3) then d("@ |C00FF00r3: "..tostring(r3).."\n") end
+                if(   r4) then d("@ |C00FF00r4: "..tostring(r4).."\n") end
+                if(   r5) then d("@ |C00FF00r5: "..tostring(r5).."\n") end
+                d("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+                if(type(r1) == 'table') then
+                    for k,v in pairs( r1 ) do
+                        d("...|CFFFFFF"..k..'|r1=|CFF0000'..tostring(v)..'|r1 (|CC000FFFF'..type(v)..'|r1)\n')
+                    end
+                    d("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+                end
 
-        end
-        --}}}
-        -- lua... --{{{
-        lua_expr = string.match(arg, "^lua%s*(.*)")
-        if lua_expr then
-
-            if(lua_expr ~= "") then lua_expr = lua_expr.."; " end
-            d(      "...zo_loadstring( |cFFFFFF\""..lua_expr.."|r)")
-            lua_expr = lua_expr.."return type(o or nil)..':'..tostring(o or nil)"
-            f = assert( zo_loadstring(              lua_expr     ) )
-            if f then
-                local r = f(o)
-                d("...f()=[|C00FF00"..tostring( r ).."|r]\n")
             end
 
         end
