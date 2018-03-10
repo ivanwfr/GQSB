@@ -3,9 +3,14 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.3.8 {{{
+- [color="aaffaa"]180310[/color]
+- [color="ffffee"]Tracking potions with same slotId .. (forum comment @Nudel)[/color]
+
+}}}
 v2.3.7 {{{
 - [color="aaffaa"]180302[/color]
-- [color="ffffee"]FIXED Collections Issue since API 100022[/color] - [i]GetCollectibleIdFromLink did the trick[/i][/color]
+- [color="ffffee"]FIXED Collections Issue since API 100022[/color] - [i]GetCollectibleIdFromLink did the trick[/i]
 
 }}}
 v2.3.6 {{{
@@ -378,7 +383,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.7", -- Update 17 (3.3.7): Dragon Bones (APIVersion 100022 Collectible working again) - 180302 previous: 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.8", -- Update 17 (3.3.7): Dragon Bones (APIVersion 100022 Collectible working again) - 180310 previous: 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -547,8 +552,8 @@ local  save_QSB_to_SlotItemTable
 local  getItem_slotId
 local   getItem_BAG_BACKPACK_slotId
 local   getItem_bagId_slotId
-local   getItem_collId_and_activeState
-local   get_collId_itemName
+--cal   getItem_collId_and_activeState
+--cal   get_collId_itemName
 local  get_tooltipText
 
 local SetUIHandlesVisibility
@@ -703,6 +708,10 @@ D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
     for bNum = 1, QSB.ButtonCountMax do
         itemName  = tostring(QSB.Settings.SlotItemTable[bNum].itemName)
         emptySlot = (itemName == nil) or (itemName == "")
+--FIXME (180310)
+if not emptySlot then d("= CLEARED #"..bNum.." "..COLOR2..itemName) end
+clear_bNum(bNum)
+--[[ FIXME (180310)
         if emptySlot then
             clear_bNum(bNum)
         else
@@ -712,6 +721,7 @@ D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
                 clear_bNum(bNum)
             end
         end
+--]]
     end
     --}}}
 
@@ -739,6 +749,12 @@ D_ITEM("...slotName=["..slotName.."]")
             end
 D_ITEM("....slotId=["..slotId.."]")
 
+-- FIXME (180310) -- cleared force -- RE-EQUIP REQUIRED
+slotId   = QSB.Settings.SlotItemTable[bNum].slotId
+d("= REEQUIP #"..bNum.." "..COLOR4..itemName.." "..COLORG.." slotId=["..slotId.."]")
+equip_bNum_item_slotId(bNum, itemName, slotId)
+
+--[[ FIXME (180310)
 --FIXME D_ITEM(" slotId=["..tostring(slotId).."] .. qsb_Id=["..tostring(QSB.Settings.SlotItemTable[bNum].slotId).."]")
 
             if((slotId ~= -1) and (slotId == QSB.Settings.SlotItemTable[bNum].slotId)) then
@@ -751,6 +767,7 @@ D_ITEM(".....UNCHANGED")
 D_ITEM("=====EQUIP bNum=["..bNum.."] .. itemName=["..itemName.."] .. slotId=["..slotId.."]")
                 equip_bNum_item_slotId(bNum, itemName, slotId)
             end
+--]]
         end
     end
     --}}}
@@ -855,16 +872,16 @@ end --}}}
 -- ITEM INFO
 function get_tooltipText(bNum) --{{{
 
-    local  itemName   = QSB.Settings.SlotItemTable[bNum].itemName
+    local  itemName   = QSB.Settings.SlotItemTable[bNum].itemName if(itemName == "") then itemName = nil end
     local  slotIndex  = Get_slotIndex_of_bNum( bNum )
 
     -- FROM [BAG_BACKPACK]
     local  count      = GetSlotItemCount( slotIndex ) or 0
 
     -- FROM [COLLECTIONS_INVENTORY]
-    local collId  = 0
+    local collId  = -1
     local active  = false
-    if(    count <= 0) then collId, active = getItem_collId_and_activeState(itemName) end
+--  if(    count <= 0) then collId, active = getItem_collId_and_activeState(itemName) end
 
     -- COLOR .. f(count or collId)
     local  color
@@ -875,7 +892,7 @@ function get_tooltipText(bNum) --{{{
 
     -- LABEL [COLLECTIBLE] OR [ITEM]
     local label
-    if(itemName ~= nil) and (itemName ~= "") then
+    if(itemName ~= nil) then
         -- ITEM NAME
         label = tostring(itemName)
 
@@ -904,9 +921,22 @@ function get_tooltipText(bNum) --{{{
     -- DEBUG
     if(DEBUG or DEBUG_ITEM) then
         local tt_Id
-        if    (collId   >  0  )                      then tt_Id = "\n- collId " ..COLOR3..tostring( collId                   ) .."|r"
-        elseif(itemName ~= nil) and (itemName ~= "") then tt_Id = "\n- slotId " ..COLOR4..tostring( getItem_slotId(itemName) ) .."|r"
-        else                                              tt_Id = "\n...empty " ..COLOR2.."itemName|r"
+        if    (collId   >  0  ) then
+            tt_Id = "\n- collId "  ..COLOR3..tostring( collId      ).."|r"
+
+        elseif(itemName ~= nil) then
+
+            local itemLink = GetSlotItemLink         ( slotIndex )
+            local collId   = GetCollectibleIdFromLink( itemLink  )
+            local slotId   = getItem_BAG_BACKPACK_slotId(itemName)
+
+            tt_Id = "\n- itemLink "..COLOR4..tostring( itemLink ).."|r"
+            ..      "\n- collId "  ..COLOR4..tostring( collId   ).."|r"
+            ..      "\n- slotId "  ..COLOR4..tostring( slotId   ).."|r"
+
+        else  
+            tt_Id = "\n...empty "  ..COLOR2.."itemName|r"
+
         end
 
         tt = tt
@@ -924,7 +954,7 @@ end --}}}
 function getItem_slotId(itemName) --{{{
 
     local               itemId = getItem_BAG_BACKPACK_slotId   ( itemName )
-    if(itemId < 0) then itemId = getItem_collId_and_activeState( itemName ) end
+--  if(itemId < 0) then itemId = getItem_collId_and_activeState( itemName ) end
     return itemId
 end --}}}
 function get_slotId_itemName(slotId) --{{{
@@ -932,8 +962,7 @@ function get_slotId_itemName(slotId) --{{{
     local    data  = SHARED_INVENTORY.bagCache[BAG_BACKPACK][slotId]
     if(      data ~= nil) then
         itemName   = GetItemName(BAG_BACKPACK, data.slotIndex)
-    else
-        itemName   = get_collId_itemName(slotId)
+--  else itemName   = get_collId_itemName(slotId)
     end
 D_ITEM("get_slotId_itemName("..tostring(slotId).."): return ["..tostring(itemName).."]")
     return nil
@@ -972,48 +1001,48 @@ end
 --}}}
 
 -- COLLECTIONS_INVENTORY_SINGLETON
-function getItem_collId_and_activeState(itemName) --{{{
--- TODO (180213) .. (find a replacement to COLLECTIONS_INVENTORY_SINGLETON)
-
-    if(COLLECTIONS_INVENTORY_SINGLETON == nil) then
-D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName).."):\n"..COLOR2.."*** (COLLECTIONS_INVENTORY_SINGLETON == nil) ***")
-    else
-        local data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
-        for i = 1, #data do
-            local slotName  = data[i].name
-            if(   slotName == itemName) then
-D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName)..")\n: return ["..tostring(data[i].collectibleId).."] active=["..tostring(data[i].active).."]")
-
-            return data[i].collectibleId, data[i].active
-        end
-    end
-end
-
-D_ITEM("getItem_collId_and_activeState("..COLOR2..tostring(itemName).."): return [-1]")
-return -1, false
-end --}}}
-function get_collId_itemName(slotId) --{{{
-
-    local itemName = nil
-    if(COLLECTIONS_INVENTORY_SINGLETON == nil) then
-        D_ITEM("get_collId_itemName("..COLOR1..tostring(slotId).."):\n"..COLOR2.."*** (COLLECTIONS_INVENTORY_SINGLETON == nil) ***")
-    else
-        local     data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
-        for i = 1, #data do
-            if(   data[i].collectibleId == slotId) then
-                D_ITEM(COLOR1.."name.........=[".. tostring(data[i].name         ) .."]")
-                D_ITEM(COLOR1.."active.......=[".. tostring(data[i].active       ) .."]")
-                D_ITEM(COLOR1.."categoryType.=[".. tostring(data[i].categoryType ) .."]")
-                D_ITEM(COLOR1.."collectibleId=[".. tostring(data[i].collectibleId) .."]")
-                D_ITEM(COLOR1.."iconFile.....=[".. tostring(data[i].iconFile     ) .."]")
-                itemName = data[i].name
-            end
-        end
-    end
-
-D_ITEM("get_collId_itemName("..tostring(slotId).."): return ["..tostring(itemName).."]")
-return itemName
-end --}}}
+--function getItem_collId_and_activeState(itemName) --{{{
+---- TODO (180213) .. (find a replacement to COLLECTIONS_INVENTORY_SINGLETON)
+--
+--    if(COLLECTIONS_INVENTORY_SINGLETON == nil) then
+--D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName).."):\n"..COLOR2.."*** (COLLECTIONS_INVENTORY_SINGLETON == nil) ***")
+--    else
+--        local data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
+--        for i = 1, #data do
+--            local slotName  = data[i].name
+--            if(   slotName == itemName) then
+--D_ITEM("getItem_collId_and_activeState("..COLOR1..tostring(itemName)..")\n: return ["..tostring(data[i].collectibleId).."] active=["..tostring(data[i].active).."]")
+--
+--            return data[i].collectibleId, data[i].active
+--        end
+--    end
+--end
+--
+--D_ITEM("getItem_collId_and_activeState("..COLOR2..tostring(itemName).."): return [-1]")
+--return -1, false
+--end --}}}
+--function get_collId_itemName(slotId) --{{{
+--
+--    local itemName = nil
+--    if(COLLECTIONS_INVENTORY_SINGLETON == nil) then
+--        D_ITEM("get_collId_itemName("..COLOR1..tostring(slotId).."):\n"..COLOR2.."*** (COLLECTIONS_INVENTORY_SINGLETON == nil) ***")
+--    else
+--        local     data = COLLECTIONS_INVENTORY_SINGLETON:GetQuickslotData()
+--        for i = 1, #data do
+--            if(   data[i].collectibleId == slotId) then
+--                D_ITEM(COLOR1.."name.........=[".. tostring(data[i].name         ) .."]")
+--                D_ITEM(COLOR1.."active.......=[".. tostring(data[i].active       ) .."]")
+--                D_ITEM(COLOR1.."categoryType.=[".. tostring(data[i].categoryType ) .."]")
+--                D_ITEM(COLOR1.."collectibleId=[".. tostring(data[i].collectibleId) .."]")
+--                D_ITEM(COLOR1.."iconFile.....=[".. tostring(data[i].iconFile     ) .."]")
+--                itemName = data[i].name
+--            end
+--        end
+--    end
+--
+--D_ITEM("get_collId_itemName("..tostring(slotId).."): return ["..tostring(itemName).."]")
+--return itemName
+--end --}}}
 -- COLLECTIONS_BOOK_SINGLETON
 --[[
  :!start explorer "http://esoapi.uesp.net/100017/src/ingame/collections/collectionsinventorysingleton.lua.html"
@@ -3458,8 +3487,9 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-  d("GQSB |c888888"..arg.."|c00FFFF " ..QSB.Version.. " (180302) |r Collectible handling is back")
+  d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180310) |r Item vs. Collections .. (slotId vs. collId)")
 --{{{
+--d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180302) |r Collectible handling is back")
 --d("GQSB     ("..arg..")\n|c00FFFF" ..QSB.Version.. " (180226) |r Update 17 (3.3.7): Dragon Bones (API 100022)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
 --d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (171128) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new slash-command:|r /gqsb clear ...to clear Current-Preset-Items")
 --d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (171028) |r Update 16 (3.2.6): Clockwork City (API 100021)|r")
@@ -3610,7 +3640,8 @@ function OnSlashCommand(arg)
     -- DEBUG DEBUG_EVENT DEBUG_ITEM clear -- {{{
     elseif(arg == "debug"       ) then DEBUG       = not DEBUG      ; d("...DEBUG......=[" ..tostring( DEBUG       ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_event" ) then DEBUG_EVENT = not DEBUG_EVENT; d("...DEBUG_EVENT=[" ..tostring( DEBUG_EVENT ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_item"  ) then DEBUG_ITEM  = not DEBUG_ITEM ; d("...DEBUG_ITEM.=[" ..tostring( DEBUG_ITEM  ).. "]"); ui_may_have_changed = true; get_collId_itemName(0)
+    elseif(arg == "debug_item"  ) then DEBUG_ITEM  = not DEBUG_ITEM ; d("...DEBUG_ITEM.=[" ..tostring( DEBUG_ITEM  ).. "]"); ui_may_have_changed = true;
+--      get_collId_itemName(0)
     --}}}
     -- LUA -- (/script-like commands) --{{{
     else
