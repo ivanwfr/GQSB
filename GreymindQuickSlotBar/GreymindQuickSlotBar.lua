@@ -4,6 +4,11 @@
 -- CHANGELOG --{{{
 --[[
 v2.3.8 {{{
+- [color="aaffaa"]180312[/color]
+- [color="ffffee"]Tracking potions with same slotId .. promoted as a "known issue"[/color]
+- [color="ffffee"]New "NO SOUND ENTRY"[/color]
+- [color="ffffee"]New "Blink Changed" Display Policy[/color]
+
 - [color="aaffaa"]180310[/color]
 - [color="ffffee"]Tracking potions with same slotId .. (forum comment @Nudel)[/color]
 
@@ -263,10 +268,12 @@ local WHEEL_LOOKUPTABLE       = { 12, 11, 10, 9, 16, 15, 14, 13 } -- holds, and 
 local VISCUE_OFF              = "Off"
 local VISCUE_WA               = "Warn + Alert"
 local VISCUE_WAC              = "Warn + Alert + Hide Consumed"
+
 local VIS_COMBAT              = "In Combat Only"
 local VIS_NEVER               = "Never"
 local VIS_ALWAYS              = "Always"
 local VIS_RETICLE             = "Reticle"
+local VIS_BLINK_CHANGES       = "Blink Changes"
 
 -- TEXTURES
 local BACKGROUNDTEXTURE       = "ESOUI/art/actionbar/quickslotbg.dds"
@@ -302,6 +309,7 @@ local KBNAME_CLEARCHAT        = COLOR4.."Clear Chat"
 local ALIGNH                  = { "Off-Left", "Left", "Center", "Right"  , "Off-Right"}
 local ALIGNV                  = { "Above"   , "Top" , "Middle", "Bottom" , "Below"    }
 local PRESETNAMES             = { "P1"      , "P2"  , "P3"    , "P4"     , "P5"       }
+local NO_SOUND                = "NO SOUND"
 local SOUNDNAMES              = {
     "QUICKSLOT_USE_EMPTY",
     "ABILITY_SLOTTED",
@@ -332,6 +340,7 @@ local SOUNDNAMES              = {
     "QUICKSLOT_CLEAR",
     "QUICKSLOT_MOUSEOVER",
     "QUICKSLOT_SET",
+    NO_SOUND
 }
 
 local KEYBINDINGS = {
@@ -383,12 +392,12 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.8", -- Update 17 (3.3.7): Dragon Bones (APIVersion 100022 Collectible working again) - 180310 previous: 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.8", -- Update 17 (3.3.7): Dragon Bones (APIVersion 100022 Collectible working again) - 180312 previous: 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
   --KeyModifier_ChoiceList              = { MOD_NONE   , MOD_SHIFT , MOD_CONTROL, MOD_ALT },
-    Visibility_ChoiceList               = { VIS_RETICLE, VIS_COMBAT, VIS_NEVER, VIS_ALWAYS  },
+    Visibility_ChoiceList               = { VIS_RETICLE, VIS_COMBAT, VIS_NEVER, VIS_ALWAYS , VIS_BLINK_CHANGES },
     VisualCue_ChoiceList                = { VISCUE_OFF , VISCUE_WA , VISCUE_WAC },
 
     -- STATES
@@ -708,10 +717,6 @@ D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
     for bNum = 1, QSB.ButtonCountMax do
         itemName  = tostring(QSB.Settings.SlotItemTable[bNum].itemName)
         emptySlot = (itemName == nil) or (itemName == "")
---FIXME (180310)
-if not emptySlot then d("= CLEARED #"..bNum.." "..COLOR2..itemName) end
-clear_bNum(bNum)
---[[ FIXME (180310)
         if emptySlot then
             clear_bNum(bNum)
         else
@@ -721,7 +726,6 @@ clear_bNum(bNum)
                 clear_bNum(bNum)
             end
         end
---]]
     end
     --}}}
 
@@ -749,14 +753,6 @@ D_ITEM("...slotName=["..slotName.."]")
             end
 D_ITEM("....slotId=["..slotId.."]")
 
--- FIXME (180310) -- cleared force -- RE-EQUIP REQUIRED
-slotId   = QSB.Settings.SlotItemTable[bNum].slotId
-d("= REEQUIP #"..bNum.." "..COLOR4..itemName.." "..COLORG.." slotId=["..slotId.."]")
-equip_bNum_item_slotId(bNum, itemName, slotId)
-
---[[ FIXME (180310)
---FIXME D_ITEM(" slotId=["..tostring(slotId).."] .. qsb_Id=["..tostring(QSB.Settings.SlotItemTable[bNum].slotId).."]")
-
             if((slotId ~= -1) and (slotId == QSB.Settings.SlotItemTable[bNum].slotId)) then
                 if DEBUG_ITEM then
                     msg  = msg.."\n|c888888.UNCHANGED [|c8888FF"..bNum.."=="..slotIndex.."|r] ID["..tostring(slotId).."] [|cCCCCFF["..tostring(itemName).."|r]"
@@ -767,7 +763,6 @@ D_ITEM(".....UNCHANGED")
 D_ITEM("=====EQUIP bNum=["..bNum.."] .. itemName=["..itemName.."] .. slotId=["..slotId.."]")
                 equip_bNum_item_slotId(bNum, itemName, slotId)
             end
---]]
         end
     end
     --}}}
@@ -1699,14 +1694,21 @@ function Display() --{{{
         return
     end
 
-    -- VIS_RETICLE -- event handler provides
+    -- VIS_RETICLE      -- event handler provides
 
-    -- VIS_COMBAT  -- combat state decides
+    -- VIS_COMBAT       -- combat state decides
     if QSB.Settings.Visibility == VIS_COMBAT then
         if IsUnitInCombat('player') then
             Show()
         elseif not ForceBarVisibility and not Reticle_isHidden then
             Hide("Display.VIS_COMBAT")
+        end
+    end
+
+    -- VIS_BLINK_CHANGES -- hide in all cases
+    if QSB.Settings.Visibility == VIS_BLINK_CHANGES then
+        if not ForceBarVisibility and not Reticle_isHidden then
+            Hide("Display.VIS_BLINK_CHANGES")
         end
     end
 
@@ -1884,6 +1886,7 @@ end --}}}
 -- SOUND
 function PlaySoundAlert(caller) --{{{
 D("PlaySoundAlert(|cFF00FF"..caller.."|r)")
+    if(QSB.Settings.SoundAlert == NO_SOUND) then return end
     if(not PlaySoundAlert_pending) then
         PlaySoundAlert_pending = true
         zo_callLater(PlaySoundAlert_delayed, ZO_CALLLATER_DELAY_S)
@@ -1900,6 +1903,7 @@ end
 --}}}
 function PlaySoundSlotted(caller) --{{{
 D("PlaySoundSlotted(|cFF00FF"..caller.."|r)")
+    if(QSB.Settings.SoundSlotted == NO_SOUND) then return end
     if(not PlaySoundSlotted_pending) then
         PlaySoundSlotted_pending = true
         zo_callLater(PlaySoundSlotted_delayed, ZO_CALLLATER_DELAY_S)
@@ -3280,6 +3284,9 @@ D_ITEM(COLOR1.."ITEM UPDATED: itemName=["..tostring(itemName).."] (level "..tost
         if     QSB.Settings.Visibility == VIS_ALWAYS   then
             Show()
 
+        elseif QSB.Settings.Visibility == VIS_BLINK_CHANGES  then
+            if not Reticle_isHidden then Hide("RETICLE_HIDDEN_UPDATE.VIS_BLINK_CHANGES") end -- done with UI settings
+
         elseif QSB.Settings.Visibility == VIS_COMBAT  then
             if not Reticle_isHidden then Hide("RETICLE_HIDDEN_UPDATE.VIS_COMBAT") end -- done with UI settings
 
@@ -3300,7 +3307,7 @@ D_ITEM(COLOR1.."ITEM UPDATED: itemName=["..tostring(itemName).."] (level "..tost
 
     --}}}
     -- RETICLE_TARGET_CHANGED --{{{
-    -- hide or show in sync with VIS_COMBAT state
+    -- hide or show in sync with VIS_RETICLE state
     EVENT_MANAGER:RegisterForEvent("GQSB.RETICLE_TARGET_CHANGED"
     , EVENT_RETICLE_TARGET_CHANGED
     , function(...)
@@ -3487,8 +3494,9 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-  d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180310) |r Item vs. Collections .. (slotId vs. collId)")
+  d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180312) |r New options: Blink Changes & NO SOUND")
 --{{{
+--d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180310) |r Item vs. Collections .. (slotId vs. collId)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180302) |r Collectible handling is back")
 --d("GQSB     ("..arg..")\n|c00FFFF" ..QSB.Version.. " (180226) |r Update 17 (3.3.7): Dragon Bones (API 100022)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
 --d("GQSB     ("..arg..")  |c00FFFF" ..QSB.Version.. " (171128) |r Update 16 (3.2.6): Clockwork City (API 100021)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new slash-command:|r /gqsb clear ...to clear Current-Preset-Items")
