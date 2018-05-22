@@ -3,9 +3,14 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.3.9 {{{
+- [color="aaffaa"]180522[/color]
+- Checked with Update 18 (4.0.5): [color="00ff00"]Summerset[/color] - APIVersion: 100023
+
+}}}
 v2.3.8 {{{
 - [color="aaffaa"]180312[/color]
-- [color="ffffee"]Tracking potions with same slotId .. promoted as a "known issue"[/color]
+- [color="ffffee"]Tracking potions with same slotId .. promoted to a "known issue"[/color]
 - [color="ffffee"]New "NO SOUND ENTRY"[/color]
 - [color="ffffee"]New "Blink Changed" Display Policy[/color]
 
@@ -392,7 +397,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.8", -- Update 17 (3.3.7): Dragon Bones (APIVersion 100022 Collectible working again) - 180312 previous: 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.3.9", -- Update 18 (4.0.5): Summerset (APIVersion 100023) - 180522 previous: 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -3494,8 +3499,9 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-  d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180312) |r New options: Blink Changes & NO SOUND")
+  d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180522) |r Update 18 (4.0.5): Summerset (API 100023)")
 --{{{
+--d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180312) |r New options: Blink Changes & NO SOUND")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180310) |r Item vs. Collections .. (slotId vs. collId)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180302) |r Collectible handling is back")
 --d("GQSB     ("..arg..")\n|c00FFFF" ..QSB.Version.. " (180226) |r Update 17 (3.3.7): Dragon Bones (API 100022)\n|cFF00FF new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n|cFF00FF new kbd and slash-commands:|r clear, force, block\n|cFF00FF Quicker UI")
