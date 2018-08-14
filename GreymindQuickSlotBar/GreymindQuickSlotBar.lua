@@ -3,6 +3,11 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.4.0 {{{
+- [color="aaffaa"]180815[/color]
+- Checked with Update 19 (4.1.15): [color="00ff00"]Wolfhunter[/color] - APIVersion: 100024
+
+}}}
 v2.3.9 {{{
 - [color="aaffaa"]180522[/color]
 - Checked with Update 18 (4.0.5): [color="00ff00"]Summerset[/color] - APIVersion: 100023
@@ -206,7 +211,7 @@ v2.2.5 {{{
 -- LINKS --{{{
 --[[
 [PATCH NOTES]:
- :!start explorer "https://forums.elderscrollsonline.com/en/discussion/377432/pc-mac-patch-notes-v3-2-6"
+ :!start explorer "https://forums.elderscrollsonline.com/en/discussion/430154/pc-mac-patch-notes-v4-1-5-wolfhunter-update-19"
 
 [COMMENTS] GreymindQuickSlotBar:
  :!start explorer "http://www.esoui.com/downloads/fileinfo.php?id=258"
@@ -217,24 +222,24 @@ v2.2.5 {{{
  :!start explorer "http://wiki.esoui.com/APIVersion"
 
 [OBJECTS] All 23507 GLOBAL objects as exported from the game
- :!start explorer "http://esoapi.uesp.net/100022/globals.html"
+ :!start explorer "http://esoapi.uesp.net/100023/globals.html"
 
 [SOURCE] Browse the 857 Lua source code files starting at the root directory
- :!start explorer "http://esoapi.uesp.net/100022/src/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100023/src/luadir.html"
 
 [FUNCTIONS] An alphabetical listing of all 50331 Lua functions
- :!start explorer "http://esoapi.uesp.net/100022/functions.html"
+ :!start explorer "http://esoapi.uesp.net/100023/functions.html"
 
 [actionbar quickslot tooltip hud inventory]
- :!start explorer "http://esoapi.uesp.net/100016/src/ingame/actionbar/luadir.html"
- :!start explorer "http://esoapi.uesp.net/100016/src/ingame/quickslot/luadir.html"
- :!start explorer "http://esoapi.uesp.net/100016/src/ingame/tooltip/luadir.html"
- :!start explorer "http://esoapi.uesp.net/100022/src/ingame/hud/luadir.html"
- :!start explorer "http://esoapi.uesp.net/100022/src/ingame/inventory/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100023/src/ingame/actionbar/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100023/src/ingame/quickslot/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100023/src/ingame/tooltip/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100023/src/ingame/hud/luadir.html"
+ :!start explorer "http://esoapi.uesp.net/100023/src/ingame/inventory/luadir.html"
 
 [COLLECTIONS_INVENTORY_SINGLETON]
- :!start explorer "http://esodata.uesp.net/100021/src/ingame/collections/collectionsinventorysingleton.lua.html"
- :!start explorer "http://esodata.uesp.net/100021/src/ingame/inventory/inventoryslot.lua.html"
+ :!start explorer "http://esodata.uesp.net/100023/src/ingame/collections/collectionsinventorysingleton.lua.html"
+ :!start explorer "http://esodata.uesp.net/100023/src/ingame/inventory/inventoryslot.lua.html"
 
 --]]
 --}}}
@@ -397,7 +402,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.3.9", -- Update 18 (4.0.5): Summerset (APIVersion 100023) - 180522 previous: 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.0", -- 180815 previous: 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1253,7 +1258,7 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
 
     -- UI TOOLTIP
     if QSB.Settings.LockUI then
-        GreymindQuickSlotBarUI.data = {tooltipText = QSB.Name.." "..QSB.Version}
+        GreymindQuickSlotBarUI.data = {tooltipText = QSB.Name.." "..QSB.Version.." Wolfhunter"}
     else
         local tt
         = "UI currently |cFF0000 UNLOCKED for layout|r\n"
@@ -3411,7 +3416,28 @@ D_ITEM(COLOR1.."ITEM UPDATED: itemName=["..tostring(itemName).."] (level "..tost
     end)
 
     --}}}
+--[[ FIXME
+    -- EVENT_ACTION_LAYER_PUSHED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ACTION_LAYER_PUSHED"
+    , EVENT_END_FAST_TRAVEL_KEEP_INTERACTION
+    , function(arg1,arg2,arg3)
+        D_EVENT("EVENT_ACTION_LAYER_PUSHED")
+d("|cFF00FF EVENT_ACTION_LAYER_PUSHED: |cFF0000 arg1=[".. tostring(arg1).."] |c00FF00 arg2=[".. tostring(arg2).."] |c0000FF arg3=[".. tostring(arg3).."] ")
+                                                                                             
+    end)                                                                                     
+                                                                                             
+    --}}}                                                                                    
+    -- EVENT_ACTION_LAYER_POPPED --{{{                                                       
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ACTION_LAYER_POPPED"                          
+    , EVENT_END_FAST_TRAVEL_KEEP_INTERACTION                                                 
+    , function(arg1,arg2,arg3)                                                                         
+        D_EVENT("EVENT_ACTION_LAYER_POPPED")                                                 
+d("|cFF00FF EVENT_ACTION_LAYER_POPPED: |cFF0000 arg1=[".. tostring(arg1).."] |c00FF00 arg2=[".. tostring(arg2).."] |c0000FF arg3=[".. tostring(arg3).."] ")
+        
+    end)
 
+    --}}}
+--]]
     -- DELAYED UI DISPLAY
     Refresh()
     D(string.format("Version %s loaded", QSB.Version))
@@ -3499,8 +3525,9 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-  d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180522) |r Update 18 (4.0.5): Summerset (API 100023)")
+  d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180815) |r Update 19 (4.1.15): Wolfhunter (API 100024)")
 --{{{
+--d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180522) |r Update 18 (4.0.5): Summerset (API 100023)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180312) |r New options: Blink Changes & NO SOUND")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180310) |r Item vs. Collections .. (slotId vs. collId)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180302) |r Collectible handling is back")
