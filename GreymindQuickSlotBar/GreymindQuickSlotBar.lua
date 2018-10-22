@@ -3,6 +3,11 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.4.1 {{{
+- [color="aaffaa"]181022[/color]
+- Checked with Patch v4.2.5: [color="00ff00"]Murkmire[/color] - APIVersion: 100025
+
+}}}
 v2.4.0 {{{
 - [color="aaffaa"]180815[/color]
 - Checked with Update 19 (4.1.15): [color="00ff00"]Wolfhunter[/color] - APIVersion: 100024
@@ -402,7 +407,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.0", -- 180815 previous: 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.1", -- 181022 previous: 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -3525,8 +3530,9 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-  d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180815) |r Update 19 (4.1.15): Wolfhunter (API 100024)")
+  d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (181022) |r Patch v4.1.15: Murkmire (API 100025)")
 --{{{
+--d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180815) |r Update 19 (4.1.15): Wolfhunter (API 100024)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180522) |r Update 18 (4.0.5): Summerset (API 100023)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180312) |r New options: Blink Changes & NO SOUND")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180310) |r Item vs. Collections .. (slotId vs. collId)")
