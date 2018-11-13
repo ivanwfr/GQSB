@@ -3,6 +3,20 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.4.4 {{{
+- [color="aaffaa"]181113[/color]
+* collectible...: Murkmire missing function call to [SelectSlotCollectible] replaced with [SelectSlotSimpleAction]
+................ (thanks to Static's Quickslot Profiles rummage)
+* crafting......: UI freezed while working at some Crafting Station (as suggested by Baertram).
+* tooltips......: UI shows a few more descriptions
+
+}}}
+v2.4.3 {{{
+- [color="aaffaa"]181027[/color]
+- Checked with Update 20 (4.2.5): [color="00ff00"]Murkmire[/color] - APIVersion: 100025
+- UI freezed while working at some Crafting Station (as suggested by Baertram).
+
+}}}
 v2.4.2 {{{
 - [color="aaffaa"]181023[/color]
 - Checked with Update 20 (4.2.5): [color="00ff00"]Murkmire[/color] - APIVersion: 100025
@@ -233,24 +247,24 @@ v2.2.5 {{{
  :!start explorer "http://wiki.esoui.com/APIVersion"
 
 [OBJECTS] All 23507 GLOBAL objects as exported from the game
- :!start explorer "http://esoapi.uesp.net/100023/globals.html"
+ :!start explorer "https://esoapi.uesp.net/100025/globals.html"
 
 [SOURCE] Browse the 857 Lua source code files starting at the root directory
- :!start explorer "http://esoapi.uesp.net/100023/src/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100025/src/luadir.html"
 
 [FUNCTIONS] An alphabetical listing of all 50331 Lua functions
- :!start explorer "http://esoapi.uesp.net/100023/functions.html"
+ :!start explorer "https://esoapi.uesp.net/100025/functions.html"
 
 [actionbar quickslot tooltip hud inventory]
- :!start explorer "http://esoapi.uesp.net/100023/src/ingame/actionbar/luadir.html"
- :!start explorer "http://esoapi.uesp.net/100023/src/ingame/quickslot/luadir.html"
- :!start explorer "http://esoapi.uesp.net/100023/src/ingame/tooltip/luadir.html"
- :!start explorer "http://esoapi.uesp.net/100023/src/ingame/hud/luadir.html"
- :!start explorer "http://esoapi.uesp.net/100023/src/ingame/inventory/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100025/src/ingame/actionbar/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100025/src/ingame/quickslot/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100025/src/ingame/tooltip/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100025/src/ingame/hud/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100025/src/ingame/inventory/luadir.html"
 
 [COLLECTIONS_INVENTORY_SINGLETON]
- :!start explorer "http://esodata.uesp.net/100023/src/ingame/collections/collectionsinventorysingleton.lua.html"
- :!start explorer "http://esodata.uesp.net/100023/src/ingame/inventory/inventoryslot.lua.html"
+ :!start explorer "https://esodata.uesp.net/100025/src/ingame/collections/collectionsinventorysingleton.lua.html"
+ :!start explorer "https://esodata.uesp.net/100025/src/ingame/inventory/inventoryslot.lua.html"
 
 --]]
 --}}}
@@ -413,7 +427,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.2", -- 181023 previous: 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.4", -- 181113 previous: 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -800,24 +814,33 @@ D_ITEM("..CLEARING [|c8888BB"..Get_bNum_of_slotIndex(slotIndex).."=="..slotIndex
     end
     CallSecureProtected("ClearSlot", slotIndex)
 end --}}}
-function equip_bNum_item_slotId(bNum, itemName, slotId) --{{{
+function equip_bNum_item_slotId(bNum, itemName, itemId) --{{{
 
     local slotIndex = Get_slotIndex_of_bNum( bNum      )
-D_ITEM(".EQUIPPING [|c8888FF"..bNum.."=="..slotIndex.."|r] slotId["..tostring(slotId).."] [|cCCCCFF"..tostring(itemName).."]")
+D_ITEM(".EQUIPPING [|c8888FF"..bNum.."=="..slotIndex.."|r] itemId["..tostring(itemId).."] [|cCCCCFF"..tostring(itemName).."]")
 
     local from_bag = (getItem_BAG_BACKPACK_slotId(itemName) >= 0)
 D_ITEM("from_bag: "..tostring(from_bag))
 
     if( from_bag ) then
-        local _, count = GetItemInfo(BAG_BACKPACK, slotId)
+        local _, count = GetItemInfo(BAG_BACKPACK, itemId)
         if(count > 0) then
-D_ITEM("SelectSlotItem.......(slotId=["..tostring(slotId).."], slotIndex=["..tostring(slotIndex).."])")
-            CallSecureProtected("SelectSlotItem"       , BAG_BACKPACK, slotId, slotIndex)
+D_ITEM("SelectSlotItem.......(itemId=["..tostring(itemId).."], slotIndex=["..tostring(slotIndex).."])")
+            CallSecureProtected("SelectSlotItem"       , BAG_BACKPACK, itemId, slotIndex)
         end
     else
         -- TODO check if available
-D_ITEM("SelectSlotCollectible(slotId=["..tostring(slotId).."], slotIndex=["..tostring(slotIndex).."])")
-        CallSecureProtected("SelectSlotCollectible",                   slotId, slotIndex)
+--[[{{{
+:new C:/LOCAL/GAMES/TESO/ADDONS/13_StaticsQuickslotProfiles/StaticsQuickslotProfiles/StaticsQuickslotProfiles.lua
+ :!start explorer "https://www.esoui.com/downloads/fileinfo.php?id=258#comments"
+ :!start explorer "https://www.esoui.com/downloads/download1775-StaticsQuickslotProfiles"
+ :!start explorer "https://esoapi.uesp.net/100025/data/s/e/l/SelectSlotSimpleAction.html"
+ :!start explorer "https://esoapi.uesp.net/100025/src/ingame/inventory/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100025/src/ingame/inventory/inventoryslot.lua.html"
+}}}--]]
+D_ITEM("SelectSlotCollectible(itemId=["..tostring(itemId).."], slotIndex=["..tostring(slotIndex).."])")
+      --CallSecureProtected("SelectSlotCollectible" ,                          itemId, slotIndex)
+        CallSecureProtected("SelectSlotSimpleAction", ACTION_TYPE_COLLECTIBLE, itemId, slotIndex)
     end
 
 end --}}}
@@ -895,36 +918,70 @@ function get_tooltipText(bNum) --{{{
     local  count      = GetSlotItemCount( slotIndex ) or 0
 
     -- FROM [COLLECTIONS_INVENTORY]
-    local collId  = -1
-    local active  = false
---  if(    count <= 0) then collId, active = getItem_collId_and_activeState(itemName) end
+    local itemLink = GetSlotItemLink         ( slotIndex )
+    local collId   = GetCollectibleIdFromLink( itemLink  )
 
     -- COLOR .. f(count or collId)
     local  color
-    if    (count     >  0) then color = COLOR4
-    elseif(collId    >= 0) then color = COLOR3
-    else                        color = COLORG
+    if    (count ) then color = COLOR4
+    elseif(collId) then color = COLOR3
+    else                color = COLORG
     end
 
     -- LABEL [COLLECTIBLE] OR [ITEM]
+    local description
+    local itemLevel
     local label
     if(itemName ~= nil) then
-        -- ITEM NAME
-        label = tostring(itemName)
 
-        -- ITEM DETAILS
-        if(collId > 0) then
-            -- [active]
-            -- TODO (170902)
-            -- ...find an [QUICK SLOT ITEM IS USED EVENT]
-            -- ...that would call Refresh() to synchronize [active] state
-            -- if(active) then label = label ..COLOR2.." (active)" end
-        else
-            -- [itemLevel]
-            local itemLevel  = QSB.Settings.SlotItemTable[bNum].itemLevel
-            if(   itemLevel ~= nil    ) then label = label .." (level ".. tostring(itemLevel) ..")" end
+        label = tostring(itemName)
+        -- [description] {{{
+        if(collId) then
+            description = tostring( GetCollectibleDescription(collId) )
+            if(description) then
+                label = label .."\n"..COLOR5..description
+            end
+        end
+        --}}}
+        -- [itemLevel] {{{
+        itemLevel = QSB.Settings.SlotItemTable[bNum].itemLevel
+        if(itemLevel) then
+            label = label ..COLOR1.." level ".. tostring(itemLevel)
         end
 
+        --}}}
+        -- [flavor] {{{
+        description = tostring( GetItemLinkFlavorText(itemLink) )
+        if(description) then
+            label = label .."\n"..COLOR2..description
+        end
+        --}}}
+--[[
+        -- [combination] {{{
+        description = tostring( GetItemLinkCombinationDescription(itemLink) )
+        if(description) then
+            label = label .."\n"..COLOR3.."Combination: "..description
+        end
+        --}}}
+        -- [materialLevel] {{{
+        description = tostring( GetItemLinkMaterialLevelDescription(itemLink) )
+        if(description) then
+            label = label .."\n"..COLOR3.."Material Level: "..description
+        end
+        --}}}
+        -- [Writ] {{{
+        description = tostring( GenerateMasterWritBaseText(itemLink) )
+        if(description) then
+            label = label .."\n"..COLOR3.."Writ: "..description
+        end
+        --}}}
+        -- [Reward] {{{
+        description = tostring( GenerateMasterWritRewardText(itemLink) )
+        if(description) then
+            label = label .."\n"..COLOR3.."Reward: "..description
+        end
+        --}}}
+--]]
     -- LABEL [EMPTY]
     else
         label = "empty"
@@ -937,18 +994,16 @@ function get_tooltipText(bNum) --{{{
     -- DEBUG
     if(DEBUG or DEBUG_ITEM) then
         local tt_Id
-        if    (collId   >  0  ) then
-            tt_Id = "\n- collId "  ..COLOR3..tostring( collId      ).."|r"
+        if(collId) then
+            tt_Id = "\n- collId "  ..COLOR3..tostring   ( collId   ).."|r"
 
         elseif(itemName ~= nil) then
 
-            local itemLink = GetSlotItemLink         ( slotIndex )
-            local collId   = GetCollectibleIdFromLink( itemLink  )
-            local slotId   = getItem_BAG_BACKPACK_slotId(itemName)
+            local slotId   = getItem_BAG_BACKPACK_slotId( itemName )
 
-            tt_Id = "\n- itemLink "..COLOR4..tostring( itemLink ).."|r"
-            ..      "\n- collId "  ..COLOR4..tostring( collId   ).."|r"
-            ..      "\n- slotId "  ..COLOR4..tostring( slotId   ).."|r"
+            tt_Id = "\n- itemLink "..COLOR4..tostring   ( itemLink ).."|r"
+            ..      "\n- collId "  ..COLOR4..tostring   ( collId   ).."|r"
+            ..      "\n- slotId "  ..COLOR4..tostring   ( slotId   ).."|r"
 
         else  
             tt_Id = "\n...empty "  ..COLOR2.."itemName|r"
@@ -1379,7 +1434,7 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
         quantityLabel   : SetHidden(true)
         visualCueBorder : SetHidden(true)
 
-        button          : SetDimensions(1, 1)   --FIXME - find out IF AND WHY this is required
+        button          : SetDimensions(1, 1)   -- find out IF AND WHY this is required
 
         background      : SetAlpha(0)
         border          : SetAlpha(0)
@@ -1738,6 +1793,11 @@ function Show() --{{{
 D("Show()")
     if((QSB.Settings.Visibility == VIS_NEVER) and (not ForceBarVisibility)) then return end
     if not ZO_Skills:IsHidden() then  D("|c00FFAA Show: not ZO_Skills:IsHidden()"); return end
+
+    if ZO_CraftingUtils_IsCraftingWindowOpen() then
+        D("|cFF0000 Show: ZO_CraftingUtils_IsCraftingWindowOpen");
+        return
+    end
 
     if(not Show_pending) then
         Show_pending = true
@@ -2316,7 +2376,7 @@ D("IsEmptySlot("..tostring(slotIndex)..")")
        slotItemCount = GetSlotItemCount(slotIndex)
 --D_ITEM("...slotItemCount=["..tostring( slotItemCount    ).."]")
 
-    if(slotItemCount == nil) then   -- 150329 -- (ticket from doxxx on ESOUI) -- GreymindQuickSlotBar.lua:1272: operator < is not supported for nil < number
+    if(slotItemCount == nil) then   -- 150329 -- (ticket from ESOUI) -- GreymindQuickSlotBar.lua:1272: operator < is not supported for nil < number
         return false
     else
         return (GetSlotTexture( slotIndex ) == "") or (slotItemCount < 1)
@@ -3427,7 +3487,7 @@ D_ITEM(COLOR1.."ITEM UPDATED: itemName=["..tostring(itemName).."] (level "..tost
     end)
 
     --}}}
---[[ FIXME
+--[[
     -- EVENT_ACTION_LAYER_PUSHED --{{{
     EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ACTION_LAYER_PUSHED"
     , EVENT_END_FAST_TRAVEL_KEEP_INTERACTION
@@ -3536,8 +3596,11 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-  d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (181023) |r Update 20 (4.2.5): Murkmire (API 100025)")
+  d("GQSB |c00FFFF" ..QSB.Version.. " (181113) |r Murkmire *collectible *crafting *tooltips")
+  d("GQSB |c888888["..arg.."]")
 --{{{
+--d("GQSB |c00FFFF" ..QSB.Version.. " (181027) |r Update 20 (4.2.5): Murkmire (API 100025)")
+--d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (181023) |r Update 20 (4.2.5): Murkmire (API 100025)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180815) |r Update 19 (4.1.15): Wolfhunter (API 100024)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180522) |r Update 18 (4.0.5): Summerset (API 100023)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180312) |r New options: Blink Changes & NO SOUND")
@@ -3696,10 +3759,9 @@ function OnSlashCommand(arg)
     elseif(arg == "debug_item"  ) then DEBUG_ITEM  = not DEBUG_ITEM ; d("...DEBUG_ITEM.=[" ..tostring( DEBUG_ITEM  ).. "]"); ui_may_have_changed = true;
 --      get_collId_itemName(0)
     --}}}
-    -- LUA -- (/script-like commands) --{{{
     else
         -- _G --{{{
-        lua_expr = string.match(arg, "^%s*_G%[\"(.*)\"%]") -- as a global var name
+        lua_expr = string.match(arg, "^%s*_G% *(%a*)") -- as a global var name
         if lua_expr then
         --QSB_ClearChat()
             local   o  =  _G[lua_expr]
@@ -3742,7 +3804,7 @@ function OnSlashCommand(arg)
 
         end
         --}}}
-    end --}}}
+    end
     -- CHANGE PRESET {{{
     if presetName ~= "" then
         SelectPreset( presetName )
@@ -3756,7 +3818,8 @@ function OnSlashCommand(arg)
         Show()
     end
 
-end --}}}
+end
+--}}}
 
 GreymindQuickSlotBar = QSB
 EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, Initialize)
