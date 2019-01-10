@@ -3,6 +3,11 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.4.5 {{{
+- [color="aaffaa"]190110[/color]
+* New saved settings option: [color="ffffaa"]Account-wide[/color] or [color="aaaaff"]Character[/color] Settings
+
+}}}
 v2.4.4 {{{
 - [color="aaffaa"]181113[/color]
 * collectible...: Murkmire missing function call to [SelectSlotCollectible] replaced with [SelectSlotSimpleAction]
@@ -427,7 +432,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.4", -- 181113 previous: 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.5", -- 190110 previous: 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -556,6 +561,7 @@ local Hide_delayed
 local Hide_pending = false
 local HideUIHandles
 local Initialize
+local Load_ZO_SavedVars
 local IsEmptySlot
 local Load_Defaults
 
@@ -620,12 +626,16 @@ D("Load_Defaults()")
     -- revert to default values
 --  CopyFromTo(QSB.SettingsDefaults, QSB.Settings)
 --  QSB.Settings = DeepCopy(QSB.SettingsDefaults)
+
+d("...QSB: RESETING ALL PRESETS TO DEFAULT VALUES:")
+
     SelectPreset( PRESETNAMES[1] ); CopySettingsDefaultsTo(QSB.Settings)
     SelectPreset( PRESETNAMES[2] ); CopySettingsDefaultsTo(QSB.Settings)
     SelectPreset( PRESETNAMES[3] ); CopySettingsDefaultsTo(QSB.Settings)
     SelectPreset( PRESETNAMES[4] ); CopySettingsDefaultsTo(QSB.Settings)
     SelectPreset( PRESETNAMES[5] ); CopySettingsDefaultsTo(QSB.Settings)
-    d("...QSB: all presets reset to default values")
+
+    loadItemSlots()
 
     ButtonSizeChanged()
     Refresh()
@@ -634,24 +644,29 @@ end --}}}
 function SelectPreset(selectedPreset) --{{{
 D("SelectPreset(|c00FFFF"..selectedPreset.."|r):")
 
+    -- UNCHANGED {{{
     -- @see ../../SavedVariables/GreymindQuickSlotBar.lua
 
     if string.match(selectedPreset, QSB.Settings.PresetName) then
 D("...|cFF00FF.SelectedPreset matches QSB.Settings.PresetName|r")
+
         return
     end
-
-    -- SAVE CURRENT PRESET
+    --}}}
+    -- SAVE CURRENT PRESET {{{
     local currentPreset = QSB.Settings.PresetName
 D("...PRESET __SAVING:".. currentPreset)
 
-    -- DEFAULTS SETTINGS
+    --}}}
+    -- DEFAULTS SETTINGS {{{
     QSB.Settings.Presets[currentPreset] = DeepCopy(QSB.SettingsDefaults)
 
-    -- SAVING CURRENT QUICK SLOT BAR CONTENT
+    --}}}
+    -- SAVING CURRENT QUICK SLOT BAR CONTENT {{{
     if is_SlotItemTable_empty() then populate_an_empty_SlotItemTable("SAVING CURRENT QUICK SLOT BAR") end
 
-    -- CURRENT SETTINGS
+    --}}}
+    -- CURRENT SETTINGS {{{
     local from, to
     from = QSB.Settings
     to   = QSB.Settings.Presets[currentPreset]
@@ -659,7 +674,8 @@ D("...PRESET __SAVING:".. currentPreset)
     to.PresetName = nil
     to.Presets    = nil
 
-    -- SELECTED PRESET
+    --}}}
+    -- SELECTED PRESET {{{
     if not QSB.Settings.Presets[selectedPreset].MainWindow then
         QSB   .Settings.Presets[selectedPreset] = DeepCopy(QSB.SettingsDefaults)
     end
@@ -667,7 +683,8 @@ D("...PRESET __SAVING:".. currentPreset)
     to   = QSB.Settings
     CopyNotNilSettingsFromTo(from, to)
 
-    -- DEFAULT TO CLONING CURRENT QUICK SLOT BAR CONTENT -- AND LAYOUT (170818)
+    --}}}
+    -- DEFAULT TO CLONING CURRENT QUICK SLOT BAR CONTENT -- AND LAYOUT (170818) {{{
     if QSB.CloneCurrentToEmtpyPreset and is_SlotItemTable_empty() then
 --d(SETTINGSPANELNAME)
 d(COLOR3.." Preset"  ..COLOR2.." "..selectedPreset.." "..COLOR3.."is EMPTY .. CLONING "..COLOR2.." "..currentPreset .." "..COLOR3.." (layout and content)")
@@ -689,20 +706,21 @@ d(COLOR3.." Preset"  ..COLOR2.." "..selectedPreset.." "..COLOR3.."is EMPTY .. CL
         to.MainWindow.Y     = from.MainWindow.Y
     end
 
-    -- PRESET SELECTED
+    --}}}
+    -- PRESET SELECTED {{{
     QSB.Settings.PresetName = selectedPreset
 D("...PRESET SELECTED:"..QSB.Settings.PresetName)
 
-    -- EQUIP ITEMS TO QUICK SLOT BAR
-    loadItemSlots()
-
-    -- UPDATE DEPENDENCIES
+    --}}}
+    -- UPDATE DEPENDENCIES {{{
     ButtonSizeChanged()                                 -- UI geometry
     GameActionButtonHideHandler(true,"SelectPreset")    -- Apply selected preset choice
 
-    -- UPDATE SETTINGS PANEL
+    --}}}
+    -- UPDATE SETTINGS PANEL {{{
     if not QSB.Panel:IsHidden() then Rebuild_LibAddonMenu() end
 
+    --}}}
 end --}}}
 -- ITEM EQUIP
 --{{{
@@ -1324,7 +1342,14 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
 
     -- UI TOOLTIP
     if QSB.Settings.LockUI then
-        GreymindQuickSlotBarUI.data = {tooltipText = QSB.Name.." "..QSB.Version.." Wolfhunter"}
+        GreymindQuickSlotBarUI.data = {
+            tooltipText
+            =  QSB.Name.." "..QSB.Version.." Wolfhunter\n"
+            ..(QSB.AccountWideSettings.SaveAccountWide and "|c0000FF Account-wide Settings"
+            or                   "|cFF0000"..GetUnitName("player").."|r Character Settings"
+            )
+
+        }
     else
         local tt
         = "UI currently |cFF0000 UNLOCKED for layout|r\n"
@@ -2182,12 +2207,12 @@ function QSB_Item8() SelectButton(8) end
 
 --}}}
 -- KEYBOARD-SHORTCUTS: P[1..5] {{{
-function QSB_P1()    SelectPreset( PRESETNAMES[1] ); Refresh(); Show(); end
-function QSB_P1()    SelectPreset( PRESETNAMES[1] ); Refresh(); Show(); end
-function QSB_P2()    SelectPreset( PRESETNAMES[2] ); Refresh(); Show(); end
-function QSB_P3()    SelectPreset( PRESETNAMES[3] ); Refresh(); Show(); end
-function QSB_P4()    SelectPreset( PRESETNAMES[4] ); Refresh(); Show(); end
-function QSB_P5()    SelectPreset( PRESETNAMES[5] ); Refresh(); Show(); end
+function QSB_P1()    SelectPreset( PRESETNAMES[1] ); loadItemSlots(); Refresh(); Show(); end
+function QSB_P1()    SelectPreset( PRESETNAMES[1] ); loadItemSlots(); Refresh(); Show(); end
+function QSB_P2()    SelectPreset( PRESETNAMES[2] ); loadItemSlots(); Refresh(); Show(); end
+function QSB_P3()    SelectPreset( PRESETNAMES[3] ); loadItemSlots(); Refresh(); Show(); end
+function QSB_P4()    SelectPreset( PRESETNAMES[4] ); loadItemSlots(); Refresh(); Show(); end
+function QSB_P5()    SelectPreset( PRESETNAMES[5] ); loadItemSlots(); Refresh(); Show(); end
 
 --}}}
 
@@ -2415,18 +2440,83 @@ D("Initialize()")
     -- CHAT SLASH_COMMANDS
     SLASH_COMMANDS[QSB_SLASH_COMMAND] = OnSlashCommand
 
-    -- LOAD SAVED SETTINGS --  (170818: changed from [NewAccountWide] to [New])
-    QSB.Settings = ZO_SavedVars:New(
-    "GreymindQuickSlotBarSettings"
-    , QSB.SettingsVersion
-    , nil
-    , QSB.SettingsDefaults
-    , "Default"
-    )
+    Load_ZO_SavedVars(nil)
+
     BuildSettingsMenu()
 
     -- EVENT HANDLERS
     zo_callLater(RegisterEventHandlers, 500)
+
+end --}}}
+function Load_ZO_SavedVars(value) --{{{
+d("Load_ZO_SavedVars("..tostring(value)..")")
+
+--[[
+:!start explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
+--]]
+    -- LOAD OR SET [AccountWide] {{{
+    local current_Settings = nil
+    if(value == nil) then
+        QSB.AccountWideSettings = ZO_SavedVars:NewAccountWide(
+        "GreymindQuickSlotBarSettings" -- savedVariableTable
+        , QSB.SettingsVersion          -- version
+        , nil                          -- namespace
+        , QSB.SettingsDefaults         -- defaults
+        , "AccountWide"                -- profile
+        )                              -- displayName
+
+    else
+        QSB.AccountWideSettings.SaveAccountWide = value
+
+        current_Settings = DeepCopy(QSB.Settings)
+    end
+    --}}}
+    -- [QSB.Settings] .. f(AccountWide.SaveAccountWide) {{{
+    if(QSB.AccountWideSettings.SaveAccountWide ) then
+d("LOADING "..COLOR1.." Account-wide |r Settings")
+
+        QSB.Settings = ZO_SavedVars:NewAccountWide(
+        "GreymindQuickSlotBarSettings"
+        , QSB.SettingsVersion
+        , nil
+        , QSB.SettingsDefaults
+        , "AccountWide"
+        )
+
+    else
+d("LOADING "..COLOR2..GetUnitName("player").."|r Character Settings")
+
+        QSB.Settings = ZO_SavedVars:New(
+        "GreymindQuickSlotBarSettings"
+        , QSB.SettingsVersion
+        , nil
+        , QSB.SettingsDefaults
+        , "Default"
+        )
+    end
+    --}}}
+    if(value ~= nil) then
+        loadItemSlots()
+--[[ --{{{
+        if( QSB.AccountWideSettings.SaveAccountWide ) then
+d("CLONING "..GetUnitName("player").." TO Account-wide Settings")
+
+          --QSB.Settings = current_Settings
+
+          --local from = current_Settings
+          --local to   = QSB.Settings
+          --CopyNotNilSettingsFromTo(from, to)
+
+          --QSB.Settings = DeepCopy(current_Settings)
+
+           loadItemSlots()
+        else
+d("LOADING "..GetUnitName("player").." SETTINGS")
+
+           loadItemSlots()
+        end
+--]] --}}}
+    end
 
 end --}}}
 function QSB.Update(...) --{{{
@@ -2925,6 +3015,7 @@ D("BuildSettingsMenu()")
         end,
         width       = "half",
     }
+
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- SoundSlotted prev button --{{{
@@ -2939,6 +3030,7 @@ D("BuildSettingsMenu()")
         end,
         width       = "half",
     }
+
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- SoundAlert next button --{{{
@@ -2953,6 +3045,7 @@ D("BuildSettingsMenu()")
         end,
         width       = "half",
     }
+
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     -- SoundSlotted next button --{{{
@@ -2967,6 +3060,7 @@ D("BuildSettingsMenu()")
         end,
         width       = "half",
     }
+
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
 
@@ -3002,6 +3096,7 @@ D("BuildSettingsMenu()")
                 end
             end
             SelectPreset(value)
+            loadItemSlots();
             Refresh();
             Show()
         end,
@@ -3082,9 +3177,8 @@ D("BuildSettingsMenu()")
             Refresh()
             Show()
         end,
-        width       = "full",
+        width       = "half",
     }
-
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
@@ -3104,7 +3198,7 @@ D("BuildSettingsMenu()")
             Refresh()
             Show()
         end,
-        width       = "full",
+        width       = "half",
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
@@ -3125,9 +3219,8 @@ D("BuildSettingsMenu()")
             Refresh()
             Show()
         end,
-        width       = "full",
+        width       = "half",
     }
-
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
@@ -3146,7 +3239,7 @@ D("BuildSettingsMenu()")
             Refresh()
             Show()
         end,
-        width       = "full",
+        width       = "half",
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
@@ -3166,7 +3259,7 @@ D("BuildSettingsMenu()")
             Refresh()
             Show()
         end,
-        width       = "full",
+        width       = "half",
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
@@ -3187,7 +3280,7 @@ D("BuildSettingsMenu()")
             Refresh()
             Show()
         end,
-        width       = "full",
+        width       = "half",
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
@@ -3196,7 +3289,7 @@ D("BuildSettingsMenu()")
 
     control = {
         type        = "checkbox",
-        reference   = "QSB_ClonePreviousToEmtpyPreset",
+        reference   = "QSB_CloneCurrentToEmtpyPreset",
         name        = "Auto-Clone previous-to-empty preset",
         tooltip     = "Whether to copy the CURRENT PRESET LAYOUT AND CONTENT\n"
         .."|cFF0000When selecting an EMPTY PRESET",
@@ -3208,7 +3301,36 @@ D("BuildSettingsMenu()")
             Refresh()
             Show()
         end,
-        width       = "full",
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SaveAccountWide (Checkbox) --{{{
+
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_SaveAccountWide",
+        name        = "Account-wide Settings",
+        tooltip     = "Must be OFF for |cFF0000"..GetUnitName("player").."|r Character Settings",
+        getFunc     = function()
+            return QSB.AccountWideSettings.SaveAccountWide
+        end,
+        setFunc     = function(value)
+            if(QSB.AccountWideSettings.SaveAccountWide ~= value) then
+                if(value) then
+                    Load_ZO_SavedVars(  true )
+                    Refresh()
+                    Show()
+                else
+                    Load_ZO_SavedVars( false )
+                  --QSB_ReloadUI()
+                    Refresh()
+                    Show()
+                end
+            end
+        end,
+        width       = "half",
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
@@ -3224,7 +3346,7 @@ D("BuildSettingsMenu()")
         func        = function()
             Load_Defaults()
         end,
-        width       = "full",
+        width       = "half",
         warning     = "|cFF0000 NO CONFIRMATION ASKED!|r\nThis will also reload the UI",
     }
 
@@ -3555,6 +3677,7 @@ D("OnClicked_handle("..tostring(handleName)..")")
         arg = string.match(handleName, "P([1-5])")
 
         SelectPreset( PRESETNAMES[ tonumber(arg) ] )
+        loadItemSlots();
         Refresh();
         Show()
 
@@ -3596,9 +3719,10 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-  d("GQSB |c00FFFF" ..QSB.Version.. " (181113) |r Murkmire *collectible *crafting *tooltips")
+  d("GQSB |c00FFFF" ..QSB.Version.. " (190110) |r Account-wide or Character Settings")
   d("GQSB |c888888["..arg.."]")
 --{{{
+--d("GQSB |c00FFFF" ..QSB.Version.. " (181113) |r Murkmire *collectible *crafting *tooltips")
 --d("GQSB |c00FFFF" ..QSB.Version.. " (181027) |r Update 20 (4.2.5): Murkmire (API 100025)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (181023) |r Update 20 (4.2.5): Murkmire (API 100025)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (180815) |r Update 19 (4.1.15): Wolfhunter (API 100024)")
@@ -3651,6 +3775,7 @@ function OnSlashCommand(arg)
         d(QSB_SLASH_COMMAND..     " reset .. RESETS ALL CHARACTER SETTINGS TO DEFAULT")
         d(QSB_SLASH_COMMAND..     " force .. to force Bar Visiblity")
         d(QSB_SLASH_COMMAND..     " block .. to block Bar Visiblity (overrides force)")
+        d(QSB_SLASH_COMMAND..   " account .. to toggle between "..GetUnitName("player").." and Account-wide Settings")
         if DEBUG_ITEM then
             d(QSB_SLASH_COMMAND.. '    _G["ZO_ChatWindowTemplate1Buffer"]')
             d(QSB_SLASH_COMMAND.. 'lua _G["ZO_ChatWindowTemplate1Buffer"]:Clear()')
@@ -3676,6 +3801,11 @@ function OnSlashCommand(arg)
     elseif(arg == "show"   ) then Show()
     elseif(arg == "refresh") then Refresh()
     elseif(arg == "reset"  ) then Load_Defaults()
+    elseif(arg == "account") then
+        Load_ZO_SavedVars(not QSB.AccountWideSettings.SaveAccountWide)
+        Rebuild_LibAddonMenu()
+        Refresh()
+        Show()
 
     elseif(arg == "p1"     ) then presetName = PRESETNAMES[1]
     elseif(arg == "p2"     ) then presetName = PRESETNAMES[2]
@@ -3808,6 +3938,7 @@ function OnSlashCommand(arg)
     -- CHANGE PRESET {{{
     if presetName ~= "" then
         SelectPreset( presetName )
+        loadItemSlots();
 
         ui_may_have_changed = true
     end
