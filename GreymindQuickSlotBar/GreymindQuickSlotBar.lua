@@ -2,9 +2,9 @@
 --  Feature Author: ivanwfr
 --}}}
 -- CHANGELOG --{{{
---[[
-v2.4.5 {{{
-- [color="aaffaa"]190110[/color]
+--[[ {{{
+v2.4.5
+- [color="aaffaa"]190111[/color]
 * New saved settings option: [color="ffffaa"]Account-wide[/color] or [color="aaaaff"]Character[/color] Settings
 
 }}}
@@ -280,8 +280,8 @@ local DEBUG_EVENT = false
 -- CONSTANTS --{{{
 
 -- DELAYS
-local ZO_CALLLATER_DELAY_1    = 10 -- Refresh Show Hide
-local ZO_CALLLATER_DELAY_S    = 10 -- PlaySound
+local ZO_CALLLATER_DELAY_1    =  10 -- Refresh Show Hide
+local ZO_CALLLATER_DELAY_S    =  10 -- PlaySound
 local ZO_CALLLATER_DELAY_N    = 200 -- NextAuto
 
 -- COLORS
@@ -428,11 +428,12 @@ local KEYBINDINGS_SWAPS = {
 -- ATTRIBUTES {{{
 local SETTINGSPANELNAME                 = COLOR1.."G "..COLOR2.."Quick "..COLOR3.."Slot "..COLOR4.."Bar"
 local QSB_SLASH_COMMAND                 = "/gqsb"
+local Loaded_QSB_Settings = {}
 local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.5", -- 190110 previous: 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.5", -- 190111 previous: 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -560,8 +561,12 @@ local Hide
 local Hide_delayed
 local Hide_pending = false
 local HideUIHandles
+
 local Initialize
 local Load_ZO_SavedVars
+local QSB_Settings_Changed
+local QSB_Setting_Preset_Changed
+
 local IsEmptySlot
 local Load_Defaults
 
@@ -820,6 +825,8 @@ D_ITEM("=====EQUIP bNum=["..bNum.."] .. itemName=["..itemName.."] .. slotId=["..
     end
     --}}}
 
+--d("XXX loadItemSlots: overriding Loaded_QSB_Settings = DeepCopy(QSB.Settings)")
+    Loaded_QSB_Settings = DeepCopy(QSB.Settings)
 if(msg ~= "") then D_ITEM(msg) end
 end --}}}
 function clear_bNum(bNum) --{{{
@@ -2046,12 +2053,12 @@ end --}}}
 
 -- KEYBINDINGS
 function BuildKeyBindingsMenu() --{{{
+
     for i = 1, #KEYBINDINGS do
         ZO_CreateStringId(KEYBINDINGS_PREFIX .. KEYBINDINGS[i].id , KEYBINDINGS[i].name)
     end
-end
 
---}}}
+end --}}}
 function GetKeyBindInfo( actionID ) --{{{
 --D("GetKeyBindInfo(actionID="..actionID..")")
 
@@ -2207,7 +2214,6 @@ function QSB_Item8() SelectButton(8) end
 
 --}}}
 -- KEYBOARD-SHORTCUTS: P[1..5] {{{
-function QSB_P1()    SelectPreset( PRESETNAMES[1] ); loadItemSlots(); Refresh(); Show(); end
 function QSB_P1()    SelectPreset( PRESETNAMES[1] ); loadItemSlots(); Refresh(); Show(); end
 function QSB_P2()    SelectPreset( PRESETNAMES[2] ); loadItemSlots(); Refresh(); Show(); end
 function QSB_P3()    SelectPreset( PRESETNAMES[3] ); loadItemSlots(); Refresh(); Show(); end
@@ -2408,7 +2414,6 @@ D("IsEmptySlot("..tostring(slotIndex)..")")
     end
 
 end --}}}
-
 -- LOGGING
 function D(msg) --{{{
     if DEBUG then
@@ -2449,13 +2454,14 @@ D("Initialize()")
 
 end --}}}
 function Load_ZO_SavedVars(value) --{{{
-d("Load_ZO_SavedVars("..tostring(value)..")")
+d("|cFFFFFF Load_ZO_SavedVars("..tostring(value)..")")
 
+    local changed = (value ~= nil) and QSB_Settings_Changed()
+
+    -- [QSB.AccountWideSettings] .. GET/SET {{{
 --[[
 :!start explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
 --]]
-    -- LOAD OR SET [AccountWide] {{{
-    local current_Settings = nil
     if(value == nil) then
         QSB.AccountWideSettings = ZO_SavedVars:NewAccountWide(
         "GreymindQuickSlotBarSettings" -- savedVariableTable
@@ -2468,7 +2474,6 @@ d("Load_ZO_SavedVars("..tostring(value)..")")
     else
         QSB.AccountWideSettings.SaveAccountWide = value
 
-        current_Settings = DeepCopy(QSB.Settings)
     end
     --}}}
     -- [QSB.Settings] .. f(AccountWide.SaveAccountWide) {{{
@@ -2494,30 +2499,69 @@ d("LOADING "..COLOR2..GetUnitName("player").."|r Character Settings")
         , "Default"
         )
     end
+
     --}}}
-    if(value ~= nil) then
-        loadItemSlots()
---[[ --{{{
-        if( QSB.AccountWideSettings.SaveAccountWide ) then
-d("CLONING "..GetUnitName("player").." TO Account-wide Settings")
+    -- [Loaded_QSB_Settings] {{{
+    if(value == nil) then
+--d("ROOTING: |cFFAA00 Loaded_QSB_Settings")
 
-          --QSB.Settings = current_Settings
-
-          --local from = current_Settings
-          --local to   = QSB.Settings
-          --CopyNotNilSettingsFromTo(from, to)
-
-          --QSB.Settings = DeepCopy(current_Settings)
-
-           loadItemSlots()
+        Loaded_QSB_Settings = DeepCopy(QSB.Settings)
+    --}}}
+    -- [QSB_ReloadUI] or [Refresh] .. f(changed) {{{
+    else
+        if( changed ) then
+d("|cFF0000 GQSB RELOADING\n|cFFAA00"..tostring(changed))
+            zo_callLater(QSB_ReloadUI, 3000)
+--[[--{{{
+--d("...SHOULD |cFFAA00 QSB_ReloadUI")
+            Rebuild_LibAddonMenu()
+            Refresh()
+            Show()
+            loadItemSlots()
+--]]--}}}
         else
-d("LOADING "..GetUnitName("player").." SETTINGS")
+--d("...CALLING |c00FF00 Rebuild_LibAddonMenu .. Refresh .. Show")
 
-           loadItemSlots()
+            Rebuild_LibAddonMenu()
+            Refresh()
+            Show()
+            loadItemSlots()
         end
---]] --}}}
     end
+    --}}}
+end --}}}
+function QSB_Settings_Changed(q,l,presetName) --{{{
 
+    local presetName;      local changed = QSB_Setting_Preset_Changed(QSB.Settings                    , Loaded_QSB_Settings       , QSB.Settings.PresetName); if changed then return changed end
+    presetName = PRESETNAMES[1]; changed = QSB_Setting_Preset_Changed(QSB.Settings.Presets[presetName], Loaded_QSB_Settings.Presets[presetName], presetName); if changed then return changed end
+    presetName = PRESETNAMES[2]; changed = QSB_Setting_Preset_Changed(QSB.Settings.Presets[presetName], Loaded_QSB_Settings.Presets[presetName], presetName); if changed then return changed end
+    presetName = PRESETNAMES[3]; changed = QSB_Setting_Preset_Changed(QSB.Settings.Presets[presetName], Loaded_QSB_Settings.Presets[presetName], presetName); if changed then return changed end
+    presetName = PRESETNAMES[4]; changed = QSB_Setting_Preset_Changed(QSB.Settings.Presets[presetName], Loaded_QSB_Settings.Presets[presetName], presetName); if changed then return changed end
+    presetName = PRESETNAMES[5]; changed = QSB_Setting_Preset_Changed(QSB.Settings.Presets[presetName], Loaded_QSB_Settings.Presets[presetName], presetName); if changed then return changed end
+
+    return false
+end --}}}
+function QSB_Setting_Preset_Changed(q,l,presetName) --{{{
+
+    local k
+    k = "NextAuto"            ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "SoundSlotted"        ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ButtonSize"          ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "version"             ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "GameActionButtonHide"; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "Visibility"          ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "SoundAlert"          ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "SaveAccountWide"     ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ShowBackground"      ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ButtonsDisplayed"    ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "PresetName"          ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ButtonColumns"       ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "NextPrevWrap"        ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "LockUI"              ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "SwapBackgroundColors"; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ButtonFontSize"      ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+
+    return false
 end --}}}
 function QSB.Update(...) --{{{
 D("Update()")
@@ -2584,6 +2628,31 @@ D("BuildSettingsMenu()")
 --]]
     --}}}
 
+    -- SaveAccountWide (Checkbox) --{{{
+
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_SaveAccountWide",
+        name        = "Account-wide Settings",
+        tooltip     = "Must be OFF for |cFF0000"..GetUnitName("player").."|r Character Settings",
+        getFunc     = function()
+            return QSB.AccountWideSettings.SaveAccountWide
+        end,
+        setFunc     = function(value)
+            if(QSB.AccountWideSettings.SaveAccountWide ~= value) then
+                if(value) then
+                    Load_ZO_SavedVars(  true )
+                else
+                    Load_ZO_SavedVars( false )
+                end
+            end
+        end,
+        width       = "full",
+        warning     = "May involve "..COLOR2.."Reload User Interface|r",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
     -- LockUI (Checkbox) --{{{
     control = {
         type        = "checkbox",
@@ -2613,7 +2682,6 @@ D("BuildSettingsMenu()")
         tooltip     = "Choose when you'd like Quick Slot Bar displayed or hidden",
         choices     = QSB.Visibility_ChoiceList,
         getFunc     = function()
-            --d("|c00FF00.GET:|r "..QSB.Settings.PresetName.." Visibility       =["..QSB.Settings.Visibility.."]") --FIXME_backfiring_issue
             return QSB.Settings.Visibility or QSB.SettingsDefaults.Visibility
         end,
         setFunc     = function(value)
@@ -3306,35 +3374,6 @@ D("BuildSettingsMenu()")
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
-    -- SaveAccountWide (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_SaveAccountWide",
-        name        = "Account-wide Settings",
-        tooltip     = "Must be OFF for |cFF0000"..GetUnitName("player").."|r Character Settings",
-        getFunc     = function()
-            return QSB.AccountWideSettings.SaveAccountWide
-        end,
-        setFunc     = function(value)
-            if(QSB.AccountWideSettings.SaveAccountWide ~= value) then
-                if(value) then
-                    Load_ZO_SavedVars(  true )
-                    Refresh()
-                    Show()
-                else
-                    Load_ZO_SavedVars( false )
-                  --QSB_ReloadUI()
-                    Refresh()
-                    Show()
-                end
-            end
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
     -- Reset (Button) --{{{
 
 --[[
@@ -3358,7 +3397,7 @@ D("BuildSettingsMenu()")
     LAM:RegisterOptionControls(QSB.Name, QSB.SettingsControls)
 
 end --}}}
-function Are_Settings_Locked(option, value) --FIXME_backfiring_issue {{{
+function Are_Settings_Locked(option, value) --{{{
     if Settings_Locked then
         --d("|cAA0000.SET:|r "..tostring(QSB.Settings.PresetName)..": "..tostring(option).."=["..tostring(value).."] |cFF0000.REJECTED")
         return true
@@ -3368,7 +3407,7 @@ function Are_Settings_Locked(option, value) --FIXME_backfiring_issue {{{
 end --}}}
 function Release_Settings_Locked() --{{{
     Settings_Locked = false
---d("|c00AAAA.^^^^ SETTINGS UNLOCKED|r")  --FIXME_backfiring_issue
+--d("|c00AAAA.^^^^ SETTINGS UNLOCKED|r")
 end
 
 --}}}
@@ -3719,8 +3758,8 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-  d("GQSB |c00FFFF" ..QSB.Version.. " (190110) |r Account-wide or Character Settings")
-  d("GQSB |c888888["..arg.."]")
+  d("GQSB |c00FFFF" ..QSB.Version.. " (190111) |r Account-wide or Character Settings")
+  d("GQSB |c888888["..arg.."] |cAAAAAA [gqsb -h for help]")
 --{{{
 --d("GQSB |c00FFFF" ..QSB.Version.. " (181113) |r Murkmire *collectible *crafting *tooltips")
 --d("GQSB |c00FFFF" ..QSB.Version.. " (181027) |r Update 20 (4.2.5): Murkmire (API 100025)")
@@ -3758,11 +3797,16 @@ function OnSlashCommand(arg)
     local lua_expr
 
     -- help --{{{
-    if (arg ==       "")
-    or (arg ==   "help")
-    or (arg ==  "-help")
-    or (arg ==  "-h"   )
-    or (arg == "--h"   )
+    if (arg == "")
+    then
+        d("Current Settings: "
+        ..(QSB.AccountWideSettings.SaveAccountWide and "|c0000FF Account-wide"
+        or                   "|cFF0000"..GetUnitName("player").."|r Character"))
+
+    elseif (arg ==  "-h"   )
+    or     (arg == "--h"   )
+    or     (arg ==  "-help")
+    or     (arg ==   "help")
     then
         d(QSB_SLASH_COMMAND..     " p1-p5 .. select Presets "..PRESETNAMES[1].." to "..PRESETNAMES[5].." (current = "..QSB.Settings.PresetName..")")
         d(QSB_SLASH_COMMAND..  " settings .. Settings Panel display (toggle)")
@@ -3801,11 +3845,8 @@ function OnSlashCommand(arg)
     elseif(arg == "show"   ) then Show()
     elseif(arg == "refresh") then Refresh()
     elseif(arg == "reset"  ) then Load_Defaults()
-    elseif(arg == "account") then
-        Load_ZO_SavedVars(not QSB.AccountWideSettings.SaveAccountWide)
-        Rebuild_LibAddonMenu()
-        Refresh()
-        Show()
+    elseif(arg == "account") then Load_ZO_SavedVars(not QSB.AccountWideSettings.SaveAccountWide)
+    elseif(arg == "compare") then QSB_Settings_Changed()
 
     elseif(arg == "p1"     ) then presetName = PRESETNAMES[1]
     elseif(arg == "p2"     ) then presetName = PRESETNAMES[2]
