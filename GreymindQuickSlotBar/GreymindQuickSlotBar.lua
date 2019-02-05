@@ -2,9 +2,9 @@
 --  Feature Author: ivanwfr
 --}}}
 -- CHANGELOG --{{{
---[[ {{{
-v2.4.5
-- [color="aaffaa"]190111[/color]
+--[[
+v2.4.5 {{{
+- [color="aaffaa"]190205[/color]
 * New saved settings option: [color="ffffaa"]Account-wide[/color] or [color="aaaaff"]Character[/color] Settings
 
 }}}
@@ -275,6 +275,7 @@ v2.2.5 {{{
 --}}}
 local DEBUG       = false
 local DEBUG_ITEM  = false
+local DEBUG_EQUIP = false
 local DEBUG_EVENT = false
 -- LOCAL
 -- CONSTANTS --{{{
@@ -433,7 +434,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.5", -- 190111 previous: 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.5", -- 190205 previous: 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -555,8 +556,8 @@ local GameActionButtonHideHandler
 local GetAlignmentXY
 local GetKeyBindInfo
 local GetSlotItemKeyName
-local Get_bNum_of_slotIndex
-local Get_slotIndex_of_bNum
+local slotIndex_to_bNum
+local bNum_to_slotIndex
 local Hide
 local Hide_delayed
 local Hide_pending = false
@@ -737,8 +738,9 @@ function check_QSB_BAG_BACKPACK_slotId_to_check() --{{{
 D_ITEM("check_QSB_BAG_BACKPACK_slotId_to_check:")
 
     local slotId    = QSB_BAG_BACKPACK_UPDATE_slotId   ; QSB_BAG_BACKPACK_UPDATE_slotId    = -1
-    local itemLevel = QSB_BAG_BACKPACK_UPDATE_itemLevel; QSB_BAG_BACKPACK_UPDATE_itemLevel = -1
     local itemName  = get_slotId_itemName ( slotId )
+    local itemLevel = QSB_BAG_BACKPACK_UPDATE_itemLevel; QSB_BAG_BACKPACK_UPDATE_itemLevel = -1
+D_ITEM("slotId=["..tostring(slotId).."] itemName=["..tostring(itemName).."] itemLevel=["..tostring(itemLevel).."]")
 
     QSB_BAG_BACKPACK_UPDATE_mutex = true -- cleared by Refresh_delayed
 
@@ -756,13 +758,13 @@ end --}}}
 function loadItemSlots() --{{{
     -- FIRST TIME USING SlotItemTable {{{
     if (QSB.Settings.SlotItemTable == nil) then
-D_ITEM("|cBBBBFF loadItemSlots: |cFF0000 (QSB.Settings.SlotItemTable == nil)|r")
+D_EQUIP("|cBBBBFF loadItemSlots: |cFF0000 (QSB.Settings.SlotItemTable == nil)|r")
         return
     end
     --}}}
     -- EMPTY SlotItemTable .. leave Quick Slot Bar as is {{{
     if is_SlotItemTable_empty() then
-D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
+D_EQUIP("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
 --[[
         return
 --]]
@@ -778,9 +780,9 @@ D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
         if emptySlot then
             clear_bNum(bNum)
         else
-            slotIndex = Get_slotIndex_of_bNum( bNum      )
-            slotName  = GetSlotName          ( slotIndex )
-            if(slotName ~= QSB.Settings.SlotItemTable[bNum].itemName) then
+            slotIndex = bNum_to_slotIndex( bNum      )
+            slotName  = GetSlotName      ( slotIndex )
+            if(slotName ~= itemName) then
                 clear_bNum(bNum)
             end
         end
@@ -790,7 +792,7 @@ D_ITEM("|cBBBBFF".."loadItemSlots: |c666666 SlotItemTable is EMPTY |r")
     -- 2/2 EQUIP SELECTED ITEMS (possibly available in BAG_BACKPACK) {{{
     local msg = ""
     local slotId
-D_ITEM("loadItemSlots:")
+D_EQUIP("loadItemSlots:")
 
     for bNum = 1, QSB.ButtonCountMax do
         itemName  = tostring(QSB.Settings.SlotItemTable[bNum].itemName)
@@ -798,10 +800,10 @@ D_ITEM("."..bNum.." itemName=["..itemName.."]")
 
         emptySlot = (itemName == nil) or (itemName == "")
         if not emptySlot then
-            slotIndex    = Get_slotIndex_of_bNum  ( bNum      )
+            slotIndex    = bNum_to_slotIndex( bNum      )
 D_ITEM("..slotIndex=["..slotIndex.."]")
 
-            slotName     = GetSlotName            ( slotIndex )
+            slotName     = GetSlotName      ( slotIndex )
 D_ITEM("...slotName=["..slotName.."]")
 
             if(slotName ~= "") then
@@ -812,13 +814,15 @@ D_ITEM("...slotName=["..slotName.."]")
 D_ITEM("....slotId=["..slotId.."]")
 
             if((slotId ~= -1) and (slotId == QSB.Settings.SlotItemTable[bNum].slotId)) then
-                if DEBUG_ITEM then
-                    msg  = msg.."\n|c888888.UNCHANGED [|c8888FF"..bNum.."=="..slotIndex.."|r] ID["..tostring(slotId).."] [|cCCCCFF["..tostring(itemName).."|r]"
+                if DEBUG_EQUIP then
+                    msg  = msg.."\n|c8888FF.UNCHANGED [|c8888FF"..bNum.."=="..slotIndex.."|r] ID["..tostring(slotId).."] [|cCCCCFF["..tostring(itemName).."|r] .. slotId=["..tostring(slotId).."]"
                 end
 D_ITEM(".....UNCHANGED")
             else
                 slotId   = QSB.Settings.SlotItemTable[bNum].slotId
-D_ITEM("=====EQUIP bNum=["..bNum.."] .. itemName=["..itemName.."] .. slotId=["..slotId.."]")
+                if DEBUG_EQUIP then
+                    msg  = msg.."\n|cFF8888.EQUIPMENT [|c8888FF"..bNum.."=="..slotIndex.."|r] ID["..tostring(slotId).."] [|cCCCCFF["..tostring(itemName).."|r] .. slotId=["..tostring(slotId).."]"
+                end
                 equip_bNum_item_slotId(bNum, itemName, slotId)
             end
         end
@@ -827,21 +831,21 @@ D_ITEM("=====EQUIP bNum=["..bNum.."] .. itemName=["..itemName.."] .. slotId=["..
 
 --d("XXX loadItemSlots: overriding Loaded_QSB_Settings = DeepCopy(QSB.Settings)")
     Loaded_QSB_Settings = DeepCopy(QSB.Settings)
-if(msg ~= "") then D_ITEM(msg) end
+if(msg ~= "") then D_EQUIP(msg) end
 end --}}}
 function clear_bNum(bNum) --{{{
-    local slotIndex = Get_slotIndex_of_bNum( bNum      )
-    local slotName  = GetSlotName          ( slotIndex )
+    local slotIndex = bNum_to_slotIndex( bNum      )
+    local slotName  = GetSlotName      ( slotIndex )
     if(   slotName ~= "") then
-D_ITEM("..CLEARING [|c8888BB"..Get_bNum_of_slotIndex(slotIndex).."=="..slotIndex.."|r] [|cCCCCFF"..tostring( slotName).."|r]")
+D_ITEM("..CLEARING [|c8888BB"..slotIndex_to_bNum(slotIndex).."=="..slotIndex.."|r] [|cCCCCFF"..tostring( slotName).."|r]")
     else
-D_ITEM("..CLEARING [|c8888BB"..Get_bNum_of_slotIndex(slotIndex).."=="..slotIndex.."|r]")
+D_ITEM("..CLEARING [|c8888BB"..slotIndex_to_bNum(slotIndex).."=="..slotIndex.."|r]")
     end
     CallSecureProtected("ClearSlot", slotIndex)
 end --}}}
 function equip_bNum_item_slotId(bNum, itemName, itemId) --{{{
 
-    local slotIndex = Get_slotIndex_of_bNum( bNum      )
+    local slotIndex = bNum_to_slotIndex( bNum )
 D_ITEM(".EQUIPPING [|c8888FF"..bNum.."=="..slotIndex.."|r] itemId["..tostring(itemId).."] [|cCCCCFF"..tostring(itemName).."]")
 
     local from_bag = (getItem_BAG_BACKPACK_slotId(itemName) >= 0)
@@ -903,41 +907,31 @@ end --}}}
 function save_QSB_to_SlotItemTable(bNum) --{{{
 D_ITEM("save_QSB_to_SlotItemTable("..bNum.."):")
 
-    local  slotIndex = Get_slotIndex_of_bNum    ( bNum      )
-
-    local  texture   = GetSlotTexture           ( slotIndex )
-
-    local  slotName  = GetSlotName              ( slotIndex )
-
-    local  slotId    = -1
+    local slotIndex = bNum_to_slotIndex( bNum      )
+    local texture   = GetSlotTexture   ( slotIndex )
+    local slotName  = GetSlotName      ( slotIndex )
+    local slotId    = -1
     if (slotName    ~= nil) and (slotName ~= "") then
         slotId       = getItem_slotId(slotName)
     end
-
-    -- TODO GET SLOTTED ITEM LEVEL FROM QUICK SLOT BAR
-    -- retain check_QSB_BAG_BACKPACK_slotId_to_check (may be nil)
-    local itemLevel  = QSB.Settings.SlotItemTable[bNum].itemLevel
-
-    -- fallback to first found slotId for slotName
-    if(   itemLevel == nil) then itemLevel = get_slotId_itemLevel( slotId ) end
 
     if(slotId == -1) then slotId = GetCollectibleIdFromLink( GetSlotItemLink(slotIndex) ) end
 D_ITEM("+++slotId...f(slotIndex).=["..tostring( slotId    ).."]")
 
     -- SINGLE-POINT-INITIALIZATION
     QSB.Settings.SlotItemTable[bNum].itemName  = slotName
-    QSB.Settings.SlotItemTable[bNum].itemLevel = itemLevel
+    QSB.Settings.SlotItemTable[bNum].itemLevel = get_slotId_itemLevel(slotId)
     QSB.Settings.SlotItemTable[bNum].slotId    = slotId
     QSB.Settings.SlotItemTable[bNum].texture   = texture
     -- SINGLE-POINT-INITIALIZATION
 
-D_ITEM(get_tooltipText(bNum))
+--D_ITEM(get_tooltipText(bNum))
 end --}}}
 -- ITEM INFO
 function get_tooltipText(bNum) --{{{
 
     local  itemName   = QSB.Settings.SlotItemTable[bNum].itemName if(itemName == "") then itemName = nil end
-    local  slotIndex  = Get_slotIndex_of_bNum( bNum )
+    local  slotIndex  = bNum_to_slotIndex( bNum )
 
     -- FROM [BAG_BACKPACK]
     local  count      = GetSlotItemCount( slotIndex ) or 0
@@ -1041,7 +1035,7 @@ function get_tooltipText(bNum) --{{{
         .."\n- texture".. COLORG .. tostring( QSB.Settings.SlotItemTable[bNum].texture ) .."|r"
     end
 
-D_ITEM("get_tooltipText("..tostring(bNum).."):\n"..tt)
+--D_ITEM("get_tooltipText("..tostring(bNum).."):\n"..tt)
     return tt
 
 end --}}}
@@ -1352,7 +1346,7 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
         GreymindQuickSlotBarUI.data = {
             tooltipText
             =  QSB.Name.." "..QSB.Version.." Wolfhunter\n"
-            ..(QSB.AccountWideSettings.SaveAccountWide and "|c0000FF Account-wide Settings"
+            ..(QSB.AccountWideSettings.SaveAccountWide and COLOR1.."Account-wide Settings"
             or                   "|cFF0000"..GetUnitName("player").."|r Character Settings"
             )
 
@@ -1370,7 +1364,7 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
     col = 0
     local current_slotIndex = GetCurrentQuickslot()
     for bNum = 1, QSB.ButtonCountMax do
-        local slotIndex  = Get_slotIndex_of_bNum( bNum )
+        local slotIndex  = bNum_to_slotIndex( bNum )
         -- Buttons first build {{{
         if (QSB.Buttons[bNum] == nil) then
             tostring_bNum = tostring(bNum)
@@ -2237,7 +2231,7 @@ D("|cFF00FF...SelectNextAuto_delayed()")
     SelectNextAuto_pending = false
 
     local slotIndex = GetCurrentQuickslot()
-    local bNum      = Get_bNum_of_slotIndex( slotIndex )
+    local bNum      = slotIndex_to_bNum( slotIndex )
     D("...bNum=["..bNum.."]")
 
     -- select next not empty slot
@@ -2249,14 +2243,14 @@ D("|cFF00FF...SelectNextAuto_delayed()")
         if QSB.Settings.NextPrevWrap then
             bNum = math.fmod(bNum+step_max, step_max) -- cares for negative values
         end
-        slotIndex = Get_slotIndex_of_bNum( bNum )
+        slotIndex = bNum_to_slotIndex( bNum )
     until not IsEmptySlot(slotIndex) or (step > step_max)
 
     D("...bNum=["..bNum.."] slotIndex=["..tostring(slotIndex).."]")
 
     if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("SelectNextAuto")
-        SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+        SetCurrentQuickslot( bNum_to_slotIndex(bNum) )
     else
         PlaySoundAlert("SelectNextAuto")
     end
@@ -2265,7 +2259,7 @@ end --}}}
 function QSB_NextItem() --{{{
 D("NextItem()")
     local slotIndex = GetCurrentQuickslot()
-    local bNum      = Get_bNum_of_slotIndex( slotIndex )
+    local bNum      = slotIndex_to_bNum( slotIndex )
 
     -- select next not empty slot
     local step = 0
@@ -2276,12 +2270,12 @@ D("NextItem()")
         if QSB.Settings.NextPrevWrap then
             bNum = math.fmod(bNum+step_max, step_max) -- cares for negative values
         end
-        slotIndex = Get_slotIndex_of_bNum( bNum )
+        slotIndex = bNum_to_slotIndex( bNum )
     until not IsEmptySlot(slotIndex) or (step > step_max)
 
     if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("NextItem")
-        SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+        SetCurrentQuickslot( bNum_to_slotIndex(bNum) )
     else
         PlaySoundAlert("NextItem")
     end
@@ -2289,7 +2283,7 @@ end --}}}
 function QSB_PreviousItem() --{{{
 D("PreviousItem()")
     local slotIndex = GetCurrentQuickslot()
-    local bNum      = Get_bNum_of_slotIndex( slotIndex )
+    local bNum      = slotIndex_to_bNum( slotIndex )
 
     -- select previous not empty slot
     local step = 0
@@ -2300,12 +2294,12 @@ D("PreviousItem()")
         if QSB.Settings.NextPrevWrap then
             bNum = math.fmod(bNum+step_max, step_max) -- cares for negative values
         end
-        slotIndex = Get_slotIndex_of_bNum( bNum )
+        slotIndex = bNum_to_slotIndex( bNum )
     until not IsEmptySlot(slotIndex) or (step > step_max)
 
     if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("PreviousItem")
-        SetCurrentQuickslot( Get_slotIndex_of_bNum(bNum) )
+        SetCurrentQuickslot( bNum_to_slotIndex(bNum) )
     else
         PlaySoundAlert("NextItem")
     end
@@ -2373,23 +2367,24 @@ D("QSB_ClearChat()")
 end --}}}
 
 -- UTILITIES
-function Get_bNum_of_slotIndex(slotIndex) --{{{
+function slotIndex_to_bNum(slotIndex) --{{{
     for bNum = 1, #WHEEL_LOOKUPTABLE do
         if WHEEL_LOOKUPTABLE[bNum] == slotIndex then
             return bNum
         end
     end
+
     return 0
 end
-
-function Get_slotIndex_of_bNum(bNum)
+--}}}
+function bNum_to_slotIndex(bNum) --{{{
     return  WHEEL_LOOKUPTABLE[ bNum ]
 end
 --}}}
 function SelectButton(bNum) --{{{
 D("SelectButton(bNum=["..tostring(bNum).."])")
 
-    local slotIndex = Get_slotIndex_of_bNum( bNum )
+    local slotIndex = bNum_to_slotIndex( bNum )
 
     if IsEmptySlot(slotIndex) then
         PlaySoundAlert("SelectButton")
@@ -2433,6 +2428,12 @@ function D_ITEM(msg) --{{{
     end
 end
 --}}}
+function D_EQUIP(msg) --{{{
+    if DEBUG_ITEM or DEBUG_EQUIP or DEBUG then
+        d(msg)
+    end
+end
+--}}}
 
 -- EVENTS (public handlers)
 function Initialize(eventCode, addOnName) --{{{
@@ -2454,7 +2455,7 @@ D("Initialize()")
 
 end --}}}
 function Load_ZO_SavedVars(value) --{{{
-d("|cFFFFFF Load_ZO_SavedVars("..tostring(value)..")")
+--d("|cFFFFFF Load_ZO_SavedVars("..tostring(value)..")")
 
     local changed = (value ~= nil) and QSB_Settings_Changed()
 
@@ -2478,7 +2479,7 @@ d("|cFFFFFF Load_ZO_SavedVars("..tostring(value)..")")
     --}}}
     -- [QSB.Settings] .. f(AccountWide.SaveAccountWide) {{{
     if(QSB.AccountWideSettings.SaveAccountWide ) then
-d("LOADING "..COLOR1.." Account-wide |r Settings")
+d("LOADING "..COLOR1.."Account-wide|r Settings")
 
         QSB.Settings = ZO_SavedVars:NewAccountWide(
         "GreymindQuickSlotBarSettings"
@@ -3440,7 +3441,7 @@ D_ITEM("ACTION_SLOT_UPDATED: slotIndex=["..slotIndex.."]")
 
         -- Quick Slot Bar item added or removed
         -- Or weapons swapped QSB.Settings.SwapBackgroundColors
-        local bNum = Get_bNum_of_slotIndex( slotIndex )
+        local bNum = slotIndex_to_bNum( slotIndex )
         if(bNum == 0) then return end
 
         if(QSB_BAG_BACKPACK_UPDATE_mutex) then
@@ -3484,7 +3485,7 @@ D_ITEM(COLORG.."ITEM REMOVED")
         else
             local itemName  = get_slotId_itemName ( slotId )
             local itemLevel = get_slotId_itemLevel( slotId )
-D_ITEM(COLOR1.."ITEM UPDATED: itemName=["..tostring(itemName).."] (level "..tostring(itemLevel).."]")
+D_ITEM(COLOR1.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tostring(itemName).."] (level "..tostring(itemLevel).."]")
 
             QSB_BAG_BACKPACK_UPDATE_slotId    = slotId
             QSB_BAG_BACKPACK_UPDATE_itemLevel = itemLevel
@@ -3758,8 +3759,9 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-  d("GQSB |c00FFFF" ..QSB.Version.. " (190111) |r Account-wide or Character Settings")
+  d("GQSB |c00FFFF" ..QSB.Version.. " (190205) |r Account-wide or Character Settings")
   d("GQSB |c888888["..arg.."] |cAAAAAA [gqsb -h for help]")
+  d("GQSB |cDD00FF /gqsb debug_equip to track P1..P5 issue")
 --{{{
 --d("GQSB |c00FFFF" ..QSB.Version.. " (181113) |r Murkmire *collectible *crafting *tooltips")
 --d("GQSB |c00FFFF" ..QSB.Version.. " (181027) |r Update 20 (4.2.5): Murkmire (API 100025)")
@@ -3821,8 +3823,9 @@ function OnSlashCommand(arg)
         d(QSB_SLASH_COMMAND..     " block .. to block Bar Visiblity (overrides force)")
         d(QSB_SLASH_COMMAND..   " account .. to toggle between "..GetUnitName("player").." and Account-wide Settings")
         if DEBUG_ITEM then
-            d(QSB_SLASH_COMMAND.. '    _G["ZO_ChatWindowTemplate1Buffer"]')
-            d(QSB_SLASH_COMMAND.. 'lua _G["ZO_ChatWindowTemplate1Buffer"]:Clear()')
+            d(QSB_SLASH_COMMAND.. '     _G["ZO_ChatWindowTemplate1Buffer"]')
+            d(QSB_SLASH_COMMAND.. ' lua _G["ZO_ChatWindowTemplate1Buffer"]:Clear()')
+            d(QSB_SLASH_COMMAND.. ' lua _G["SLASH_COMMANDS"]')
         end
 
       --d(QSB_SLASH_COMMAND.. " debug")
@@ -3927,6 +3930,7 @@ function OnSlashCommand(arg)
     -- DEBUG DEBUG_EVENT DEBUG_ITEM clear -- {{{
     elseif(arg == "debug"       ) then DEBUG       = not DEBUG      ; d("...DEBUG......=[" ..tostring( DEBUG       ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_event" ) then DEBUG_EVENT = not DEBUG_EVENT; d("...DEBUG_EVENT=[" ..tostring( DEBUG_EVENT ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_equip" ) then DEBUG_EQUIP = not DEBUG_EQUIP; d("...DEBUG_EQUIP=[" ..tostring( DEBUG_EQUIP ).. "]"); ui_may_have_changed = true;
     elseif(arg == "debug_item"  ) then DEBUG_ITEM  = not DEBUG_ITEM ; d("...DEBUG_ITEM.=[" ..tostring( DEBUG_ITEM  ).. "]"); ui_may_have_changed = true;
 --      get_collId_itemName(0)
     --}}}
