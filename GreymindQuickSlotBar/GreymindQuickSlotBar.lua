@@ -4,8 +4,9 @@
 -- CHANGELOG --{{{
 --[[
 v2.4.5 {{{
-- [color="aaffaa"]190205[/color]
+- [color="aaffaa"]190207[/color]
 * New saved settings option: [color="ffffaa"]Account-wide[/color] or [color="aaaaff"]Character[/color] Settings
+* User Interface showing a [color="ff0000"]BIG RED X[/color] when unlocked .. instead of hiding slotted items.
 
 }}}
 v2.4.4 {{{
@@ -322,6 +323,12 @@ local BASEBACKGROUNDTEXTURE   = "ESOUI/art/actionbar/abilityframe64_empty.dds"
 local BORDERTEXTURE           = "ESOUI/art/actionbar/abilityframe64_up.dds"
 local VISUALCUEBORDERTEXTURE  = "GreymindQuickSlotBar/BorderAlt.dds"
 
+-- TOOLTIP
+local UNLOCKED_TT
+= "UI currently |cFF0000 UNLOCKED for layout|r\n"
+.."...that's why you can't see any icons...\n"
+.."Click |cFF0000 RED PIN |r to |c00FF00 Lock on screen"
+
 -- KEYS
 local MOD_NONE                = "No Modifier"
 local MOD_SHIFT               = "Shift"
@@ -434,7 +441,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.5", -- 190205 previous: 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.5", -- 190207 previous: 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -579,6 +586,10 @@ local OnMoveStart
 local OnMoveStop
 local OnResizeStart
 local OnResizeStop
+
+local OnMouseNotClicked
+local OnMouseDown
+local OnMouseClicked
 
 local OnSlashCommand
 local PlaySoundAlert
@@ -1352,11 +1363,7 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
 
         }
     else
-        local tt
-        = "UI currently |cFF0000 UNLOCKED for layout|r\n"
-        .."...that's why you can't see any icons...\n"
-        .."Click |cFF0000 RED PIN |r to |c00FF00 Lock on screen"
-        GreymindQuickSlotBarUI.data = {tooltipText = tt}
+        GreymindQuickSlotBarUI.data = {tooltipText = UNLOCKED_TT}
     end
 
     local x, y, hAlign, vAlign, row, col, color, alpha
@@ -1629,13 +1636,28 @@ end
                 overground      : SetHidden(true)
             end
 
-            -- unlocked layout
+            -- UNLOCKED LAYOUT
             if not QSB.Settings.LockUI then
-                background:SetAlpha(1) -- so we can see what we are doing
-                button:SetHidden(true)
-            end
 
-            button.data = {tooltipText = get_tooltipText(bNum)}
+                visualCueBorder:SetColor(COLORALERT.R, COLORALERT.G, COLORALERT.B)
+
+                background:SetAlpha(1) -- so we can see what we are doing
+                button    :SetAlpha(1)
+
+                button:SetNormalFontColor(1, 0, 0, 1)
+                button:SetFont("EsoUI/Common/Fonts/univers57.otf|"..tostring(math.floor(0.8 * QSB.Settings.ButtonSize)))
+                button:SetText("X")
+                button.data = {tooltipText = UNLOCKED_TT}
+
+                button:SetMouseEnabled(false) -- UI move and resize through
+
+            -- LOCKED LAYOUT
+            else
+                button:SetMouseEnabled( true) -- button click
+
+                button:SetNormalFontColor(1, 1, 1, 1)
+                button.data = {tooltipText = get_tooltipText(bNum)}
+            end
 
             --}}}
             -- background f(GetActiveWeaponPairInfo) -- 150329 {{{
@@ -2383,6 +2405,10 @@ end
 --}}}
 function SelectButton(bNum) --{{{
 D("SelectButton(bNum=["..tostring(bNum).."])")
+
+    if not QSB.Settings.LockUI then
+        QSB.Settings.LockUI = not QSB.Settings.LockUI
+    end
 
     local slotIndex = bNum_to_slotIndex( bNum )
 
@@ -3505,16 +3531,16 @@ D_ITEM(COLOR1.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tostr
     , function(...)
         Reticle_isHidden = select(2,...)
         D_EVENT("RETICLE_HIDDEN_UPDATE: Reticle_isHidden="..tostring(Reticle_isHidden))
+
+        -- always show when unlocked
+        if not QSB.Settings.LockUI then
+            return
+        end
+
         ZO_OptionsWindow:SetHidden(true) -- may have been opened by handle
                QSB.Panel:SetHidden(true)
 
         if not QSB.Settings then return end
-
-        -- always show when unlocked
-        if not QSB.Settings.LockUI then
-            Show()
-            return
-        end
 
         -- done with UI settings, get back to normal opacity
         if QSB.SomeSlotItemChanged then
@@ -3676,27 +3702,65 @@ d("|cFF00FF EVENT_ACTION_LAYER_POPPED: |cFF0000 arg1=[".. tostring(arg1).."] |c0
     D(string.format("Version %s loaded", QSB.Version))
 
 end --}}}
+
+local MouseDown
+
 function OnMoveStart() --{{{
 D("OnMoveStart")
-    QSB.Moving = true
+    QSB.Moving   = true
+    OnMouseDown()
 end --}}}
 function OnMoveStop() --{{{
-D("OnMoveStop")
+D("OnMoveStop: MouseDown=["..tostring(MouseDown).."]")
     QSB.Moving = false
 
-    UIWindowChanged()
+    if (MouseDown) then
+        OnMouseClicked()
+    else
+        UIWindowChanged()
+    end
     --Refresh()
 end --}}}
+
 function OnResizeStart() --{{{
 D("OnResizeStart")
     QSB.Resizing = true
+    OnMouseDown()
 end --}}}
 function OnResizeStop() --{{{
-D("OnResizeStop")
+D("OnResizeStop: MouseDown=["..tostring(MouseDown).."]")
     QSB.Resizing = false
 
-    UIWindowChanged()
-    Refresh()
+    if (MouseDown) then
+        OnMouseClicked()
+    else
+        UIWindowChanged()
+        Refresh()
+    end
+end --}}}
+
+function OnMouseDown() --{{{
+D("OnMouseDown")
+
+    MouseDown = true
+    zo_callLater(OnMouseNotClicked, 250)
+
+end --}}}
+function OnMouseNotClicked() --{{{
+D("OnMouseNotClicked")
+
+    MouseDown = false
+
+end --}}}
+function OnMouseClicked() --{{{
+D("OnMouseClicked: MouseDown=["..tostring(MouseDown).."]")
+
+    if not QSB.Settings.LockUI then
+        QSB.Settings.LockUI = true
+        Refresh()
+        Show()
+    end
+
 end --}}}
 
 -- LOCAL
@@ -3759,9 +3823,9 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-  d("GQSB |c00FFFF" ..QSB.Version.. " (190205) |r Account-wide or Character Settings")
+  d("GQSB |c00FFFF" ..QSB.Version.. " (190207) |r Account-wide or Character Settings")
   d("GQSB |c888888["..arg.."] |cAAAAAA [gqsb -h for help]")
-  d("GQSB |cDD00FF /gqsb debug_equip to track P1..P5 issue")
+--d("GQSB |cDD00FF /gqsb debug_equip to track P1..P5 issue")
 --{{{
 --d("GQSB |c00FFFF" ..QSB.Version.. " (181113) |r Murkmire *collectible *crafting *tooltips")
 --d("GQSB |c00FFFF" ..QSB.Version.. " (181027) |r Update 20 (4.2.5): Murkmire (API 100025)")
