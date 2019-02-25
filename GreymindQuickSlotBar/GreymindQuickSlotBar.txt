@@ -1,5 +1,5 @@
 ## Title: |c4477FFGreymind|r Quick Slot Bar
-## APIVersion: 100025
+## APIVersion: 100026
 ## SavedVariables: GreymindQuickSlotBarSettings
 ## Author:  ivanwfr
 ## Feature Author: Ivan Wellesz
