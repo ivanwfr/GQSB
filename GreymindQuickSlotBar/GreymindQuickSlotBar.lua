@@ -4,7 +4,8 @@
 -- CHANGELOG --{{{
 --[[
 v2.4.5 {{{
-- [color="aaffaa"]190207[/color]
+- [color="aaffaa"]190226[/color]
+- Checked with Update 21 (4.3.5): [color="00ff00"]Wrathstone[/color] - APIVersion: 100026
 * New saved settings option: [color="ffffaa"]Account-wide[/color] or [color="aaaaff"]Character[/color] Settings
 * User Interface showing a [color="ff0000"]BIG RED X[/color] when unlocked .. instead of hiding slotted items.
 
@@ -282,8 +283,7 @@ local DEBUG_EVENT = false
 -- CONSTANTS --{{{
 
 -- DELAYS
-local ZO_CALLLATER_DELAY_1    =  10 -- Refresh Show Hide
-local ZO_CALLLATER_DELAY_S    =  10 -- PlaySound
+local ZO_CALLLATER_DELAY_1    =  10 -- Refresh Show Hidelocal ZO_CALLLATER_DELAY_S    =  10 -- PlaySound
 local ZO_CALLLATER_DELAY_N    = 200 -- NextAuto
 
 -- COLORS
@@ -441,7 +441,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.5", -- 190207 previous: 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.5", -- 190226 previous: 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -3059,6 +3059,68 @@ D("BuildSettingsMenu()")
     --}}}
 
     --LAM:AddHeader(panel, "QSB_Sep5", "")
+    -- Preset Selection (Slider) --{{{
+
+    control = {
+        type        = "slider",
+        reference   = "QSB_Presets",
+        name        = "Preset Selection",
+        tooltip     = "Current settings will be saved in current preset before each change",
+        min         = 1,
+        max         = 5,
+        step        = 1,
+        getFunc     = function()
+            local value = 1
+            for k, v in pairs(PRESETNAMES) do
+                if string.match(v, QSB.Settings.PresetName) then
+                    value = k
+                    break
+                end
+            end
+            D("getFunc |cFF0000.QSB_Presets|r: return "..value)
+            return value
+        end,
+        setFunc     = function(value)
+            value = tostring(value)
+            D("setFunc |cFF0000.QSB_Presets|r: value="..value)
+            for k, v in pairs(PRESETNAMES) do
+                if string.match(v, tostring(value)) then
+                    value = v
+                    break
+                end
+            end
+            SelectPreset(value)
+            loadItemSlots();
+            Refresh();
+            Show()
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- Auto-Clone previous-to-empty preset (Checkbox) --{{{
+
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_CloneCurrentToEmtpyPreset",
+        name        = "Auto-Clone previous-to-empty preset",
+        tooltip     = "Whether to copy the CURRENT PRESET LAYOUT AND CONTENT\n"
+        .."|cFF0000When selecting an EMPTY PRESET",
+        getFunc     = function()
+            return QSB.CloneCurrentToEmtpyPreset
+        end,
+        setFunc     = function(value)
+            QSB.CloneCurrentToEmtpyPreset = value
+            Refresh()
+            Show()
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+
     local KW_Sound = COLOR5.."Sound:|r "
     -- SoundAlert (Dropdown) --{{{
 
@@ -3159,53 +3221,32 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
 
-    --LAM:AddHeader(panel, "QSB_Sep6", "")
-    -- Presets (Slider) --{{{
+    -- Disable Default Quick Slot (Checkbox) --{{{
 
     control = {
-        type        = "slider",
-        reference   = "QSB_Presets",
-        name        = "Preset Selection",
-        tooltip     = "Current settings will be saved in current preset before each change",
-        min         = 1,
-        max         = 5,
-        step        = 1,
+        type        = "checkbox",
+        reference   = "QSB_DisableQuickSlotActionButton",
+        name        = "Disable Default Quick Slot Button",
+        tooltip     = "Whether to disable the game's default quick slot action button.\n"
+        ..COLOR4.."When OFF, no hiding or showing this button will interfere.",
         getFunc     = function()
-            local value = 1
-            for k, v in pairs(PRESETNAMES) do
-                if string.match(v, QSB.Settings.PresetName) then
-                    value = k
-                    break
-                end
-            end
-            D("getFunc |cFF0000.QSB_Presets|r: return "..value)
-            return value
+            return QSB.Settings.GameActionButtonHide;
         end,
         setFunc     = function(value)
-            value = tostring(value)
-            D("setFunc |cFF0000.QSB_Presets|r: value="..value)
-            for k, v in pairs(PRESETNAMES) do
-                if string.match(v, tostring(value)) then
-                    value = v
-                    break
-                end
-            end
-            SelectPreset(value)
-            loadItemSlots();
-            Refresh();
-            Show()
+            QSB.Settings.GameActionButtonHide = value;
+            GameActionButtonHideHandler(true,"Settings.control")    -- Apply new user choice
         end,
-        width       = "full",
+        width       = "half",
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
-    -- Keybindings modifiers --{{{
+    -- Prepare Key modifiers --{{{
 
     control = {
         type        = "button",
         reference   = "QSB_ModBingingsButton",
-        name        = "Prepare Key Modifiers",
+        name        = COLOR3.."Prepare Key Modifiers",
         tooltip     = "This is a 2 steps operation:\n"
         .."\n"
         .."1. This button will PREPARE this addon's  "..COLOR1.."EMPTY KEYBINDINGS|r"
@@ -3221,7 +3262,7 @@ D("BuildSettingsMenu()")
             ApplyKeyBindingsModifier()
             ApplyKeyBindingsModifier_SWAPS()
         end,
-        width       = "full",
+        width       = "half",
         warning     = COLOR1.."Brace yourself!|r This is not a friendly procedure, but it works!\n"
         .."\n"
         .."First you will have to click on "..COLOR2.."Not Bound|r keys"
@@ -3235,27 +3276,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
 
-    -- GameActionButtonHide (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_DisableQuickSlotActionButton",
-        name        = "Disable Default Quick Slot",
-        tooltip     = "Whether to disable the game's default quick slot action button.\n"
-        ..COLOR4.."When OFF, no hiding or showing this button will interfere.",
-        getFunc     = function()
-            return QSB.Settings.GameActionButtonHide;
-        end,
-        setFunc     = function(value)
-            QSB.Settings.GameActionButtonHide = value;
-            GameActionButtonHideHandler(true,"Settings.control")    -- Apply new user choice
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- NextAuto (Checkbox) --{{{
+    -- Auto-select next not empty slot (Checkbox) --{{{
 
     control = {
         type        = "checkbox",
@@ -3277,7 +3298,7 @@ D("BuildSettingsMenu()")
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
-    -- NextPrevWrap (Checkbox) --{{{
+    -- Next <-o-> Previous Wrap (Checkbox) --{{{
 
     control = {
         type        = "checkbox",
@@ -3299,52 +3320,12 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
 
-    -- ShowNumbers (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_ShowNumbers",
-        name        = "Show Numbers On Slots",
-        tooltip     = "Whether to show buttons number over the images in Quick Slot Bar",
-        getFunc     = function()
-            return QSB.Settings.SlotItem.ShowNumbers
-        end,
-        setFunc     = function(value)
-            QSB.Settings.SlotItem.ShowNumbers = value
-            Refresh()
-            Show()
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- ShowBackground (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_ShowBackground",
-        name        = "Show Quick Bar Background",
-        tooltip     = "Whether to show Quick Slot Bar Background",
-        getFunc     = function()
-            return QSB.Settings.ShowBackground
-        end,
-        setFunc     = function(value)
-            QSB.Settings.ShowBackground = value
-            Refresh()
-            Show()
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- SlotItem.HideSlotBackground (Checkbox) --{{{
+    -- Hide buttons background (Checkbox) --{{{
 
     control = {
         type        = "checkbox",
         reference   = "QSB_SlotItem_ShowBackground",
-        name        = "Hide buttons background",
+        name        = "Hide "..COLOR1.."buttons|r background",
         tooltip     = "Controls buttons background texture",
         getFunc     = function()
             return QSB.Settings.SlotItem.HideSlotBackground
@@ -3359,14 +3340,14 @@ D("BuildSettingsMenu()")
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
-    -- SwapBackgroundColors (Checkbox) --{{{
+    -- Weapon swap background colors (Checkbox) --{{{
 
     control = {
         type        = "checkbox",
         reference   = "QSB_SwapBackgroundColors",
-        name        = "Weapon Swap Colors",
-        tooltip     = "Whether to change buttons background colors on Weapon Swap\n"
-        .."|cFF0000when Hide buttons background is OFF",
+        name        = "Weapon swap |c6666AA background |c66AA66 color",
+        tooltip     = "Whether to change frame background colors on Weapon Swap\n"
+        .."|cAA0000When not hiding buttons background",
         getFunc     = function()
             return QSB.Settings.SwapBackgroundColors
         end,
@@ -3379,20 +3360,20 @@ D("BuildSettingsMenu()")
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- CloneCurrentToEmtpyPreset (Checkbox) --{{{
+     --}}}
+
+    -- Show frame background (Checkbox) --{{{
 
     control = {
         type        = "checkbox",
-        reference   = "QSB_CloneCurrentToEmtpyPreset",
-        name        = "Auto-Clone previous-to-empty preset",
-        tooltip     = "Whether to copy the CURRENT PRESET LAYOUT AND CONTENT\n"
-        .."|cFF0000When selecting an EMPTY PRESET",
+        reference   = "QSB_ShowBackground",
+        name        = "Show frame background",
+        tooltip     = "Whether to show frame background",
         getFunc     = function()
-            return QSB.CloneCurrentToEmtpyPreset
+            return QSB.Settings.ShowBackground
         end,
         setFunc     = function(value)
-            QSB.CloneCurrentToEmtpyPreset = value
+            QSB.Settings.ShowBackground = value
             Refresh()
             Show()
         end,
@@ -3401,6 +3382,28 @@ D("BuildSettingsMenu()")
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
+    -- Show slot number (Checkbox) --{{{
+
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_ShowNumbers",
+        name        = "Show slot number",
+        tooltip     = "Whether to show slot number over the icons\n"
+        ..COLOR4.."#1 at ring-top .. clockwise .. to last #8",
+        getFunc     = function()
+            return QSB.Settings.SlotItem.ShowNumbers
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SlotItem.ShowNumbers = value
+            Refresh()
+            Show()
+        end,
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+
     -- Reset (Button) --{{{
 
 --[[
@@ -3443,7 +3446,7 @@ D("Rebuild_LibAddonMenu()")
     if(not Rebuild_LibAddonMenu_pending) then
         Rebuild_LibAddonMenu_pending = true
         LAM:OpenToPanel( nil )
-        zo_callLater(Rebuild_LibAddonMenu_delayed, ZO_CALLLATER_DELAY_1)
+        zo_callLater(Rebuild_LibAddonMenu_delayed, ZO_CALLLATER_DELAY_LIB)
     end
 end
 --}}}
@@ -3823,10 +3826,14 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-  d("GQSB |c00FFFF" ..QSB.Version.. " (190207) |r Account-wide or Character Settings")
-  d("GQSB |c888888["..arg.."] |cAAAAAA [gqsb -h for help]")
+    d("GQSB|c00FFFF "..QSB.Version.." (190226)|r\n"
+    .."GQSB|c00FFFF Checked with Update 21 (4.3.5): Wrathstone (API 100026)|r\n"
+    .."GQSB|c00FFFF New Settings Option: Account-wide or Character Settings\n"
+    .."GQSB|c888888 "..QSB_SLASH_COMMAND.." -h for help|r\n"
+    ..QSB_SLASH_COMMAND.." "..arg)
 --d("GQSB |cDD00FF /gqsb debug_equip to track P1..P5 issue")
 --{{{
+--d("GQSB |c00FFFF" ..QSB.Version.. " (190226) |r Account-wide or Character Settings")
 --d("GQSB |c00FFFF" ..QSB.Version.. " (181113) |r Murkmire *collectible *crafting *tooltips")
 --d("GQSB |c00FFFF" ..QSB.Version.. " (181027) |r Update 20 (4.2.5): Murkmire (API 100025)")
 --d("GQSB |c888888"..arg.."|c00FFFF" ..QSB.Version.. " (181023) |r Update 20 (4.2.5): Murkmire (API 100025)")
@@ -3865,7 +3872,7 @@ function OnSlashCommand(arg)
     -- help --{{{
     if (arg == "")
     then
-        d("Current Settings: "
+        d("GQSB Current Settings: "
         ..(QSB.AccountWideSettings.SaveAccountWide and "|c0000FF Account-wide"
         or                   "|cFF0000"..GetUnitName("player").."|r Character"))
 
