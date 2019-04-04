@@ -4,10 +4,11 @@
 -- CHANGELOG --{{{
 --[[
 v2.4.6 {{{
-- [color="aaffaa"]190304[/color]
+- [color="aaffaa"]190404[/color]
 - Checked with Update 21 (4.3.5): [color="00ff00"]Wrathstone[/color] - APIVersion: 100026.
 - [color="ffffee"]"Blink Changes"[/color] display duration set to 500ms (up from 10ms).
 - [color="ffffee"]Added PRESET SWAP COOLDOWN[/color] .. trying to prevent SPAM WARNING MESSAGES.
+* Crafting Station: UI (effectively!) freezed while crafting or showing Skills window.
 
 }}}
 v2.4.5 {{{
@@ -282,19 +283,21 @@ v2.2.5 {{{
 
 --]]
 --}}}
-local DEBUG       = false
-local DEBUG_ITEM  = false
-local DEBUG_EQUIP = false
-local DEBUG_EVENT = false
-local DEBUG_TASKS = false
+local DEBUG         = false
+local DEBUG_ITEM    = false
+local DEBUG_EQUIP   = false
+local DEBUG_EVENT   = false
+local DEBUG_TASKS   = false
+local DEBUG_STATION = false
 -- LOCAL
 -- CONSTANTS --{{{
 
 -- DELAYS
 local ZO_CALLLATER_DELAY_HIDE    =  500 -- Hide
+local ZO_CALLLATER_DELAY_SHOW    =   10 -- Show
+local ZO_CALLLATER_DELAY_CHECK   =  500 -- Check .. account for some delay between RETICLE_HIDDEN_UPDATE and windows reported as closed
 local ZO_CALLLATER_DELAY_NEXT    =  200 -- NextAuto
 local ZO_CALLLATER_DELAY_REFRESH =   10 -- Refresh
-local ZO_CALLLATER_DELAY_SHOW    =   10 -- Show
 local ZO_CALLLATER_DELAY_SOUND   =   10 -- PlaySound
 local ZO_CALLLATER_DELAY_LIB     =   10 -- PlaySound
 local ZO_CALLLATER_DELAY_TASKS   =   20 -- clear_or_equip
@@ -473,7 +476,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.6", -- 190304 previous: 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.6", -- 190404 previous: 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -598,7 +601,7 @@ local GetSlotItemKeyName
 local slotIndex_to_bNum
 local bNum_to_slotIndex
 local Hide
-local Hide_delayed
+local Hide_handler
 local Hide_pending = false
 local HideUIHandles
 
@@ -662,7 +665,7 @@ local  tasks_handler
 local SetUIHandlesVisibility
 local Settings_Locked
 local Show
-local Show_delayed
+local Show_handler
 local Show_pending = false
 local ShowUIHandles
 local UIWindowChanged
@@ -833,11 +836,11 @@ D_EQUIP(COLOR_6.."loadItemSlots: "..COLOR_8.." SlotItemTable is EMPTY |r")
             slotIndex = bNum_to_slotIndex( bNum      )
             slotName  = GetSlotName      ( slotIndex )
             if(slotName ~= "") then
-if(DEBUG_TASKS) then d(COLOR_8.."....CLEAR EMPTY-SLOT: slotName=["..tostring(slotName).."]") end
+if(DEBUG_TASKS) then d(COLOR_6.."....CLEAR UNUSED ["..tostring(slotName).."]") end
 
-                tasks_loaded[#tasks_loaded + 1] = { clear_bNum , bNum , "EMPTY-SLOT"}
+                tasks_loaded[#tasks_loaded + 1] = { clear_bNum , bNum , "CLEAR UNUSED" }
             else
-if(DEBUG_TASKS) then d(COLOR_8.."....SKIP EMPTY-SLOT") end
+if(DEBUG_TASKS) then d(COLOR_8.."....SKIP  EMPTY") end
 
             end
 
@@ -845,9 +848,9 @@ if(DEBUG_TASKS) then d(COLOR_8.."....SKIP EMPTY-SLOT") end
             slotIndex = bNum_to_slotIndex( bNum      )
             slotName  = GetSlotName      ( slotIndex )
             if(slotName ~= itemName) then
-if(DEBUG_TASKS) then d(COLOR_8.."...filled-slot: slotName=["..tostring(slotName).."] ~= itemName=["..tostring(itemName).."]") end
+if(DEBUG_TASKS) then d(COLOR_5.."....SET  CHANGED ["..tostring(slotName).."] ~= ["..tostring(itemName).."]") end
 
-                tasks_loaded[#tasks_loaded + 1] = { clear_bNum , bNum , "SLOT-ITEM-CHANGED"}
+                tasks_loaded[#tasks_loaded + 1] = { clear_bNum , bNum , "SET CHANGED"}
             end
         end
     end
@@ -872,7 +875,7 @@ D_ITEM("...slotName=["..slotName.."]")
 
             if(slotName == itemName) then
 D_ITEM(".....SAME ITEM NAME")
-if(DEBUG_TASKS) then d(COLOR_8..".....SAME ITEM NAME ["..tostring(slotName).."]") end
+if(DEBUG_TASKS) then d(COLOR_8.."...SAME ITEM NAME ["..tostring(slotName).."]") end
 
             else
                 if(slotName ~= "") then
@@ -884,7 +887,7 @@ D_ITEM("....slotId=["..slotId.."]")
 
                 if((slotId ~= -1) and (slotId == QSB.Settings.SlotItemTable[bNum].slotId)) then
 D_ITEM(".....SAME ITEM ID")
-if(DEBUG_TASKS) then d(COLOR_8..".....SAME ITEM ID ["..tostring(slotId).."]") end
+if(DEBUG_TASKS) then d(COLOR_8.."...SAME ITEM ID   ["..tostring(slotId).."]") end
 
                     if DEBUG_EQUIP then
                         msg  = msg.."\n"..COLOR_6..".UNCHANGED ["..COLOR_6..bNum.."=="..slotIndex.."|r] ID["..tostring(slotId).."] ["..COLOR_6..tostring(itemName).."|r] .. slotId=["..tostring(slotId).."]"
@@ -892,7 +895,7 @@ if(DEBUG_TASKS) then d(COLOR_8..".....SAME ITEM ID ["..tostring(slotId).."]") en
                 else
                     slotId   = QSB.Settings.SlotItemTable[bNum].slotId
 D_ITEM(".....EQUIP ITEM ID")
-if(DEBUG_TASKS) then d(COLOR_8..".....EQUIP ITEM ID ["..tostring(slotId).."]") end
+if(DEBUG_TASKS) then d(COLOR_7.."...EQUIP ITEM ID  ["..tostring(slotId).."]") end
 
                     if DEBUG_EQUIP then
                         msg  = msg.."\n"..COLOR_3..".EQUIPMENT ["..COLOR_6..bNum.."=="..slotIndex.."|r] ID["..tostring(slotId).."] ["..COLOR_6..tostring(itemName).."|r] .. slotId=["..tostring(slotId).."]"
@@ -913,10 +916,10 @@ if(msg ~= "") then D_EQUIP(msg) end
     -- EQUIP TASK COOLDOWN {{{
     if(#tasks_loaded > 0) then
         if not tasks_cooldown_inprogress then
-if(DEBUG_TASKS) then d(COLOR_C.."tasks_handler: "..tostring(#tasks_loaded).." tasks_loaded .. NOT ON COOLDOWN") end
+if(DEBUG_TASKS) then d(COLOR_C.."TASK #"..tostring(#tasks_loaded).." .. NOT ON COOLDOWN") end
             tasks_post(ZO_CALLLATER_DELAY_TASKS)
         else
-if(DEBUG_TASKS) then d(COLOR_M.."tasks_handler: "..tostring(#tasks_loaded).." tasks_loaded .. ON COOLDOWN .. POSTPONING") end
+if(DEBUG_TASKS) then d(COLOR_M.."TASK #"..tostring(#tasks_loaded).." .. ON COOLDOWN .. POSTPONING") end
             tasks_cooldown_begin()
             return
         end
@@ -969,12 +972,12 @@ end --}}}
 function tasks_cooldown_begin() --{{{
     -- NO STACKING COOLDOWN {{{
     if tasks_cooldown_inprogress then
-if(DEBUG_TASKS) then d(COLOR_8.."TASKS COOLDOWN ALREADY IN PROGRESS") end
+if(DEBUG_TASKS) then d(COLOR_8.."TASK .. COOLDOWN ALREADY IN PROGRESS") end
 
         return
     end
     --}}}
-if(DEBUG_TASKS) then d(COLOR_7.."TASKS COOLDOWN BEGIN") end
+if(DEBUG_TASKS) then d(COLOR_7.."TASK .. COOLDOWN BEGIN") end
     tasks_cooldown_inprogress = true
 
     zo_callLater(tasks_cooldown_end, ZO_COOL_DOWN_DELAY_TASKS)
@@ -983,19 +986,19 @@ function tasks_cooldown_end() --{{{
     tasks_cooldown_inprogress = false
 
     if(#tasks_loaded > 0) then
-if(DEBUG_TASKS) then d(COLOR_7.."TASKS COOLDOWN END .. "..COLOR_4.."POSTING "..#tasks_loaded.." LOADED TASKS") end
+if(DEBUG_TASKS) then d(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_4.."POSTING "..#tasks_loaded.." LOADED TASKS") end
 
         tasks_post(ZO_CALLLATER_DELAY_TASKS)
     else
-if(DEBUG_TASKS) then d(COLOR_7.."TASKS COOLDOWN END .. "..COLOR_8.."NO MORE LOADED TASKS") end
+if(DEBUG_TASKS) then d(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_8.."NO MORE LOADED TASKS") end
 
-        Refresh();
-        Show();
+        Refresh()
+        Show()
     end
 
 end --}}}
 function tasks_post(delay) --{{{
-if(DEBUG_TASKS) then d(COLOR_C.."tasks_post("..tostring(delay).."): "..tostring(#tasks_loaded).." tasks_loaded") end
+if(DEBUG_TASKS) then d(COLOR_C.."TASK #"..tostring(#tasks_loaded).." .. POST DELAY("..tostring(delay)..") .. "..#tasks_loaded.." LOADED TASKS") end
     tasks_cooldown_begin()
     tasks_posted = DeepCopy(tasks_loaded)
     tasks_loaded = {}
@@ -1004,7 +1007,7 @@ end --}}}
 function tasks_handler() --{{{
     -- fetch next task {{{
     if(#tasks_posted == 0) then
-if(DEBUG_TASKS) then d(COLOR_8.."TASKS: NO PENDING TASK") end
+if(DEBUG_TASKS) then d(COLOR_8.."TASK .. NO PENDING TASK") end
         return
     end
 
@@ -1015,10 +1018,10 @@ if(DEBUG_TASKS) then d(COLOR_8.."TASKS: NO PENDING TASK") end
     --}}}
 --{{{
     if    (clear_or_equip == clear_bNum            ) then
-if(DEBUG_TASKS) then d(COLOR_6.."TASKS: clear_bNum("..tostring(bNum)..") .. "..tostring(itemName_or_reason)) end
+if(DEBUG_TASKS) then d(COLOR_6.."TASK .. CLEAR BNUM("..COLOR_8..tostring(bNum)..") .. "..COLOR_6..tostring(itemName_or_reason)) end
 
     elseif(clear_or_equip == equip_bNum_item_slotId) then
-if(DEBUG_TASKS) then d(COLOR_4.."TASKS: equip_bNum_item_slotId("..COLOR_7..tostring(bNum).." "..COLOR_4..tostring(itemName_or_reason).." "..COLOR_8.." slotId="..tostring(slotId)..")") end
+if(DEBUG_TASKS) then d(COLOR_4.."TASK ,, EQUIP BNUM("..COLOR_7..tostring(bNum)..") .. "..COLOR_4..tostring(itemName_or_reason).." "..COLOR_8.." slotId="..tostring(slotId)..")") end
 
     else
 
@@ -1044,7 +1047,7 @@ end
     --}}}
     -- 2/2 all done and up to date {{{
     elseif(#tasks_loaded == 0) then
-if(DEBUG_TASKS) then d(COLOR_3.."TASKS: REQUESTED ALL DONE") end
+if(DEBUG_TASKS) then d(COLOR_3.."TASK .. REQUESTED ALL DONE") end
 
         tasks_cooldown_begin()
 
@@ -1122,9 +1125,9 @@ function get_tooltipText(bNum) --{{{
 
     -- COLOR .. f(count or collId)
     local  color
-    if    (count ) then color = COLOR_6
-    elseif(collId) then color = COLOR_4
-    else                color = COLOR_8
+    if    (count ) then color = COLOR_3 -- RED   .. ITEMS
+    elseif(collId) then color = COLOR_9 -- WHITE .. COLLECTIBLE
+    else                color = COLOR_8 -- GRAY  .. DEFAULT
     end
 
     -- LABEL [COLLECTIBLE] OR [ITEM]
@@ -1626,8 +1629,8 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
         --}}}
         -- ESOUI-vedarion --{{{
         if not slotItemCount then
-            D(COLOR_7.."-GQSB: [slotItemCount=nil] for [slotIndex="..tostring(slotIndex).."]");
-            slotItemCount = 1;
+            D(COLOR_7.."-GQSB: [slotItemCount=nil] for [slotIndex="..tostring(slotIndex).."]")
+            slotItemCount = 1
         end
         --}}}
         -- Update with settings that may have changed {{{
@@ -2035,21 +2038,44 @@ function Display() --{{{
 end --}}}
 function Show() --{{{
 D("Show()")
-    if((QSB.Settings.Visibility == VIS_NEVER) and (not ForceBarVisibility)) then return end
-    if not ZO_Skills:IsHidden() then  D(COLOR_5.." Show: not ZO_Skills:IsHidden()"); return end
 
+    -- HIDE WHILE CRAFTING {{{
     if ZO_CraftingUtils_IsCraftingWindowOpen() then
-        D(COLOR_3.." Show: ZO_CraftingUtils_IsCraftingWindowOpen");
+if(DEBUG_STATION) then d(COLOR_3.." Show: CRAFTING WINDOW IS OPENED"); end
+        Hide_handler()
+
+        return
+    else
+if(DEBUG_STATION) then d(COLOR_8.." Show: NO CRAFTING WINDOW OPENED"); end
+    end
+    --}}}
+    -- HIDE WHILE SKILL TUNING {{{
+    if not ZO_Skills:IsHidden() then
+if(DEBUG_STATION) then d(COLOR_5.." Show: SKILLS WINDOW IS OPENED"); end
+        Hide_handler()
+
+        -- SKILLS WINDOW TAKES TIME TO CLOSE .. HAVE TO CHECK AGAIN LATER
+        --zo_callLater(Show, ZO_CALLLATER_DELAY_HIDE)
+        return
+    else
+if(DEBUG_STATION) then d(COLOR_8.." Show: NO SKILLS WINDOW OPENED"); end
+    end
+    --}}}
+    -- HIDE ON VIS_NEVER WITH (not ForceBarVisibility) {{{
+    if((QSB.Settings.Visibility == VIS_NEVER) and (not ForceBarVisibility)) then
+        Hide_handler()
+
         return
     end
-
+    --}}}
     if(not Show_pending) then
         Show_pending = true
-        zo_callLater(Show_delayed, ZO_CALLLATER_DELAY_SHOW)
+        zo_callLater(Show_handler, ZO_CALLLATER_DELAY_SHOW)
     end
+
 end  --}}}
-function Show_delayed() --{{{
-D("...Show_delayed()")
+function Show_handler() --{{{
+D("...Show_handler()")
     Show_pending = false
 
     if BlockBarVisibility then return end
@@ -2063,11 +2089,11 @@ function Hide(caller) --{{{
 D("Hide(caller=["..caller.."])")
     if(not Hide_pending) then
         Hide_pending = true
-        zo_callLater(Hide_delayed, ZO_CALLLATER_DELAY_HIDE)
+        zo_callLater(Hide_handler, ZO_CALLLATER_DELAY_HIDE)
     end
 end  --}}}
-function Hide_delayed() --{{{
-D("...Hide_delayed()")
+function Hide_handler() --{{{
+D("...Hide_handler()")
     Hide_pending = false
 
     if ForceBarVisibility and not BlockBarVisibility then return end
@@ -3286,8 +3312,8 @@ D("BuildSettingsMenu()")
                 end
             end
             SelectPreset(value)
-            loadItemSlots();
-            Refresh();
+            loadItemSlots()
+            Refresh()
             Show()
         end,
         width       = "full",
@@ -3426,10 +3452,10 @@ D("BuildSettingsMenu()")
         tooltip     = "Whether to disable the game's default quick slot action button.\n"
         ..COLOR_6.."When OFF, no hiding or showing this button will interfere.",
         getFunc     = function()
-            return QSB.Settings.GameActionButtonHide;
+            return QSB.Settings.GameActionButtonHide
         end,
         setFunc     = function(value)
-            QSB.Settings.GameActionButtonHide = value;
+            QSB.Settings.GameActionButtonHide = value
             GameActionButtonHideHandler(true,"Settings.control")    -- Apply new user choice
         end,
         width       = "half",
@@ -3752,7 +3778,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
         -- Show / Hide
 
         if     QSB.Settings.Visibility == VIS_ALWAYS   then
-            Show()
+            zo_callLater(Show, ZO_CALLLATER_DELAY_CHECK)
 
         elseif QSB.Settings.Visibility == VIS_BLINK_CHANGES  then
             if not Reticle_isHidden then Hide("RETICLE_HIDDEN_UPDATE.VIS_BLINK_CHANGES") end -- done with UI settings
@@ -3767,7 +3793,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
             if(Reticle_isHidden) then
                 Hide("RETICLE_HIDDEN_UPDATE.VIS_RETICLE")
             else
-                Show()
+                zo_callLater(Show, ZO_CALLLATER_DELAY_CHECK)
             end
         end
 
@@ -3982,8 +4008,8 @@ D("OnClicked_handle("..tostring(handleName)..")")
         arg = string.match(handleName, "P([1-5])")
 
         SelectPreset( PRESETNAMES[ tonumber(arg) ] )
-        loadItemSlots();
-        Refresh();
+        loadItemSlots()
+        Refresh()
         Show()
 
     end
@@ -4024,7 +4050,7 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-    d("GQSB"..COLOR_C.." "..QSB.Version.." (190304)|r\n"
+    d("GQSB"..COLOR_C.." "..QSB.Version.." (190404)|r\n"
     .."GQSB"..COLOR_8.." Checked with Update 21 (4.3.5): Wrathstone (API 100026)|r\n"
     .."GQSB"..COLOR_8.." New Settings Option: Account-wide or Character Settings|r\n"
     .."GQSB"..COLOR_8.." Preset swap cooldown to avoid warning message|r\n"
@@ -4198,10 +4224,12 @@ function OnSlashCommand(arg)
 
     --}}}
     -- DEBUG DEBUG_EVENT DEBUG_ITEM clear -- {{{
-    elseif(arg == "debug"       ) then DEBUG       = not DEBUG      ; d("...DEBUG......=[" ..tostring( DEBUG       ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_event" ) then DEBUG_EVENT = not DEBUG_EVENT; d("...DEBUG_EVENT=[" ..tostring( DEBUG_EVENT ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_equip" ) then DEBUG_EQUIP = not DEBUG_EQUIP; d("...DEBUG_EQUIP=[" ..tostring( DEBUG_EQUIP ).. "]"); ui_may_have_changed = true;
-    elseif(arg == "debug_item"  ) then DEBUG_ITEM  = not DEBUG_ITEM ; d("...DEBUG_ITEM.=[" ..tostring( DEBUG_ITEM  ).. "]"); ui_may_have_changed = true;
+    elseif(arg == "debug"         ) then DEBUG         = not DEBUG        ; d("...DEBUG........=[" ..tostring( DEBUG         ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_event"   ) then DEBUG_EVENT   = not DEBUG_EVENT  ; d("...DEBUG_EVENT..=[" ..tostring( DEBUG_EVENT   ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_equip"   ) then DEBUG_EQUIP   = not DEBUG_EQUIP  ; d("...DEBUG_EQUIP..=[" ..tostring( DEBUG_EQUIP   ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_item"    ) then DEBUG_ITEM    = not DEBUG_ITEM   ; d("...DEBUG_ITEM...=[" ..tostring( DEBUG_ITEM    ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_tasks"   ) then DEBUG_TASKS   = not DEBUG_TASKS  ; d("...DEBUG_TASKS..=[" ..tostring( DEBUG_TASKS   ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_station" ) then DEBUG_STATION = not DEBUG_STATION; d("...DEBUG_STATION=[" ..tostring( DEBUG_STATION ).. "]"); ui_may_have_changed = true
 --      get_collId_itemName(0)
     --}}}
     else
@@ -4253,7 +4281,7 @@ function OnSlashCommand(arg)
     -- CHANGE PRESET {{{
     if presetName ~= "" then
         SelectPreset( presetName )
-        loadItemSlots();
+        loadItemSlots()
 
         ui_may_have_changed = true
     end
