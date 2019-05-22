@@ -4,11 +4,13 @@
 -- CHANGELOG --{{{
 --[[
 v2.4.6 {{{
-- [color="aaffaa"]190404[/color]
-- Checked with Update 21 (4.3.5): [color="00ff00"]Wrathstone[/color] - APIVersion: 100026.
+- [color="aaffaa"]190522[/color]
+- Checked with Update 22 (5.0.5): [color="00ff00"]Elsweyr[/color] - APIVersion: 100027.
+- [color="ffffee"]Added PRESET SWAP COOLDOWN[/color] to prevent SPAM WARNING MESSAGES.
+- New  Settings Option: [color="ffffee"]Print selected item description to Chat Window[/color].
+* Crafting Station: UI EFFECTIVELY freezed while crafting or showing Skills window.
 - [color="ffffee"]"Blink Changes"[/color] display duration set to 500ms (up from 10ms).
-- [color="ffffee"]Added PRESET SWAP COOLDOWN[/color] .. trying to prevent SPAM WARNING MESSAGES.
-* Crafting Station: UI (effectively!) freezed while crafting or showing Skills window.
+* Initial "Visibility" option set to "Always" so that it wont start hiding by default.
 
 }}}
 v2.4.5 {{{
@@ -321,6 +323,7 @@ local COLOR_6                    = "|c6495ED"
 local COLOR_7                    = "|cEE82EE"
 local COLOR_8                    = "|cA0A0A0"
 local COLOR_9                    = "|cFFFFFF"
+local COLOR_X                    = { COLOR_1, COLOR_2, COLOR_3, COLOR_4, COLOR_5, COLOR_6, COLOR_7, COLOR_8, COLOR_9 }
 
 -- VISUAL-CUE BORDERS
 local COLORBLACK              = { R =0  , G =0  , B =0  , A = 1   }
@@ -476,13 +479,13 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.6", -- 190404 previous: 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.6", -- 190522 previous: 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
   --KeyModifier_ChoiceList              = { MOD_NONE   , MOD_SHIFT , MOD_CONTROL, MOD_ALT },
-    Visibility_ChoiceList               = { VIS_RETICLE, VIS_COMBAT, VIS_NEVER, VIS_ALWAYS , VIS_BLINK_CHANGES },
-    VisualCue_ChoiceList                = { VISCUE_OFF , VISCUE_WA , VISCUE_WAC },
+    Visibility_ChoiceList               = { VIS_ALWAYS, VIS_RETICLE, VIS_COMBAT, VIS_BLINK_CHANGES, VIS_NEVER },
+    VisualCue_ChoiceList                = { VISCUE_OFF, VISCUE_WA  , VISCUE_WAC },
 
     -- STATES
     Moving                              = false,
@@ -537,7 +540,7 @@ QSB.SettingsDefaults = {
     NextAuto                            = false,
     ShowBackground                      = false,
     SwapBackgroundColors                = false,
-    Visibility                          = VIS_RETICLE,
+    Visibility                          = VIS_ALWAYS,
     PresetName                          = PRESETNAMES[1],
     SoundAlert                          = SOUNDNAMES[1],
     SoundSlotted                        = SOUNDNAMES[2],
@@ -554,6 +557,7 @@ QSB.SettingsDefaults = {
         HideSlotBackground              = false,
         ShowKeyBindings                 = false,
         ShowNumbers                     = false,
+        PrintDescription                = false,
         ShowQuantityLabels              = true,
         VisualCue                       = VISCUE_WA,
     },
@@ -593,7 +597,7 @@ local D
 local D_EVENT
 local D_ITEM
 local DeepCopy
-local Display
+local ShowOrHide
 local GameActionButtonHideHandler
 local GetAlignmentXY
 local GetKeyBindInfo
@@ -637,6 +641,7 @@ local Refresh_pending = false
 local RegisterEventHandlers
 local Release_Settings_Locked
 local SelectButton
+local QSB_SetCurrentQuickslot
 local SelectNextAuto
 local SelectNextAuto_delayed
 local SelectNextAuto_pending = false
@@ -1049,6 +1054,11 @@ end
     elseif(#tasks_loaded == 0) then
 if(DEBUG_TASKS) then d(COLOR_3.."TASK .. REQUESTED ALL DONE") end
 
+        if QSB.Settings.SlotItem.PrintDescription then
+            local bNum = slotIndex_to_bNum( GetCurrentQuickslot() )
+            d( COLOR_9.."Preset "..QSB.Settings.PresetName.." "..COLOR_X[bNum].."Current Quick slot "..tostring(bNum).."\n"..get_tooltipText(bNum))
+        end
+
         tasks_cooldown_begin()
 
         QSB_BAG_BACKPACK_UPDATE_mutex = false
@@ -1186,7 +1196,7 @@ function get_tooltipText(bNum) --{{{
 --]]
     -- LABEL [EMPTY]
     else
-        label = "empty"
+        label = "-"
         color = COLOR_8
     end
 
@@ -1393,6 +1403,7 @@ function CopyNotNilSettingsFromTo(orig, dest) --{{{
     if( orig.SlotItem.HideSlotBackground              ~= nil) then dest.SlotItem.HideSlotBackground              = orig.SlotItem.HideSlotBackground              end
     if( orig.SlotItem.ShowKeyBindings                 ~= nil) then dest.SlotItem.ShowKeyBindings                 = orig.SlotItem.ShowKeyBindings                 end
     if( orig.SlotItem.ShowNumbers                     ~= nil) then dest.SlotItem.ShowNumbers                     = orig.SlotItem.ShowNumbers                     end
+    if( orig.SlotItem.PrintDescription                ~= nil) then dest.SlotItem.PrintDescription                = orig.SlotItem.PrintDescription                end
     if( orig.SlotItem.ShowQuantityLabels              ~= nil) then dest.SlotItem.ShowQuantityLabels              = orig.SlotItem.ShowQuantityLabels              end
     if( orig.SlotItem.VisualCue                       ~= nil) then dest.SlotItem.VisualCue                       = orig.SlotItem.VisualCue                       end
 
@@ -1431,6 +1442,7 @@ function CopySettingsDefaultsTo(dest) --{{{
     dest.SlotItem.HideSlotBackground              = QSB.SettingsDefaults.SlotItem.HideSlotBackground
     dest.SlotItem.ShowKeyBindings                 = QSB.SettingsDefaults.SlotItem.ShowKeyBindings
     dest.SlotItem.ShowNumbers                     = QSB.SettingsDefaults.SlotItem.ShowNumbers
+    dest.SlotItem.PrintDescription                = QSB.SettingsDefaults.SlotItem.PrintDescription
     dest.SlotItem.ShowQuantityLabels              = QSB.SettingsDefaults.SlotItem.ShowQuantityLabels
     dest.SlotItem.VisualCue                       = QSB.SettingsDefaults.SlotItem.VisualCue
 
@@ -1877,7 +1889,7 @@ end
         end
     end
 
-    Display()
+    ShowOrHide()
 
 end  --}}}
 function BuildUIHandles() --{{{
@@ -1926,12 +1938,12 @@ D("BuildUIHandles():")
     end
 
 end --}}}
-function GameActionButtonHideHandler(just_changed,caller) --{{{
-D(COLOR_5.."GameActionButtonHideHandler(just_changed="..tostring(just_changed)..COLOR_3.." caller=[".. caller .."]):|r")
+function GameActionButtonHideHandler(just_changed, _caller) --{{{
+D(COLOR_5.."GameActionButtonHideHandler(just_changed="..tostring(just_changed)..COLOR_3.." _caller=[".. _caller .."]):|r")
 
     if     QSB.Settings.GameActionButtonHide then
         if not ActionButton9:IsHidden() then
-            D(COLOR_6.."- @@@ HIDING Game Action Slot Button"..COLOR_3.." caller=[".. caller .."]|r")  --(160218)
+            D(COLOR_6.."- @@@ HIDING Game Action Slot Button"..COLOR_3.." _caller=[".. _caller .."]|r")  --(160218)
             ActionButton9:SetHidden(true)
         end
 
@@ -1939,7 +1951,7 @@ D(COLOR_5.."GameActionButtonHideHandler(just_changed="..tostring(just_changed)..
         -- if asked not to handle button anymore, make it visible again in case it is hidden
         if just_changed then
             if ActionButton9:IsHidden() then
-                D(COLOR_5.."- @@@ RESTORING Game Action Slot Button"..COLOR_3.." caller=[".. caller .."]|r")  --(160218)
+                D(COLOR_5.."- @@@ RESTORING Game Action Slot Button"..COLOR_3.." _caller=[".. _caller .."]|r")  --(160218)
                 ActionButton9:SetHidden(false)
             end
         end
@@ -1993,52 +2005,41 @@ function SetUIHandlesVisibility( visible ) --{{{
 
 end --}}}
 
--- UI (display)
-function Display() --{{{
+-- UI (Show Hide)
+function ShowOrHide() --{{{
     if not QSB.Settings then return end
 
-    -- VIS_NEVER -- only show with ForceBarVisibility
-    if QSB.Settings.Visibility == VIS_NEVER then
+    if     QSB.Settings.Visibility == VIS_NEVER then
         if not ForceBarVisibility and not Reticle_isHidden then
-            Hide("Display.VIS_NEVER")
+            local msg = "ShowOrHide: VIS_NEVER .. not FORCED .. HIDING"
+            Hide( msg )
         end
-        return
-    end
-
-    -- VIS_ALWAYS -- ...
-    if QSB.Settings.Visibility == VIS_ALWAYS then
+    elseif QSB.Settings.Visibility == VIS_ALWAYS then
+        local     msg = "ShowOrHide: VIS_ALWAYS .. SHOWING"
+if(DEBUG_STATION)       then d(COLOR_3..msg) end
         Show()
-        return
-    end
-
-    -- UNLOCKED -- always show
-    if not QSB.Settings.LockUI then
+    elseif not QSB.Settings.LockUI then
+        local     msg = "ShowOrHide: NOT LOCKED ON SCREEN ..  SHOWING"
+if(DEBUG_STATION)       then d(COLOR_3..msg) end
         Show()
-        return
-    end
-
-    -- VIS_RETICLE      -- event handler provides
-
-    -- VIS_COMBAT       -- combat state decides
-    if QSB.Settings.Visibility == VIS_COMBAT then
+    elseif QSB.Settings.Visibility == VIS_COMBAT then
         if IsUnitInCombat('player') then
+            local msg = "ShowOrHide: VIS_COMBAT .. IN COMBAT .. SHOWING"
+if(DEBUG_STATION)       then d(COLOR_3..msg) end
             Show()
         elseif not ForceBarVisibility and not Reticle_isHidden then
-            Hide("Display.VIS_COMBAT")
+            local msg = "ShowOrHide: VIS_COMBAT .. NOT IN COMBAT .. HIDING"
+            Hide( msg )
         end
-    end
-
-    -- VIS_BLINK_CHANGES -- hide in all cases
-    if QSB.Settings.Visibility == VIS_BLINK_CHANGES then
+    elseif QSB.Settings.Visibility == VIS_BLINK_CHANGES then
         if not ForceBarVisibility and not Reticle_isHidden then
-            Hide("Display.VIS_BLINK_CHANGES")
+            local msg = "ShowOrHide: VIS_BLINK_CHANGES .. not FORCED .. HIDING"
+            Hide( msg )
         end
     end
-
 end --}}}
 function Show() --{{{
 D("Show()")
-
     -- HIDE WHILE CRAFTING {{{
     if ZO_CraftingUtils_IsCraftingWindowOpen() then
 if(DEBUG_STATION) then d(COLOR_3.." Show: CRAFTING WINDOW IS OPENED"); end
@@ -2085,8 +2086,8 @@ D("...Show_handler()")
 
     OnMouseExit()
 end --}}}
-function Hide(caller) --{{{
-D("Hide(caller=["..caller.."])")
+function Hide(_caller) --{{{
+if(DEBUG or DEBUG_STATION) then d("Hide: ".. _caller) end
     if(not Hide_pending) then
         Hide_pending = true
         zo_callLater(Hide_handler, ZO_CALLLATER_DELAY_HIDE)
@@ -2235,8 +2236,8 @@ function GetAlignmentXY(hAlign, vAlign) --{{{
 end --}}}
 
 -- SOUND
-function PlaySoundAlert(caller) --{{{
-D("PlaySoundAlert("..COLOR_7..caller.."|r)")
+function PlaySoundAlert(_caller) --{{{
+D("PlaySoundAlert("..COLOR_7.._caller.."|r)")
     if(QSB.Settings.SoundAlert == NO_SOUND) then return end
     if(not PlaySoundAlert_pending) then
         PlaySoundAlert_pending = true
@@ -2252,8 +2253,8 @@ D(COLOR_2.."...PlaySoundAlert_delayed()")
     PlaySound(QSB.Settings.SoundAlert)
 end
 --}}}
-function PlaySoundSlotted(caller) --{{{
-D("PlaySoundSlotted("..COLOR_7..caller.."|r)")
+function PlaySoundSlotted(_caller) --{{{
+D("PlaySoundSlotted("..COLOR_7.._caller.."|r)")
     if(QSB.Settings.SoundSlotted == NO_SOUND) then return end
     if(not PlaySoundSlotted_pending) then
         PlaySoundSlotted_pending = true
@@ -2460,13 +2461,15 @@ function QSB_P5()    SelectPreset( PRESETNAMES[5] ); loadItemSlots(); Refresh();
 
 --}}}
 
-function SelectNextAuto() --{{{
-D("SelectNextAuto()")
+local SelectNextAuto_caller = ""
+function SelectNextAuto(_caller) --{{{
+D("SelectNextAuto(".._caller..")")
     if not QSB.Settings.NextAuto              then return end
     if not IsEmptySlot(GetCurrentQuickslot()) then return end
 
     if(not SelectNextAuto_pending) then
         SelectNextAuto_pending = true
+        SelectNextAuto_caller  = _caller
         zo_callLater(SelectNextAuto_delayed, ZO_CALLLATER_DELAY_NEXT)
     end
 end  --}}}
@@ -2494,7 +2497,7 @@ D(COLOR_7.."...SelectNextAuto_delayed()")
 
     if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("SelectNextAuto")
-        SetCurrentQuickslot( bNum_to_slotIndex(bNum) )
+        QSB_SetCurrentQuickslot(bNum_to_slotIndex(bNum), " NEXT AUTO ("..SelectNextAuto_caller..")")
     else
         PlaySoundAlert("SelectNextAuto")
     end
@@ -2519,7 +2522,7 @@ D("NextItem()")
 
     if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("NextItem")
-        SetCurrentQuickslot( bNum_to_slotIndex(bNum) )
+        QSB_SetCurrentQuickslot(bNum_to_slotIndex(bNum), " NEXT ITEM")
     else
         PlaySoundAlert("NextItem")
     end
@@ -2543,7 +2546,7 @@ D("PreviousItem()")
 
     if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("PreviousItem")
-        SetCurrentQuickslot( bNum_to_slotIndex(bNum) )
+        QSB_SetCurrentQuickslot(bNum_to_slotIndex(bNum), " PREV ITEM")
     else
         PlaySoundAlert("NextItem")
     end
@@ -2611,7 +2614,7 @@ D("QSB_ClearChat()")
 end --}}}
 
 -- UTILITIES
-function slotIndex_to_bNum(slotIndex) --{{{
+function slotIndex_to_bNum( slotIndex ) --{{{
     for bNum = 1, #WHEEL_LOOKUPTABLE do
         if WHEEL_LOOKUPTABLE[bNum] == slotIndex then
             return bNum
@@ -2621,7 +2624,7 @@ function slotIndex_to_bNum(slotIndex) --{{{
     return 0
 end
 --}}}
-function bNum_to_slotIndex(bNum) --{{{
+function bNum_to_slotIndex( bNum ) --{{{
     return  WHEEL_LOOKUPTABLE[ bNum ]
 end
 --}}}
@@ -2634,13 +2637,24 @@ D("SelectButton(bNum=["..tostring(bNum).."])")
 
     local slotIndex = bNum_to_slotIndex( bNum )
 
-    if IsEmptySlot(slotIndex) then
-        PlaySoundAlert("SelectButton")
-        SetCurrentQuickslot( slotIndex ) -- force scanning
-        SelectNextAuto()
-    else
+    if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("SelectButton")
-        SetCurrentQuickslot( slotIndex )
+        QSB_SetCurrentQuickslot(slotIndex, "")
+    else
+        PlaySoundAlert("SelectButton")
+        QSB_SetCurrentQuickslot(slotIndex, " (EMPTY SLOT)") -- force scanning
+        SelectNextAuto("BUTTON "..tostring(bNum))
+    end
+
+end --}}}
+function QSB_SetCurrentQuickslot(slotIndex, _caller) --{{{
+D("QSB_SetCurrentQuickslot("..tostring(slotIndex)..", ".._caller..")")
+
+    SetCurrentQuickslot( slotIndex )
+
+    if QSB.Settings.SlotItem.PrintDescription then
+        local bNum = slotIndex_to_bNum( slotIndex )
+        d(COLOR_X[bNum].."BUTTON "..tostring(bNum)..COLOR_9.._caller.." ".."\n"..get_tooltipText(bNum))
     end
 
 end --}}}
@@ -3625,6 +3639,26 @@ D("BuildSettingsMenu()")
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
+    -- Print Description (Checkbox) --{{{
+
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_PrintDescription",
+        name        = "Print Description",
+        tooltip     = "Whether to print the selected item description\n"
+        ..COLOR_4.."in the main Chat Window\n"
+        ..COLOR_5.."when changed",
+        getFunc     = function()
+            return QSB.Settings.SlotItem.PrintDescription
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SlotItem.PrintDescription = value
+        end,
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
 
     -- Reset (Button) --{{{
 
@@ -3704,7 +3738,7 @@ D_ITEM(COLOR_5.."handle_ACTION_SLOT_UPDATED(bNum "..bNum..") .. CALLED" )
             handle_ACTION_SLOT_UPDATED(bNum)
         end
 
-        SelectNextAuto()
+        --SelectNextAuto("SLOT UPDATED")
         Refresh()
         Show()
     end)
@@ -3716,7 +3750,7 @@ D_ITEM(COLOR_5.."handle_ACTION_SLOT_UPDATED(bNum "..bNum..") .. CALLED" )
     , function(event, slotIndex)
 D_ITEM("ACTIVE_QUICKSLOT_CHANGED: slotIndex=["..slotIndex.."]")
 
-      --SelectNextAuto()
+      --SelectNextAuto("QUICKSLOT CHANGED")
         Refresh()
         Show()
     end)
@@ -3745,7 +3779,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
         end
         --}}}
 
-        SelectNextAuto()
+        SelectNextAuto("INVENTORY UPDATED")
         Refresh()
     end)
 
@@ -3823,7 +3857,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
         D_EVENT("PLAYER_COMBAT_STATE")
         if not QSB.Settings then return end
         if (QSB.Settings.Visibility ~= VIS_COMBAT) then
-            Display()
+            ShowOrHide()
         else
             local inCombat = select(2,...)
             if(inCombat) then
@@ -4050,45 +4084,12 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-    d("GQSB"..COLOR_C.." "..QSB.Version.." (190404)|r\n"
-    .."GQSB"..COLOR_8.." Checked with Update 21 (4.3.5): Wrathstone (API 100026)|r\n"
-    .."GQSB"..COLOR_8.." New Settings Option: Account-wide or Character Settings|r\n"
-    .."GQSB"..COLOR_8.." Preset swap cooldown to avoid warning message|r\n"
+    d("GQSB"..COLOR_C.." "..QSB.Version.." (190522)|r\n"
+    .."GQSB"..COLOR_8.." Checked with Update 22 (5.0.5): Elsweyr (API 100027)\n"
+    .."GQSB"..COLOR_8.." New preset-swap cooldown to prevent spam warning messages\n"
+    .."GQSB"..COLOR_8.." New option to print Selected Item description in Chat Window\n"
     .."GQSB"..COLOR_8.." "..QSB_SLASH_COMMAND.." -h for help|r\n"
     ..QSB_SLASH_COMMAND.." "..arg)
---d("GQSB "..COLOR_7.." /gqsb debug_equip to track P1..P5 issue")
---{{{
---d("GQSB "..QSB.Version.. " (190226) |r Account-wide or Character Settings")
---d("GQSB "..QSB.Version.. " (181113) |r Murkmire *collectible *crafting *tooltips")
---d("GQSB "..QSB.Version.. " (181027) |r Update 20 (4.2.5): Murkmire (API 100025)")
---d("GQSB "..QSB.Version.. " (181023) |r Update 20 (4.2.5): Murkmire (API 100025)")
---d("GQSB "..QSB.Version.. " (180815) |r Update 19 (4.1.15): Wolfhunter (API 100024)")
---d("GQSB "..QSB.Version.. " (180522) |r Update 18 (4.0.5): Summerset (API 100023)")
---d("GQSB "..QSB.Version.. " (180312) |r New options: Blink Changes & NO SOUND")
---d("GQSB "..QSB.Version.. " (180310) |r Item vs. Collections .. (slotId vs. collId)")
---d("GQSB "..QSB.Version.. " (180302) |r Collectible handling is back")
---d("GQSB "..QSB.Version.. " (180226) |r Update 17 (3.3.7): Dragon Bones (API 100022)\n new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n new kbd and slash-commands:|r clear, force, block\n Quicker UI")
---d("GQSB "..QSB.Version.. " (171128) |r Update 16 (3.2.6): Clockwork City (API 100021)\n new option:|r Auto-Clone previous-to-empty preset (ON OFF)\n new slash-command:|r /gqsb clear ...to clear Current-Preset-Items")
---d("GQSB "..QSB.Version.. " (171028) |r Update 16 (3.2.6): Clockwork City (API 100021)|r")
---d("GQSB "..QSB.Version.. " (170917) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n Item Presets|r + Keyboard Shortcuts|r + ollectible support(+)|r")
---d("GQSB "..QSB.Version.. " (170902) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n Item Presets|r + Keyboard Shortcuts|r + ollectible support|r")
---d("GQSB "..QSB.Version.. " (170829) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n Item Presets (for each char)|r +  Preset Keyboard Shortcuts|r")
---d("GQSB "..QSB.Version.. " (170822) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n Item Presets (for each char)|r +  Preset Keyboard Shortcuts|r")
---d("GQSB "..QSB.Version.. " (170818) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n Item Presets (for each char)|r +  LibAddonMenu-2.0 r24 |r")
---d("GQSB "..QSB.Version.. " (170815) |r Update 15 (3.1.5): Horns of the Reach (API 100020)\n Item Presets|r +  LibAddonMenu-2.0 r24 |r")
---d("GQSB "..QSB.Version.. " (170709) |r Update 14 (3.0.5): Morrowind   (API 100019)\n New feature: Item Presets|r")
---d("GQSB "..QSB.Version.. " (170524) |r Update 14 (3.0.5): Morrowind   (API 100019)")
---d("GQSB "..QSB.Version.. " (170207) |r Update 13 (2.7.5): Homestead   (API 100018)")
---d("GQSB "..QSB.Version.. " (161128) |r Update 12 (2.6.4): One Tamriel (API 100017)")
---d("GQSB "..QSB.Version.. " (161007) |r Update 12 (2.6.4): One Tamriel (API 100017)")
---d("GQSB "..QSB.Version.. " (160803) |r Update 2.5.5 : Shadows of the Hist (API 100016)")
---d("GQSB "..QSB.Version.. " (160601) |r Update 2.4.5 : Dark Brotherhood (API 100015)")
---d("GQSB "..QSB.Version.. " (160310) |r Update 2.2.5 : Thieves Guild (API 100014)")
---d("GQSB "..QSB.Version.. " (160219) |r Update 2.2.4 : Orsinium (API 100013)")
---d("GQSB "..QSB.Version.." + Tooltips|r Update 6 (API 100011)")
---d("GQSB "..QSB.Version.." + Settings->Prepare for SWAPS with Control-Keybinds]|r Update 6 (API 100011)")
---d("GQSB "..QSB.Version.." + LibAddonMenu-2.0-r17]|r Update 6 (API 100011)")
---}}}
 
     local ui_may_have_changed = false
     local presetName = ""
@@ -4099,7 +4100,7 @@ function OnSlashCommand(arg)
     then
         d("GQSB Current Settings: "
         ..(QSB.AccountWideSettings.SaveAccountWide and COLOR_6.." Account-wide"
-        or                   COLOR_2..GetUnitName("player").."|r Character"))
+        or                                             COLOR_2..GetUnitName("player").."|r Character"))
 
     elseif (arg ==  "-h"   )
     or     (arg == "--h"   )
