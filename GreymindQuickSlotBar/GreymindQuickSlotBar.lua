@@ -7,11 +7,7 @@ v2.4.6 {{{
 - [color="aaffaa"]190522[/color]
 - Checked with Update 22 (5.0.5): [color="00ff00"]Elsweyr[/color] - APIVersion: 100027.
 - [color="ffffee"]Added PRESET SWAP COOLDOWN[/color] to prevent SPAM WARNING MESSAGES.
-<<<<<<< HEAD
 - New  Settings Option: [color="ffffee"]Print selected item description to Chat Window[/color].
-=======
-- New  settings Option: [color="ffffee"]Print selected item description in to Chat Window[/color].
->>>>>>> bc2d67f8e5ceb2043be03f10bdb1c90cffc0a6c6
 * Crafting Station: UI EFFECTIVELY freezed while crafting or showing Skills window.
 - [color="ffffee"]"Blink Changes"[/color] display duration set to 500ms (up from 10ms).
 * Initial "Visibility" option set to "Always" so that it wont start hiding by default.
@@ -1060,11 +1056,7 @@ if(DEBUG_TASKS) then d(COLOR_3.."TASK .. REQUESTED ALL DONE") end
 
         if QSB.Settings.SlotItem.PrintDescription then
             local bNum = slotIndex_to_bNum( GetCurrentQuickslot() )
-<<<<<<< HEAD
             d( COLOR_9.."Preset "..QSB.Settings.PresetName.." "..COLOR_X[bNum].."Current Quick slot "..tostring(bNum).."\n"..get_tooltipText(bNum))
-=======
-            d( COLOR_9.."TASK ALL DONE "..COLOR_X[bNum].."Current Quick slot "..tostring(bNum).."\n"..get_tooltipText(bNum))
->>>>>>> bc2d67f8e5ceb2043be03f10bdb1c90cffc0a6c6
         end
 
         tasks_cooldown_begin()
