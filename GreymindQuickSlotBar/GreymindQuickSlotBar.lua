@@ -3,6 +3,14 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.4.7 {{{
+- [color="aaffaa"]190813[/color]
+- Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
+* Crafting Station: ForceBarVisibility to work while ALREADY crafting or showing Skills window.
+- [color="ee00ee"]Locked Forced Blocked and Display policy[/color] precedence tuned for more consistent Show or Hide results
+- [color="ee00ee"]New Key binding to open Settings Menu[/color]
+- ...use [color="888888"]/gqsb debug_station[/color] for logging
+}}}
 v2.4.6 {{{
 - [color="aaffaa"]190522[/color]
 - Checked with Update 22 (5.0.5): [color="00ff00"]Elsweyr[/color] - APIVersion: 100027.
@@ -390,6 +398,7 @@ local KBNAME_PREVIOUS         = COLOR_3.."Previous Quick Slot Item"
 local KBNAME_NEXT             = COLOR_4.."Next Quick Slot Item"
 local KBNAME_RELOADUI         = COLOR_8.."Reload UI"
 local KBNAME_CLEARCHAT        = COLOR_8.."Clear Chat"
+local KBNAME_SETTINGS         = COLOR_9.."Settings"
 
 -- CHOICE-LISTS
 local ALIGNH                  = { "Off-Left", "Left", "Center", "Right"  , "Off-Right"}
@@ -453,6 +462,7 @@ local KEYBINDINGS = {
 
     { name=KBNAME_RELOADUI             , id="GREYMIND_QUICK_SLOT_BAR_RELOADUI"            }, -- QSB_ReloadUI
     { name=KBNAME_CLEARCHAT            , id="GREYMIND_QUICK_SLOT_BAR_CLEARCHAT"           }, -- QSB_ClearChat
+    { name=KBNAME_SETTINGS             , id="GREYMIND_QUICK_SLOT_BAR_SETTINGS"            }, -- QSB_Settings
 }
 
 local KEYBINDINGS_SWAPS = {
@@ -479,7 +489,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.6", -- 190522 previous: 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.7", -- 190813 previous: 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -635,6 +645,7 @@ local PlaySoundAlert
 local PlaySoundAlert_pending = false
 local PlaySoundSlotted
 local PlaySoundSlotted_pending = false
+local Show_and_Refresh
 local Refresh
 local Refresh_delayed
 local Refresh_pending = false
@@ -699,8 +710,8 @@ d("...QSB: RESETING ALL PRESETS TO DEFAULT VALUES:")
     loadItemSlots()
 
     ButtonSizeChanged()
-    Refresh()
-    Show()
+
+    Show_and_Refresh("Load_Defaults")
 end --}}}
 function SelectPreset(selectedPreset) --{{{
 D("SelectPreset("..COLOR_C..selectedPreset.."|r):")
@@ -997,8 +1008,7 @@ if(DEBUG_TASKS) then d(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_4.."POSTING ".
     else
 if(DEBUG_TASKS) then d(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_8.."NO MORE LOADED TASKS") end
 
-        Refresh()
-        Show()
+        Show_and_Refresh("tasks_cooldown_end")
     end
 
 end --}}}
@@ -1449,6 +1459,14 @@ function CopySettingsDefaultsTo(dest) --{{{
 end --}}}
 
 -- UI (build & refresh)
+function Show_and_Refresh(caller) --{{{
+D("Show_and_Refresh("..tostring(caller)..")")
+
+    Show(caller)
+
+    Refresh()
+
+end --}}}
 function Refresh() --{{{
 D("Refresh()")
     if not QSB.Settings then return end
@@ -1547,7 +1565,7 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
         else
             GreymindQuickSlotBarUI.data = {
                 tooltipText
-                =  QSB.Name.." "..QSB.Version.." Wolfhunter\n"
+                =  QSB.Name.." "..QSB.Version.." Scalebreaker\n"
                 ..(QSB.AccountWideSettings.SaveAccountWide and COLOR_3.."Account-wide Settings"
                 or                                             COLOR_6..GetUnitName("player").."|r Character Settings"
                 )
@@ -2008,65 +2026,125 @@ end --}}}
 -- UI (Show Hide)
 function ShowOrHide() --{{{
     if not QSB.Settings then return end
+if(DEBUG_STATION)       then d(COLOR_3.."Visibility "..COLOR_5..QSB.Settings.Visibility) end
 
-    if     QSB.Settings.Visibility == VIS_NEVER then
-        if not ForceBarVisibility and not Reticle_isHidden then
-            local msg = "ShowOrHide: VIS_NEVER .. not FORCED .. HIDING"
-            Hide( msg )
-        end
-    elseif QSB.Settings.Visibility == VIS_ALWAYS then
+    if     not QSB.Settings.LockUI               then --{{{ SHOW .. LOCKED
+        local msg = "ShowOrHide: NOT LOCKED ON SCREEN ..  SHOWING"
+if(DEBUG_STATION) then d(COLOR_5..msg) end
+
+        Show( msg )
+        --}}}
+    elseif BlockBarVisibility                    then --{{{ HIDE .. BLOCKED
+        local msg = "ShowOrHide: BLOCKED .. HIDING"
+if(DEBUG_STATION) then d(COLOR_5..msg) end
+
+        Hide( msg )
+    --}}}
+    elseif ForceBarVisibility                    then --{{{ SHOW .. FORCED
+        local msg = "ShowOrHide: FORCED .. SHOWING"
+if(DEBUG_STATION) then d(COLOR_5..msg) end
+
+        Show( msg )
+    --}}}
+    elseif QSB.Settings.Visibility == VIS_NEVER  then --{{{ HIDE .. NEVER
+        local msg = "ShowOrHide: VIS_NEVER .. HIDING"
+
+        Hide( msg )
+    --}}}
+    elseif QSB.Settings.Visibility == VIS_ALWAYS then --{{{ SHOW .. ALWAYS
         local     msg = "ShowOrHide: VIS_ALWAYS .. SHOWING"
-if(DEBUG_STATION)       then d(COLOR_3..msg) end
-        Show()
-    elseif not QSB.Settings.LockUI then
-        local     msg = "ShowOrHide: NOT LOCKED ON SCREEN ..  SHOWING"
-if(DEBUG_STATION)       then d(COLOR_3..msg) end
-        Show()
-    elseif QSB.Settings.Visibility == VIS_COMBAT then
+if(DEBUG_STATION) then d(COLOR_5..msg) end
+
+        Show( msg )
+        --}}}
+    elseif QSB.Settings.Visibility == VIS_RETICLE then --{{{ SHOW or HIDE .. (if no menu on screen)
+        
+        if Reticle_isHidden then
+            local msg = "ShowOrHide: VIS_RETICLE .. RETICLE HIDDEN .. HIDING"
+if(DEBUG_STATION) then d(COLOR_5..msg) end
+
+            Hide( msg )
+        else
+            local msg = "ShowOrHide: VIS_RETICLE .. RETICLE ON SCREEN .. SHOWING"
+if(DEBUG_STATION) then d(COLOR_5..msg) end
+
+            Show( msg )
+        end
+        --}}}
+    elseif QSB.Settings.Visibility == VIS_COMBAT then --{{{ SHOW or HIDE .. (if no menu on screen)
+
         if IsUnitInCombat('player') then
             local msg = "ShowOrHide: VIS_COMBAT .. IN COMBAT .. SHOWING"
-if(DEBUG_STATION)       then d(COLOR_3..msg) end
-            Show()
-        elseif not ForceBarVisibility and not Reticle_isHidden then
-            local msg = "ShowOrHide: VIS_COMBAT .. NOT IN COMBAT .. HIDING"
-            Hide( msg )
-        end
-    elseif QSB.Settings.Visibility == VIS_BLINK_CHANGES then
-        if not ForceBarVisibility and not Reticle_isHidden then
-            local msg = "ShowOrHide: VIS_BLINK_CHANGES .. not FORCED .. HIDING"
-            Hide( msg )
-        end
-    end
-end --}}}
-function Show() --{{{
-D("Show()")
-    -- HIDE WHILE CRAFTING {{{
-    if ZO_CraftingUtils_IsCraftingWindowOpen() then
-if(DEBUG_STATION) then d(COLOR_3.." Show: CRAFTING WINDOW IS OPENED"); end
-        Hide_handler()
+if(DEBUG_STATION) then d(COLOR_5..msg) end
 
-        return
-    else
-if(DEBUG_STATION) then d(COLOR_8.." Show: NO CRAFTING WINDOW OPENED"); end
+            Show( msg )
+        elseif Reticle_isHidden then
+            local msg = "ShowOrHide: VIS_COMBAT .. MENU ON SCREEN .. SHOWING"
+if(DEBUG_STATION) then d(COLOR_5..msg) end
+
+            Show( msg )
+        else
+            local msg = "ShowOrHide: VIS_COMBAT .. NOT IN COMBAT .. HIDING"
+if(DEBUG_STATION) then d(COLOR_5..msg) end
+
+            Hide( msg )
+        end
+        --}}}
+    else  ----------------------------------------------{{{ ------- HIDE .. (if no menu on screen)
+
+        if Reticle_isHidden then
+            local msg = "ShowOrHide: VIS_BLINK_CHANGES .. MENU ON SCREEN .. SHOWING"
+if(DEBUG_STATION) then d(COLOR_5..msg) end
+
+            Show( msg )
+        else
+            local msg = "ShowOrHide: VIS_BLINK_CHANGES .. HIDING"
+if(DEBUG_STATION) then d(COLOR_5..msg) end
+
+            Hide( msg )
+        end
+
+    end
+    --}}}
+end --}}}
+function Show(_caller) --{{{
+if(DEBUG) then d("Show: "..COLOR_3..tostring(_caller)) end
+
+    -- HIDE WHILE CRAFTING {{{
+    if not GreymindQuickSlotBarUI:IsHidden() then
+        if ZO_CraftingUtils_IsCraftingWindowOpen() then
+            if not ForceBarVisibility then
+                if(DEBUG_STATION) then d(COLOR_3.." Show: CRAFTING WINDOW IS OPENED"); end
+
+                Hide_handler()
+                return
+            end
+        else
+            if(DEBUG) then d(COLOR_8.." Show: NO CRAFTING WINDOW OPENED"); end
+
+        end
     end
     --}}}
     -- HIDE WHILE SKILL TUNING {{{
-    if not ZO_Skills:IsHidden() then
-if(DEBUG_STATION) then d(COLOR_5.." Show: SKILLS WINDOW IS OPENED"); end
-        Hide_handler()
-
-        -- SKILLS WINDOW TAKES TIME TO CLOSE .. HAVE TO CHECK AGAIN LATER
-        --zo_callLater(Show, ZO_CALLLATER_DELAY_HIDE)
-        return
-    else
-if(DEBUG_STATION) then d(COLOR_8.." Show: NO SKILLS WINDOW OPENED"); end
+    if not GreymindQuickSlotBarUI:IsHidden() then
+        if not ZO_Skills:IsHidden() then
+            if(DEBUG_STATION) then d(COLOR_5.." Show: SKILLS WINDOW IS OPENED"); end
+            Hide_handler()
+            -- SKILLS WINDOW TAKES TIME TO CLOSE .. HAVE TO CHECK AGAIN LATER
+            --zo_callLater(Show, ZO_CALLLATER_DELAY_HIDE)
+            return
+        else
+            if(DEBUG) then d(COLOR_8.." Show: NO SKILLS WINDOW OPENED"); end
+        end
     end
     --}}}
     -- HIDE ON VIS_NEVER WITH (not ForceBarVisibility) {{{
-    if((QSB.Settings.Visibility == VIS_NEVER) and (not ForceBarVisibility)) then
-        Hide_handler()
+    if not GreymindQuickSlotBarUI:IsHidden() then
+        if((QSB.Settings.Visibility == VIS_NEVER) and (not ForceBarVisibility)) then
+            Hide_handler()
 
-        return
+            return
+        end
     end
     --}}}
     if(not Show_pending) then
@@ -2087,7 +2165,8 @@ D("...Show_handler()")
     OnMouseExit()
 end --}}}
 function Hide(_caller) --{{{
-if(DEBUG or DEBUG_STATION) then d("Hide: ".. _caller) end
+if(DEBUG) then d("Hide: "..COLOR_3..tostring(_caller)) end
+
     if(not Hide_pending) then
         Hide_pending = true
         zo_callLater(Hide_handler, ZO_CALLLATER_DELAY_HIDE)
@@ -2453,11 +2532,11 @@ function QSB_Item8() SelectButton(8) end
 
 --}}}
 -- KEYBOARD-SHORTCUTS: P[1..5] {{{
-function QSB_P1()    SelectPreset( PRESETNAMES[1] ); loadItemSlots(); Refresh(); Show(); end
-function QSB_P2()    SelectPreset( PRESETNAMES[2] ); loadItemSlots(); Refresh(); Show(); end
-function QSB_P3()    SelectPreset( PRESETNAMES[3] ); loadItemSlots(); Refresh(); Show(); end
-function QSB_P4()    SelectPreset( PRESETNAMES[4] ); loadItemSlots(); Refresh(); Show(); end
-function QSB_P5()    SelectPreset( PRESETNAMES[5] ); loadItemSlots(); Refresh(); Show(); end
+function QSB_P1()    SelectPreset( PRESETNAMES[1] ); loadItemSlots(); Show_and_Refresh("P1"); end
+function QSB_P2()    SelectPreset( PRESETNAMES[2] ); loadItemSlots(); Show_and_Refresh("P2"); end
+function QSB_P3()    SelectPreset( PRESETNAMES[3] ); loadItemSlots(); Show_and_Refresh("P3"); end
+function QSB_P4()    SelectPreset( PRESETNAMES[4] ); loadItemSlots(); Show_and_Refresh("P4"); end
+function QSB_P5()    SelectPreset( PRESETNAMES[5] ); loadItemSlots(); Show_and_Refresh("P5"); end
 
 --}}}
 
@@ -2566,13 +2645,9 @@ function QSB_ForceBarVisibility() --{{{
     and            COLOR_3.." ON"
     or             COLOR_6.." OFF"
 
-d(keyName..COLOR_5.." GQSB: Bar Visibility "..COLOR_4.." FORCED "..state)
+d(keyName..COLOR_5.." GQSB: Bar Visibility "..COLOR_9..QSB.Settings.Visibility..COLOR_4.." FORCED "..state)
 
-    if ForceBarVisibility and not BlockBarVisibility then
-        Show()
-    else
-        Hide("QSB_ForceBarVisibility")
-    end
+    ShowOrHide()
 
 end --}}}
 function QSB_BlockBarVisibility() --{{{
@@ -2590,14 +2665,9 @@ function QSB_BlockBarVisibility() --{{{
     and            COLOR_3.." ON"
     or             COLOR_6.." OFF"
 
-d(keyName..COLOR_5.." GQSB: Bar Visibility "..COLOR_7.." BLOCKED "..state)
+d(keyName..COLOR_5.." GQSB: Bar Visibility "..COLOR_9..QSB.Settings.Visibility..COLOR_7.." BLOCKED "..state)
 
-
-    if BlockBarVisibility then
-        Hide("QSB_BlockBarVisibility")
-    else
-        Show()
-    end
+    ShowOrHide()
 
 end --}}}
 function QSB_ReloadUI() --{{{
@@ -2610,6 +2680,11 @@ D("QSB_ClearChat()")
     for i=1, GetNumChatContainerTabs(1), 1 do
         _G["ZO_ChatWindowTemplate".. i .."Buffer"]:Clear()
     end
+
+end --}}}
+function QSB_Settings() --{{{
+D("QSB_Settings()")
+    OnClicked_handle( "S" )
 
 end --}}}
 
@@ -2648,7 +2723,7 @@ D("SelectButton(bNum=["..tostring(bNum).."])")
 
 end --}}}
 function QSB_SetCurrentQuickslot(slotIndex, _caller) --{{{
-D("QSB_SetCurrentQuickslot("..tostring(slotIndex)..", ".._caller..")")
+D("QSB_SetCurrentQuickslot("..tostring(slotIndex)..", "..tostring(_caller)..")")
 
     SetCurrentQuickslot( slotIndex )
 
@@ -2779,16 +2854,15 @@ d(COLOR_2.." GQSB RELOADING\n"..COLOR_2..tostring(changed))
 --d("...SHOULD "..COLOR_2.." QSB_ReloadUI")
             Rebuild_LibAddonMenu()
             Refresh()
-            Show()
+            Show("Load_ZO_SavedVars")
             loadItemSlots()
 --]]--}}}
         else
 --d("...CALLING "..COLOR_5.." Rebuild_LibAddonMenu .. Refresh .. Show")
 
             Rebuild_LibAddonMenu()
-            Refresh()
-            Show()
             loadItemSlots()
+            Show_and_Refresh("Load_ZO_SavedVars")
         end
     end
     --}}}
@@ -2928,8 +3002,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.LockUI = value
-            Refresh()
-            Show()
+            Show_and_Refresh("LockUI")
         end,
         width       = "full",
         warning     = "Disabling the lock will "..COLOR_3.."force UI visibility|r and the background to show so you can reposition it with guidance",
@@ -2950,8 +3023,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.Visibility = value
-                Refresh()
-                Show()
+                Show_and_Refresh("Visibility")
             end
         end,
         width       = "full",
@@ -2981,8 +3053,7 @@ D("BuildSettingsMenu()")
             value = math.min(value, 64)
             QSB.Settings.ButtonSize = value
             ButtonSizeChanged()
-            Refresh()
-            Show()
+            Show_and_Refresh("SlotItem_ButtonSize")
         end,
         width       = "full",
     }
@@ -3007,8 +3078,7 @@ D("BuildSettingsMenu()")
             value = math.max(value, 12)
             value = math.min(value, 32)
             QSB.Settings.ButtonFontSize = value
-            Refresh()
-            Show()
+            Show_and_Refresh("SlotItem_ButtonFontSize")
         end,
         width       = "full",
     }
@@ -3033,8 +3103,7 @@ D("BuildSettingsMenu()")
             value = math.max(value,   0)
             value = math.min(value, 100)
             QSB.Settings.SlotItem.NotSelectedButtonOpacity = value
-            Refresh()
-            Show()
+            Show_and_Refresh("SlotItem_NotSelectedButtonOpacity")
         end,
         width       = "full",
     }
@@ -3059,8 +3128,7 @@ D("BuildSettingsMenu()")
             value = math.max(value,   0)
             value = math.min(value, 100)
             QSB.Settings.SlotItem.OverlayButtonOpacity = value
-            Refresh()
-            Show()
+            Show_and_Refresh("SlotItem_OverlayButtonOpacity")
         end,
         width       = "full",
     }
@@ -3084,8 +3152,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.SlotItem.VisualCue = value
-                Refresh()
-                Show()
+                Show_and_Refresh("VisualCue")
             end
         end,
         width       = "full",
@@ -3114,8 +3181,7 @@ D("BuildSettingsMenu()")
                 clamped = not QSB.Panel:IsHidden()
             end
             QSB.Settings.SlotItem.QuantityWarning = value
-            Refresh()
-            Show()
+            Show_and_Refresh("SlotItem_WarningQuantity")
             if clamped then Rebuild_LibAddonMenu() end
         end,
         width       = "full",
@@ -3145,8 +3211,7 @@ D("BuildSettingsMenu()")
                 clamped = not QSB.Panel:IsHidden()
             end
             QSB.Settings.SlotItem.QuantityAlert = value
-            Refresh()
-            Show()
+            Show_and_Refresh("SlotItem_AlertQuantity")
             if clamped then Rebuild_LibAddonMenu() end
         end,
         width       = "full",
@@ -3170,8 +3235,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SlotItem.ShowKeyBindings = value
-            Refresh()
-            Show()
+            Show_and_Refresh("ShowKeyBindings")
         end,
         width       = "full",
     }
@@ -3192,8 +3256,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.SlotItem.KeyBindAlignV = value
-                Refresh()
-                Show()
+                Show_and_Refresh("SlotItem_KeyBindPositionVertical")
             end
         end,
         width       = "full",
@@ -3215,8 +3278,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.SlotItem.KeyBindAlignH = value
-                Refresh()
-                Show()
+                Show_and_Refresh("SlotItem_KeyBindPositionHorizontal")
             end
         end,
         width       = "full",
@@ -3239,8 +3301,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SlotItem.ShowQuantityLabels = value
-            Refresh()
-            Show()
+            Show_and_Refresh("ShowQuantityLabels")
         end,
         width       = "full",
     }
@@ -3261,8 +3322,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.SlotItem.QuantityLabelPositionVertical = value
-                Refresh()
-                Show()
+                Show_and_Refresh("SlotItem_QuantityLabelPositionVertical")
             end
         end,
         width       = "full",
@@ -3284,8 +3344,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.SlotItem.QuantityLabelPositionHorizontal = value
-                Refresh()
-                Show()
+                Show_and_Refresh("SlotItem_QuantityLabelPositionHorizontal")
             end
         end,
         width       = "full",
@@ -3327,8 +3386,7 @@ D("BuildSettingsMenu()")
             end
             SelectPreset(value)
             loadItemSlots()
-            Refresh()
-            Show()
+            Show_and_Refresh("Presets")
         end,
         width       = "full",
     }
@@ -3348,8 +3406,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.CloneCurrentToEmtpyPreset = value
-            Refresh()
-            Show()
+            Show_and_Refresh("CloneCurrentToEmtpyPreset")
         end,
         width       = "full",
     }
@@ -3526,8 +3583,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.NextAuto = value
-            Refresh()
-            Show()
+            Show_and_Refresh("NextAuto")
         end,
         width       = "half",
     }
@@ -3547,8 +3603,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.NextPrevWrap = value
-            Refresh()
-            Show()
+            Show_and_Refresh("NextPrevWrap")
         end,
         width       = "half",
     }
@@ -3568,8 +3623,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SlotItem.HideSlotBackground = value
-            Refresh()
-            Show()
+            Show_and_Refresh("SlotItem_ShowBackground")
         end,
         width       = "half",
     }
@@ -3589,8 +3643,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SwapBackgroundColors = value
-            Refresh()
-            Show()
+            Show_and_Refresh("SwapBackgroundColors")
         end,
         width       = "half",
     }
@@ -3610,8 +3663,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.ShowBackground = value
-            Refresh()
-            Show()
+            Show_and_Refresh("ShowBackground")
         end,
         width       = "half",
     }
@@ -3631,8 +3683,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SlotItem.ShowNumbers = value
-            Refresh()
-            Show()
+            Show_and_Refresh("ShowNumbers")
         end,
         width       = "half",
     }
@@ -3653,6 +3704,10 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SlotItem.PrintDescription = value
+            if(value) then
+                QSB_SetCurrentQuickslot(GetCurrentQuickslot(), "QSB_PrintDescription")
+                Show_and_Refresh("PrintDescription")
+            end
         end,
         width       = "half",
     }
@@ -3739,8 +3794,7 @@ D_ITEM(COLOR_5.."handle_ACTION_SLOT_UPDATED(bNum "..bNum..") .. CALLED" )
         end
 
         --SelectNextAuto("SLOT UPDATED")
-        Refresh()
-        Show()
+        Show_and_Refresh("ACTION_SLOT_UPDATED")
     end)
 
     --}}}
@@ -3751,8 +3805,7 @@ D_ITEM(COLOR_5.."handle_ACTION_SLOT_UPDATED(bNum "..bNum..") .. CALLED" )
 D_ITEM("ACTIVE_QUICKSLOT_CHANGED: slotIndex=["..slotIndex.."]")
 
       --SelectNextAuto("QUICKSLOT CHANGED")
-        Refresh()
-        Show()
+        Show_and_Refresh("ACTIVE_QUICKSLOT_CHANGED")
     end)
 
     --}}}
@@ -3861,7 +3914,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
         else
             local inCombat = select(2,...)
             if(inCombat) then
-                Show()
+                Show("PLAYER_COMBAT_STATE")
             else
                 Hide("PLAYER_COMBAT_STATE (not inCombat)")
             end
@@ -3902,8 +3955,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
     , EVENT_KEYBINDING_SET
     , function(self)
         D_EVENT("KEYBINDING_SET")
-        Refresh()
-        Show()
+        Show_and_Refresh("KEYBINDING_SET")
     end)
 
     --}}}
@@ -3912,8 +3964,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
     , EVENT_KEYBINDING_CLEARED
     , function(self)
         D_EVENT("KEYBINDING_CLEARED")
-        Refresh()
-        Show()
+        Show_and_Refresh("KEYBINDING_CLEARED")
     end)
 
     --}}}
@@ -4019,7 +4070,7 @@ D("OnMouseClicked: MouseDown=["..tostring(MouseDown).."]")
     if not QSB.Settings.LockUI then
         QSB.Settings.LockUI = true
         Refresh()
-        Show()
+        Show("OnMouseClicked")
     end
 
 end --}}}
@@ -4032,19 +4083,18 @@ D("OnClicked_handle("..tostring(handleName)..")")
     if handleName == "L" then
         QSB.Settings.LockUI = not QSB.Settings.LockUI
       --Rebuild_LibAddonMenu()
-        Refresh()
-        Show()
+        Show_and_Refresh("OnClicked_handle L")
 
     elseif handleName == "S" then
         Rebuild_LibAddonMenu()
+        Show_and_Refresh("OnClicked_handle "..handleName)
 
     elseif    string.match(handleName, "P([1-5])") then
         arg = string.match(handleName, "P([1-5])")
 
         SelectPreset( PRESETNAMES[ tonumber(arg) ] )
         loadItemSlots()
-        Refresh()
-        Show()
+        Show_and_Refresh("OnClicked_handle "..handleName)
 
     end
 
@@ -4084,10 +4134,9 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-    d("GQSB"..COLOR_C.." "..QSB.Version.." (190522)|r\n"
-    .."GQSB"..COLOR_8.." Checked with Update 22 (5.0.5): Elsweyr (API 100027)\n"
-    .."GQSB"..COLOR_8.." New preset-swap cooldown to prevent spam warning messages\n"
-    .."GQSB"..COLOR_8.." New option to print Selected Item description in Chat Window\n"
+    d("GQSB"..COLOR_C.." "..QSB.Version.." (190813)|r\n"
+    .."GQSB"..COLOR_8.." Checked with Update 23 (5.1.5): Scalebreaker (API 100028)\n"
+    .."GQSB"..COLOR_8.." New Key binding to open Settings Menu"
     .."GQSB"..COLOR_8.." "..QSB_SLASH_COMMAND.." -h for help|r\n"
     ..QSB_SLASH_COMMAND.." "..arg)
 
@@ -4141,8 +4190,8 @@ function OnSlashCommand(arg)
         getItem_bagId_slotId(bag, name)
 
     -- hide show refresh reset p1-5 kbclr kbmod {{{
-    elseif(arg == "hide"   ) then Hide("OnSlashCommand")
-    elseif(arg == "show"   ) then Show()
+    elseif(arg == "hide"   ) then Hide("OnSlashCommand /"..arg)
+    elseif(arg == "show"   ) then Show("OnSlashCommand /"..arg)
     elseif(arg == "refresh") then Refresh()
     elseif(arg == "reset"  ) then Load_Defaults()
     elseif(arg == "account") then Load_ZO_SavedVars(not QSB.AccountWideSettings.SaveAccountWide)
@@ -4289,8 +4338,7 @@ function OnSlashCommand(arg)
     --}}}
 
     if(ui_may_have_changed) then
-        Refresh()
-        Show()
+        Show_and_Refresh("OnSlashCommand /"..arg)
     end
 
 end
