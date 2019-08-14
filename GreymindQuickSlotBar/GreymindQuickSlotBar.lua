@@ -3,6 +3,11 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.4.8 {{{
+- [color="aaffaa"]190814[/color]
+-  All USE and CHANGE events display suppressed by [color="ee00ee"]Show policy .. Never[/color] option
+-  UI layout may be reduced to a single [1x1 cell] .. down from [2R x 1C]
+}}}
 v2.4.7 {{{
 - [color="aaffaa"]190813[/color]
 - Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
@@ -489,7 +494,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.7", -- 190813 previous: 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.8", -- 190814 previous: 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1460,7 +1465,11 @@ end --}}}
 
 -- UI (build & refresh)
 function Show_and_Refresh(caller) --{{{
-D("Show_and_Refresh("..tostring(caller)..")")
+D("Show_and_Refresh("..tostring(caller)..") "..COLOR_7.."Vis "..QSB.Settings.Visibility)
+
+    if((QSB.Settings.Visibility == VIS_NEVER) and (not ForceBarVisibility)) then
+        return
+    end
 
     Show(caller)
 
@@ -2242,10 +2251,10 @@ D("Adjust_ButtonColumns(cols="..cols..", rows="..rows..")")
     rows = math.min(rows, QSB.ButtonCountMax)                   -- [rows <= ButtonCountMax]
 
     -- 2 >= ButtonCountMax
-    if ((rows * cols) < 2) then
-        rows = 2
+--[[if ((rows * cols) < 2) then
+        rows = 1
     end
-
+--]]
     -- rows <= ButtonCountMax
     if ((rows * cols) >  QSB.ButtonCountMax) then
         rows = math.ceil(QSB.ButtonCountMax / cols)
@@ -4134,7 +4143,7 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-    d("GQSB"..COLOR_C.." "..QSB.Version.." (190813)|r\n"
+    d("GQSB"..COLOR_C.." "..QSB.Version.." (190814)|r\n"
     .."GQSB"..COLOR_8.." Checked with Update 23 (5.1.5): Scalebreaker (API 100028)\n"
     .."GQSB"..COLOR_8.." New Key binding to open Settings Menu"
     .."GQSB"..COLOR_8.." "..QSB_SLASH_COMMAND.." -h for help|r\n"
