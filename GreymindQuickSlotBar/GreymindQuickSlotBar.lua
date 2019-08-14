@@ -5,8 +5,11 @@
 --[[
 v2.4.8 {{{
 - [color="aaffaa"]190814[/color]
+- Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
 -  All USE and CHANGE events display suppressed by [color="ee00ee"]Show policy .. Never[/color] option
--  UI layout may be reduced to a single [1x1 cell] .. down from [2R x 1C]
+-  Default [color="ee00ee"]Show Policy[/color] set to [Never] instead of [Always]
+-  Default [color="ee00ee"]Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
+-  [color="ee00ee"]UI layout[/color] may be reduced to a single [1x1 cell] .. down from [2R x 1C]
 }}}
 v2.4.7 {{{
 - [color="aaffaa"]190813[/color]
@@ -555,7 +558,7 @@ QSB.SettingsDefaults = {
     NextAuto                            = false,
     ShowBackground                      = false,
     SwapBackgroundColors                = false,
-    Visibility                          = VIS_ALWAYS,
+    Visibility                          = VIS_NEVER,
     PresetName                          = PRESETNAMES[1],
     SoundAlert                          = SOUNDNAMES[1],
     SoundSlotted                        = SOUNDNAMES[2],
@@ -574,7 +577,7 @@ QSB.SettingsDefaults = {
         ShowNumbers                     = false,
         PrintDescription                = false,
         ShowQuantityLabels              = true,
-        VisualCue                       = VISCUE_WA,
+        VisualCue                       = VISCUE_OFF,
     },
 
     Presets                             = { P1={}, P2={}, P3={}, P4={}, P5={} },
@@ -1467,17 +1470,15 @@ end --}}}
 function Show_and_Refresh(caller) --{{{
 D("Show_and_Refresh("..tostring(caller)..") "..COLOR_7.."Vis "..QSB.Settings.Visibility)
 
-    if((QSB.Settings.Visibility == VIS_NEVER) and (not ForceBarVisibility)) then
-        return
+    if(not (QSB.Settings.Visibility == VIS_NEVER) and not ForceBarVisibility) then
+        Show(caller)
     end
 
-    Show(caller)
-
-    Refresh()
+    Refresh("Show_and_Refresh")
 
 end --}}}
-function Refresh() --{{{
-D("Refresh()")
+function Refresh(caller) --{{{
+D("Refresh("..tostring(caller)..")")
     if not QSB.Settings then return end
     if     QSB.Moving or QSB.Resizing then return end
     if not ZO_Skills:IsHidden() then  D(COLOR_5.."Refresh: not ZO_Skills:IsHidden()"); return end
@@ -2862,7 +2863,7 @@ d(COLOR_2.." GQSB RELOADING\n"..COLOR_2..tostring(changed))
 --[[--{{{
 --d("...SHOULD "..COLOR_2.." QSB_ReloadUI")
             Rebuild_LibAddonMenu()
-            Refresh()
+            Refresh("Load_ZO_SavedVars")
             Show("Load_ZO_SavedVars")
             loadItemSlots()
 --]]--}}}
@@ -3842,7 +3843,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
         --}}}
 
         SelectNextAuto("INVENTORY UPDATED")
-        Refresh()
+        Refresh("INVENTORY UPDATED")
     end)
 
     --}}}
@@ -3868,7 +3869,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
         -- done with UI settings, get back to normal opacity
         if QSB.SomeSlotItemChanged then
             QSB.SomeSlotItemChanged = false
-            Refresh()
+            Refresh("RETICLE_HIDDEN_UPDATE")
         end
 
         -- Show / Hide
@@ -3940,7 +3941,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
     , EVENT_PLAYER_ACTIVATED
     , function(self)
         D_EVENT("PLAYER_ACTIVATED")
-        Refresh()
+        Refresh("PLAYER_ACTIVATED")
     end)
 
     --}}}
@@ -3953,7 +3954,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
         if(not locked) then
             D(COLOR_7.." Active Weapon Pair: "..COLOR_C..tostring(activeWeaponPair).."|r")
         end
-        Refresh()
+        Refresh("ACTIVE_WEAPON_PAIR_CHANGED")
 --d("GetActiveWeaponPairInfo() returns ["..tostring(GetActiveWeaponPairInfo()).."]")
     end)
 
@@ -3983,7 +3984,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
     , EVENT_END_FAST_TRAVEL_INTERACTION
     , function(self)
         D_EVENT("END_FAST_TRAVEL_INTERACTION")
-        Refresh()
+        Refresh("END_FAST_TRAVEL_INTERACTION")
     end)
 
     --}}}
@@ -3992,7 +3993,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
     , EVENT_END_FAST_TRAVEL_KEEP_INTERACTION
     , function(self)
         D_EVENT("END_FAST_TRAVEL_KEEP_INTERACTION")
-        Refresh()
+        Refresh("END_FAST_TRAVEL_KEEP_INTERACTION")
     end)
 
     --}}}
@@ -4019,7 +4020,7 @@ d(COLOR_7.." EVENT_ACTION_LAYER_POPPED: "..COLOR_2.." arg1=[".. tostring(arg1)..
     --}}}
 --]]
     -- DELAYED UI DISPLAY
-    Refresh()
+    Refresh("DELAYED UI DISPLAY .. (catch all)")
     D(string.format("Version %s loaded", QSB.Version))
 
 end --}}}
@@ -4040,7 +4041,7 @@ D("OnMoveStop: MouseDown=["..tostring(MouseDown).."]")
     else
         UIWindowChanged()
     end
-    --Refresh()
+    --Refresh("OnMoveStop")
 end --}}}
 
 function OnResizeStart() --{{{
@@ -4056,7 +4057,7 @@ D("OnResizeStop: MouseDown=["..tostring(MouseDown).."]")
         OnMouseClicked()
     else
         UIWindowChanged()
-        Refresh()
+        Refresh("OnResizeStop")
     end
 end --}}}
 
@@ -4078,7 +4079,7 @@ D("OnMouseClicked: MouseDown=["..tostring(MouseDown).."]")
 
     if not QSB.Settings.LockUI then
         QSB.Settings.LockUI = true
-        Refresh()
+        Refresh("OnMouseClicked")
         Show("OnMouseClicked")
     end
 
@@ -4145,7 +4146,7 @@ end --}}}
 function OnSlashCommand(arg)
     d("GQSB"..COLOR_C.." "..QSB.Version.." (190814)|r\n"
     .."GQSB"..COLOR_8.." Checked with Update 23 (5.1.5): Scalebreaker (API 100028)\n"
-    .."GQSB"..COLOR_8.." New Key binding to open Settings Menu"
+    .."GQSB"..COLOR_8.." New Key binding to open Settings Menu\n"
     .."GQSB"..COLOR_8.." "..QSB_SLASH_COMMAND.." -h for help|r\n"
     ..QSB_SLASH_COMMAND.." "..arg)
 
@@ -4201,7 +4202,7 @@ function OnSlashCommand(arg)
     -- hide show refresh reset p1-5 kbclr kbmod {{{
     elseif(arg == "hide"   ) then Hide("OnSlashCommand /"..arg)
     elseif(arg == "show"   ) then Show("OnSlashCommand /"..arg)
-    elseif(arg == "refresh") then Refresh()
+    elseif(arg == "refresh") then Refresh("OnSlashCommand")
     elseif(arg == "reset"  ) then Load_Defaults()
     elseif(arg == "account") then Load_ZO_SavedVars(not QSB.AccountWideSettings.SaveAccountWide)
     elseif(arg == "compare") then QSB_Settings_Changed()
