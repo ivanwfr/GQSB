@@ -3,12 +3,25 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.4.8.1 {{{
+- [color="aaffaa"]190815[/color]
+- Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
+-  All USE and CHANGE events display suppressed by [color="ee00ee"]Show policy Never[/color] option
+-  [color="ee00ee"]Default Show Policy[/color] set to [Never] instead of [Always]
+-  [color="ee00ee"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
+-  [color="ee00ee"]UI layout[/color] may be reduced to a single [1x1 cell] .. down from [2R x 1C]
+-  [color="magenta"]Trader08_mod:
+-  [color="green"  ]- LockAllPresets|r option
+-  [color="magenta"] ...profiles not saved to allow temporary slottings
+-  [color="blue"   ]- DelayCombatPresetSwap|r option
+-  [color="magenta"] ...switch profile when you get out of combat
+}}}
 v2.4.8 {{{
 - [color="aaffaa"]190814[/color]
 - Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
--  All USE and CHANGE events display suppressed by [color="ee00ee"]Show policy .. Never[/color] option
--  Default [color="ee00ee"]Show Policy[/color] set to [Never] instead of [Always]
--  Default [color="ee00ee"]Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
+-  All USE and CHANGE events display suppressed by [color="ee00ee"]Show policy Never[/color] option
+-  [color="ee00ee"]Default Show Policy[/color] set to [Never] instead of [Always]
+-  [color="ee00ee"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
 -  [color="ee00ee"]UI layout[/color] may be reduced to a single [1x1 cell] .. down from [2R x 1C]
 }}}
 v2.4.7 {{{
@@ -301,12 +314,27 @@ v2.2.5 {{{
 
 --]]
 --}}}
-local DEBUG         = false
-local DEBUG_ITEM    = false
-local DEBUG_EQUIP   = false
-local DEBUG_EVENT   = false
-local DEBUG_TASKS   = false
-local DEBUG_STATION = false
+local DEBUG           = false
+local DEBUG_ITEM      = false
+local DEBUG_EQUIP     = false
+local DEBUG_EVENT     = false
+local DEBUG_TASKS     = false
+local DEBUG_STATION   = false
+
+local DEBUG_Trader08  = false
+-- [Trader08_block]
+--{{{
+-- Trader08_mod: SESSION SCOPE VARIALE
+-- Trader08_mod: i.e. Not savable by QSB.Settings
+-- Trader08_mod: as it would auto-exclude its own saving!
+
+-- Trader08_mod: but DelayCombatPresetSwap is saved with each Settings attribute
+-- Trader08_mod: ...does it make sense to block swapping on a per-preset basis ?
+
+local LockAllPresets  = false
+--}}}
+-- [Trader08_block]
+
 -- LOCAL
 -- CONSTANTS --{{{
 
@@ -497,7 +525,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8", -- 190814 previous: 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.8.1 release candidate", -- 190815 previous: 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -554,6 +582,7 @@ QSB.SettingsDefaults = {
     ButtonsDisplayed                    = QSB.ButtonCountMax,
     GameActionButtonHide                = false,
     LockUI                              = false,
+    DelayCombatPresetSwap               = false,
     NextPrevWrap                        = false,
     NextAuto                            = false,
     ShowBackground                      = false,
@@ -721,23 +750,75 @@ d("...QSB: RESETING ALL PRESETS TO DEFAULT VALUES:")
 
     Show_and_Refresh("Load_Defaults")
 end --}}}
-function SelectPreset(selectedPreset) --{{{
-D("SelectPreset("..COLOR_C..selectedPreset.."|r):")
 
+-- [Trader08_block]
+-- Set_preset_pending_IN_COMBAT .. Clr_preset_pending .. Process_preset_pending {{{
+local preset_pending   = -1
+
+function Clr_preset_pending_NOT_IN_COMBAT() --{{{
+
+    if(preset_pending == -1) then return end
+
+if(DEBUG_Trader08) then d(COLOR_8.."Clr_preset_pending_NOT_IN_COMBAT: [preset_pending "..tostring(preset_pending).."]") end
+
+    preset_pending     = -1
+end --}}}
+function Set_preset_pending_IN_COMBAT( selectedPreset ) --{{{
+if(DEBUG_Trader08) then d(COLOR_M.."Set_preset_pending_IN_COMBAT(selectedPreset "..tostring(selectedPreset).. " )") end
+
+    preset_pending     = selectedPreset
+
+    PlaySound( SOUNDS.ACTIVE_SKILL_MORPH_CHOSEN )
+end --}}}
+function Process_preset_pending(inCombat_state) --{{{
+if(DEBUG_Trader08) then d(COLOR_4.."Process_preset_pending(inCombat_state "..tostring(inCombat_state)..") .. [preset_pending "..tostring(preset_pending).."]") end
+
+    if(preset_pending == -1) then return end
+
+    --zo_callLater(SelectPresetPending, 5000)
+
+    SelectPreset( preset_pending )
+
+    loadItemSlots();
+
+    Show_and_Refresh("Process_preset_pending")
+end --}}}
+--}}}
+-- [Trader08_block]
+
+function SelectPreset(selectedPreset) --{{{
+-- [Trader08_block] {{{
+    if DelayCombatPresetSwap then
+        if IsUnitInCombat('player') then Set_preset_pending_IN_COMBAT( selectedPreset ) return
+        else                             Clr_preset_pending_NOT_IN_COMBAT()             end
+    end
+-- [Trader08_block] }}}
+D("SelectPreset("..COLOR_C..selectedPreset.."|r):")
     -- UNCHANGED {{{
     -- @see ../../SavedVariables/GreymindQuickSlotBar.lua
 
-    if string.match(selectedPreset, QSB.Settings.PresetName) then
-D("..."..COLOR_7..".SelectedPreset matches QSB.Settings.PresetName|r")
+-- Trader08_mod: commented this [if]
+-- Trader08_mod: to have the addon forcibly load the selected profile
+-- Trader08_mod: (in case we temporarily had manually changed something in the quickslots)
 
-        return
-    end
+--    if string.match(selectedPreset, QSB.Settings.PresetName) then
+--D("..."..COLOR_7..".SelectedPreset matches QSB.Settings.PresetName|r")
+--
+--        return
+--    end
     --}}}
-    -- SAVE CURRENT PRESET {{{
+
+-- [Trader08_block]
+    -- SAVE CURRENT PRESET .. (unless LockAllPresets is ON) {{{
     local currentPreset = QSB.Settings.PresetName
-D("...PRESET __SAVING:".. currentPreset)
 
-    --}}}
+if LockAllPresets then
+
+if(DEBUG_Trader08) then d(COLOR_M.."SelectedPreset .. saving currentPreset SKIPPED BY [Lock all preset]") end
+
+else
+
+D("...PRESET __SAVING:".. currentPreset)
     -- DEFAULTS SETTINGS {{{
     QSB.Settings.Presets[currentPreset] = DeepCopy(QSB.SettingsDefaults)
 
@@ -755,10 +836,17 @@ D("...PRESET __SAVING:".. currentPreset)
     to.Presets    = nil
 
     --}}}
-    -- SELECTED PRESET {{{
+    -- MainWindow {{{
     if not QSB.Settings.Presets[selectedPreset].MainWindow then
         QSB   .Settings.Presets[selectedPreset] = DeepCopy(QSB.SettingsDefaults)
+
     end
+    --}}}
+end
+--}}}
+-- [Trader08_block]
+
+    -- COPY WORKING PRESET {{{
     from = QSB.Settings.Presets[selectedPreset]
     to   = QSB.Settings
     CopyNotNilSettingsFromTo(from, to)
@@ -799,7 +887,7 @@ D("...PRESET SELECTED:"..QSB.Settings.PresetName)
     --}}}
     -- UPDATE SETTINGS PANEL {{{
     if not QSB.Panel:IsHidden() then Rebuild_LibAddonMenu() end
-
+    
     --}}}
 end --}}}
 -- ITEM EQUIP
@@ -963,19 +1051,28 @@ D_ITEM("..CLEARING ["..COLOR_6..slotIndex_to_bNum(slotIndex).."=="..slotIndex.."
     CallSecureProtected("ClearSlot", slotIndex)
 end --}}}
 function equip_bNum_item_slotId(bNum, itemName, itemId) --{{{
-
+    -- [slotIndex] {{{
     local slotIndex = bNum_to_slotIndex( bNum )
 D_ITEM(".EQUIPPING ["..COLOR_6..bNum.."=="..slotIndex.."|r] itemId["..tostring(itemId).."] ["..COLOR_6..tostring(itemName).."]")
 
-    local from_bag = (getItem_BAG_BACKPACK_slotId(itemName) >= 0)
-D_ITEM("from_bag: "..tostring(from_bag))
+    --}}}
+    -- 1/2 - BAG ITEM {{{
 
-    if( from_bag ) then
+-- Trader08_mod: itemId (coming from slotID)
+-- Trader08_mod: to be updated with present inventory slotID
+-- Trader08_mod: (instead of from old saved dynamic slotID)
+
+    local        from_bag  = getItem_BAG_BACKPACK_slotId(itemName)
+    if(          from_bag >= 0) then
+    	itemId = from_bag
         local _, count = GetItemInfo(BAG_BACKPACK, itemId)
         if(count > 0) then
 D_ITEM("SelectSlotItem.......(itemId=["..tostring(itemId).."], slotIndex=["..tostring(slotIndex).."])")
+
             CallSecureProtected("SelectSlotItem"       , BAG_BACKPACK, itemId, slotIndex)
         end
+    --}}}
+    -- 2/2 OR COLLECTIBLE {{{
     else
         -- TODO check if available
 --[[{{{
@@ -989,7 +1086,7 @@ D_ITEM("SelectSlotItem.......(itemId=["..tostring(itemId).."], slotIndex=["..tos
 D_ITEM("SelectSlotCollectible(itemId=["..tostring(itemId).."], slotIndex=["..tostring(slotIndex).."])")
       --CallSecureProtected("SelectSlotCollectible" ,                          itemId, slotIndex)
         CallSecureProtected("SelectSlotSimpleAction", ACTION_TYPE_COLLECTIBLE, itemId, slotIndex)
-    end
+    end --}}}
 
 end --}}}
 
@@ -1116,14 +1213,26 @@ D_ITEM(COLOR_3.."handle_ACTION_SLOT_UPDATED(bNum="..bNum.."):|r")
 
 end --}}}
 function save_QSB_to_SlotItemTable(bNum) --{{{
+
+-- [Trader08_block]
+--[[//FIXME .. these changes shoud be allowed .. only the saving part must not be
+    -- LockAllPresets {{{
+    if LockAllPresets then
+if(DEBUG_Trader08) then d(COLOR_M.."save_QSB_to_SlotItemTable .. CANCELED BY [Lock all preset]") end
+        return
+    end
+    --}}}
+--]]
+-- [Trader08_block]
+
 D_ITEM("save_QSB_to_SlotItemTable("..bNum.."):")
 
     local slotIndex = bNum_to_slotIndex( bNum      )
     local texture   = GetSlotTexture   ( slotIndex )
     local slotName  = GetSlotName      ( slotIndex )
     local slotId    = -1
-    if (slotName    ~= nil) and (slotName ~= "") then
-        slotId       = getItem_slotId(slotName)
+    if( slotName   ~= nil) and (slotName ~= "") then
+        slotId      = getItem_slotId(slotName)
     end
 
     if(slotId == -1) then slotId = GetCollectibleIdFromLink( GetSlotItemLink(slotIndex) ) end
@@ -1401,6 +1510,7 @@ function CopyNotNilSettingsFromTo(orig, dest) --{{{
     if( orig.ButtonsDisplayed                         ~= nil) then dest.ButtonsDisplayed                         = orig.ButtonsDisplayed                         end
     if( orig.GameActionButtonHide                     ~= nil) then dest.GameActionButtonHide                     = orig.GameActionButtonHide                     end
     if( orig.LockUI                                   ~= nil) then dest.LockUI                                   = orig.LockUI                                   end
+    if( orig.DelayCombatPresetSwap                    ~= nil) then dest.DelayCombatPresetSwap                    = orig.DelayCombatPresetSwap                    end
     if( orig.NextPrevWrap                             ~= nil) then dest.NextPrevWrap                             = orig.NextPrevWrap                             end
     if( orig.NextAuto                                 ~= nil) then dest.NextAuto                                 = orig.NextAuto                                 end
     if( orig.ShowBackground                           ~= nil) then dest.ShowBackground                           = orig.ShowBackground                           end
@@ -1440,6 +1550,7 @@ function CopySettingsDefaultsTo(dest) --{{{
     dest.ButtonsDisplayed                         = QSB.SettingsDefaults.ButtonsDisplayed
     dest.GameActionButtonHide                     = QSB.SettingsDefaults.GameActionButtonHide
     dest.LockUI                                   = QSB.SettingsDefaults.LockUI
+    dest.DelayCombatPresetSwap                    = QSB.SettingsDefaults.DelayCombatPresetSwap
     dest.NextPrevWrap                             = QSB.SettingsDefaults.NextPrevWrap
     dest.NextAuto                                 = QSB.SettingsDefaults.NextAuto
     dest.ShowBackground                           = QSB.SettingsDefaults.ShowBackground
@@ -1966,7 +2077,18 @@ D("BuildUIHandles():")
     end
 
 end --}}}
+
 function GameActionButtonHideHandler(just_changed, _caller) --{{{
+-- [Trader08_block]
+    -- LockAllPresets {{{
+    if LockAllPresets then
+if(DEBUG_Trader08) then d(COLOR_M.."GameActionButtonHideHandler .. CANCELED BY [Lock all preset]") end
+
+        return
+    end
+    --}}}
+-- [Trader08_block]
+
 D(COLOR_5.."GameActionButtonHideHandler(just_changed="..tostring(just_changed)..COLOR_3.." _caller=[".. _caller .."]):|r")
 
     if     QSB.Settings.GameActionButtonHide then
@@ -1987,6 +2109,7 @@ D(COLOR_5.."GameActionButtonHideHandler(just_changed="..tostring(just_changed)..
     end
 
 end --}}}
+
 function ShowUIHandles() --{{{ D("ShowUIHandles")
     if not QSB.UIHandles then return end
 
@@ -2891,22 +3014,23 @@ end --}}}
 function QSB_Setting_Preset_Changed(q,l,presetName) --{{{
 
     local k
-    k = "NextAuto"            ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "SoundSlotted"        ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "ButtonSize"          ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "version"             ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "GameActionButtonHide"; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "Visibility"          ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "SoundAlert"          ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "SaveAccountWide"     ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "ShowBackground"      ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "ButtonsDisplayed"    ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "PresetName"          ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "ButtonColumns"       ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "NextPrevWrap"        ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "LockUI"              ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "SwapBackgroundColors"; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "ButtonFontSize"      ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "NextAuto"              ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "SoundSlotted"          ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ButtonSize"            ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "version"               ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "GameActionButtonHide"  ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "Visibility"            ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "SoundAlert"            ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "SaveAccountWide"       ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ShowBackground"        ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ButtonsDisplayed"      ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "PresetName"            ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ButtonColumns"         ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "NextPrevWrap"          ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "LockUI"                ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "DelayCombatPresetSwap" ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "SwapBackgroundColors"  ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ButtonFontSize"        ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
 
     return false
 end --}}}
@@ -3725,6 +3849,72 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
 
+    -- Trader08_mod: [LockAllPresets]
+    -- Lock all preset (Checkbox) {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_LockAllPresets",
+        name        = "Lock all preset "..COLOR_M.."profiles\n",
+        tooltip     = "Whether to keep all profile's quickslots static\n"
+        ..            COLOR_9.."An "..COLOR_M.."per-session .. all-presets|r option\n"
+        ..            COLOR_M.."Trader08_mod",
+        warning     = COLOR_3.."As this option prevents saving quickslots:\n"
+        ..            COLOR_9.."You need to turn it\n"
+        ..            COLOR_M.."ON |r to lock all profiles\n"
+        ..            COLOR_8.."OFF|r to update your current preset\n"
+        ..            COLOR_8.."(the load-time default)\n"
+        ..            "\n"
+        ..            COLOR_2.."BTW this option has no chance to get saved in its ON state because "
+        ..            COLOR_8.."...well I'm pretty sure you can guess why!|r\n"
+        ..            "\n"
+        ..                     "This also means that anything you change in the Settings menu "
+        ..                     "during the "..COLOR_M.."ON|r state is "
+        ..            COLOR_2.."discarded when you change preset|r\n"
+        ..            "\n"
+        ..                     "Conclusion: do your homework in the "..COLOR_8.."OFF|r state "
+        ..                     "and only then, you can "..COLOR_M.."LOCK ON everything|r \n"
+        ..            "\n"
+        ..            COLOR_4.."In other words, this is a Session-level option\n"
+        ..            COLOR_4.."...as such, you have to set it ON after each game load"
+        ..            COLOR_4.." (after each reload as well)"
+        ,
+        getFunc     = function()
+            return LockAllPresets
+        end,
+        setFunc     = function(value)
+            LockAllPresets = value
+        end,
+        width       = "half",
+    }
+    
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- Trader08_mod: [DelayCombatPresetSwap]
+    -- Delay In Combat Preset Swap (Checkbox) {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_DelayCombatPresetSwap",
+        name        = "Delay In Combat "..COLOR_M.."Profile swap",
+        tooltip     = "Wheter to delay "..COLOR_M.."In-Combat preset swap|r\n"
+        ..            "until getting out of combat\n"
+        ..            COLOR_M.."Trader08_mod",
+        getFunc     = function()
+            if( QSB.Settings.DelayCombatPresetSwap == nil) then
+            	QSB.Settings.DelayCombatPresetSwap = false
+            end
+            return QSB.Settings.DelayCombatPresetSwap
+        end,
+        setFunc     = function(value)
+            QSB.Settings.DelayCombatPresetSwap = value
+        end,
+        width       = "half",
+    }
+    
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+
+    -- optionsTable }}}
+
     -- Reset (Button) --{{{
 
 --[[
@@ -3744,7 +3934,6 @@ D("BuildSettingsMenu()")
 --]]
     --}}}
 
-    --}}}
     LAM:RegisterOptionControls(QSB.Name, QSB.SettingsControls)
 
 end --}}}
@@ -3919,16 +4108,21 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
     , function(...)
         D_EVENT("PLAYER_COMBAT_STATE")
         if not QSB.Settings then return end
+
+        local inCombat_state = select(2,...)
+
         if (QSB.Settings.Visibility ~= VIS_COMBAT) then
             ShowOrHide()
         else
-            local inCombat = select(2,...)
-            if(inCombat) then
+            if(inCombat_state) then
                 Show("PLAYER_COMBAT_STATE")
             else
-                Hide("PLAYER_COMBAT_STATE (not inCombat)")
+                Hide("PLAYER_COMBAT_STATE (not inCombat_state)")
             end
         end
+        
+        -- Trader08_mod: AUTO CHANGE TO SELECTED PRESET WHEN OUT OF COMBAT
+        Process_preset_pending( inCombat_state )
 
         GameActionButtonHideHandler(false,"PLAYER_COMBAT_STATE")    -- Apply current user choice
 
@@ -4144,9 +4338,13 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-    d("GQSB"..COLOR_C.." "..QSB.Version.." (190814)|r\n"
+    d("GQSB"..COLOR_C.." "..QSB.Version.." (190815)|r\n"
     .."GQSB"..COLOR_8.." Checked with Update 23 (5.1.5): Scalebreaker (API 100028)\n"
-    .."GQSB"..COLOR_8.." New Key binding to open Settings Menu\n"
+    .."GQSB"..COLOR_7.."Trader08_mod:\n"
+    .."GQSB"..COLOR_5.."- LockAllPresets|r option\n"
+    .."GQSB"..COLOR_7.." ...profiles not saved to allow temporary slottings\n"
+    .."GQSB"..COLOR_6.."- DelayCombatPresetSwap|r option\n"
+    .."GQSB"..COLOR_7.." ...switch profile when you get out of combat\n"
     .."GQSB"..COLOR_8.." "..QSB_SLASH_COMMAND.." -h for help|r\n"
     ..QSB_SLASH_COMMAND.." "..arg)
 
@@ -4284,12 +4482,13 @@ function OnSlashCommand(arg)
 
     --}}}
     -- DEBUG DEBUG_EVENT DEBUG_ITEM clear -- {{{
-    elseif(arg == "debug"         ) then DEBUG         = not DEBUG        ; d("...DEBUG........=[" ..tostring( DEBUG         ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_event"   ) then DEBUG_EVENT   = not DEBUG_EVENT  ; d("...DEBUG_EVENT..=[" ..tostring( DEBUG_EVENT   ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_equip"   ) then DEBUG_EQUIP   = not DEBUG_EQUIP  ; d("...DEBUG_EQUIP..=[" ..tostring( DEBUG_EQUIP   ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_item"    ) then DEBUG_ITEM    = not DEBUG_ITEM   ; d("...DEBUG_ITEM...=[" ..tostring( DEBUG_ITEM    ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_tasks"   ) then DEBUG_TASKS   = not DEBUG_TASKS  ; d("...DEBUG_TASKS..=[" ..tostring( DEBUG_TASKS   ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_station" ) then DEBUG_STATION = not DEBUG_STATION; d("...DEBUG_STATION=[" ..tostring( DEBUG_STATION ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug"         ) then DEBUG          = not DEBUG         ; d("...DEBUG..........=[" ..tostring( DEBUG          ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_event"   ) then DEBUG_EVENT    = not DEBUG_EVENT   ; d("...DEBUG_EVENT....=[" ..tostring( DEBUG_EVENT    ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_equip"   ) then DEBUG_EQUIP    = not DEBUG_EQUIP   ; d("...DEBUG_EQUIP....=[" ..tostring( DEBUG_EQUIP    ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_item"    ) then DEBUG_ITEM     = not DEBUG_ITEM    ; d("...DEBUG_ITEM.....=[" ..tostring( DEBUG_ITEM     ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_tasks"   ) then DEBUG_TASKS    = not DEBUG_TASKS   ; d("...DEBUG_TASKS....=[" ..tostring( DEBUG_TASKS    ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_station" ) then DEBUG_STATION  = not DEBUG_STATION ; d("...DEBUG_STATION..=[" ..tostring( DEBUG_STATION  ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_trader"  ) then DEBUG_Trader08 = not DEBUG_Trader08; d("...DEBUG_Trader08.=[" ..tostring( DEBUG_Trader08 ).. "]"); ui_may_have_changed = true
 --      get_collId_itemName(0)
     --}}}
     else
