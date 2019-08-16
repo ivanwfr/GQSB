@@ -3,18 +3,18 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
-v2.4.8.1 {{{
+v2.4.8.1 release candidate {{{
 - [color="aaffaa"]190815[/color]
 - Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
 -  All USE and CHANGE events display suppressed by [color="ee00ee"]Show policy Never[/color] option
 -  [color="ee00ee"]Default Show Policy[/color] set to [Never] instead of [Always]
 -  [color="ee00ee"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
 -  [color="ee00ee"]UI layout[/color] may be reduced to a single [1x1 cell] .. down from [2R x 1C]
--  [color="magenta"]Trader08_mod:
--  [color="green"  ]- LockAllPresets|r option
--  [color="magenta"] ...profiles not saved to allow temporary slottings
--  [color="blue"   ]- DelayCombatPresetSwap|r option
--  [color="magenta"] ...switch profile when you get out of combat
+-  [color="magenta"]Trader08_mod:[/color]
+-  [color="green"]   - LockAllPresets[/color] option
+-  [color="magenta"] ...profiles not saved to allow temporary slottings[/color]
+-  [color="blue"]    - DelayCombatPresetSwap[/color] option
+-  [color="magenta"] ...forbidden profile change while in combat activated when you get out of combat[/color]
 }}}
 v2.4.8 {{{
 - [color="aaffaa"]190814[/color]
@@ -328,7 +328,7 @@ local DEBUG_Trader08  = false
 -- Trader08_mod: i.e. Not savable by QSB.Settings
 -- Trader08_mod: as it would auto-exclude its own saving!
 
--- Trader08_mod: but DelayCombatPresetSwap is saved with each Settings attribute
+-- Trader08_mod: but QSB.Settings.DelayCombatPresetSwap is saved with each Settings attribute
 -- Trader08_mod: ...does it make sense to block swapping on a per-preset basis ?
 
 local LockAllPresets  = false
@@ -410,6 +410,10 @@ local COOLDOWN_TT
 = "PRESET CHANGE "..COLOR_9.." PENDING|r\n"
 .."delayed by cooldown\n"
 .."to avoid a spam warning message"
+
+local COOLDOWN_TP
+= "PRESET CHANGE "..COLOR_M.." PENDING|r\n"
+.."delayed while in-combat\n"
 
 -- KEYS
 local MOD_NONE                = "No Modifier"
@@ -628,6 +632,12 @@ QSB.SettingsDefaults = {
 -- FORWARD DECLARATION OF LOCAL FUNCTIONS --{{{
 -- ...so we can call them before their definition in this file
 
+-- [Trader08_block]
+local Set_preset_pending_IN_COMBAT
+local Has_preset_pending_IN_COMBAT
+local Process_preset_pending_IN_COMBAT
+-- [Trader08_block]
+
 local Adjust_ButtonColumns
 local Adjust_MainWindow
 local ApplyKeyBindingsModifier
@@ -752,45 +762,46 @@ d("...QSB: RESETING ALL PRESETS TO DEFAULT VALUES:")
 end --}}}
 
 -- [Trader08_block]
--- Set_preset_pending_IN_COMBAT .. Clr_preset_pending .. Process_preset_pending {{{
-local preset_pending   = -1
-
-function Clr_preset_pending_NOT_IN_COMBAT() --{{{
-
-    if(preset_pending == -1) then return end
-
-if(DEBUG_Trader08) then d(COLOR_8.."Clr_preset_pending_NOT_IN_COMBAT: [preset_pending "..tostring(preset_pending).."]") end
-
-    preset_pending     = -1
-end --}}}
+--{{{
+local preset_pending_IN_COMBAT = -1
+--}}}
 function Set_preset_pending_IN_COMBAT( selectedPreset ) --{{{
 if(DEBUG_Trader08) then d(COLOR_M.."Set_preset_pending_IN_COMBAT(selectedPreset "..tostring(selectedPreset).. " )") end
 
-    preset_pending     = selectedPreset
+    preset_pending_IN_COMBAT = selectedPreset
 
     PlaySound( SOUNDS.ACTIVE_SKILL_MORPH_CHOSEN )
-end --}}}
-function Process_preset_pending(inCombat_state) --{{{
-if(DEBUG_Trader08) then d(COLOR_4.."Process_preset_pending(inCombat_state "..tostring(inCombat_state)..") .. [preset_pending "..tostring(preset_pending).."]") end
 
-    if(preset_pending == -1) then return end
+    Show_and_Refresh() -- COOLDOWN-BORDER .. COOLDOWN_TP
+end --}}}
+function Process_preset_pending_IN_COMBAT(inCombat_state) --{{{
+if(DEBUG_Trader08) then d(COLOR_4.."Process_preset_pending_IN_COMBAT(inCombat_state "..tostring(inCombat_state)..") .. [preset_pending_IN_COMBAT "..tostring(preset_pending_IN_COMBAT).."]") end
+
+    if(preset_pending_IN_COMBAT == -1) then return end
 
     --zo_callLater(SelectPresetPending, 5000)
 
-    SelectPreset( preset_pending )
+    SelectPreset( preset_pending_IN_COMBAT )
+    preset_pending_IN_COMBAT     = -1
 
     loadItemSlots();
 
-    Show_and_Refresh("Process_preset_pending")
+    Show_and_Refresh("Process_preset_pending_IN_COMBAT")
 end --}}}
---}}}
+function Has_preset_pending_IN_COMBAT() --{{{
+
+    return (preset_pending_IN_COMBAT ~= -1)
+
+end --}}}
 -- [Trader08_block]
 
 function SelectPreset(selectedPreset) --{{{
 -- [Trader08_block] {{{
-    if DelayCombatPresetSwap then
-        if IsUnitInCombat('player') then Set_preset_pending_IN_COMBAT( selectedPreset ) return
-        else                             Clr_preset_pending_NOT_IN_COMBAT()             end
+    if IsUnitInCombat('player') then
+        if QSB.Settings.DelayCombatPresetSwap then
+            Set_preset_pending_IN_COMBAT( selectedPreset )
+        end
+        return
     end
 -- [Trader08_block] }}}
 D("SelectPreset("..COLOR_C..selectedPreset.."|r):")
@@ -1663,7 +1674,8 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseEnter", ZO_Options_OnMouseEnter)
 GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
 
     --}}}
-    local tasks_pending = (#tasks_loaded > 0) or (#tasks_posted > 0)
+    local tasks_pending  = (#tasks_loaded > 0) or (#tasks_posted > 0)
+    local preset_pending = Has_preset_pending_IN_COMBAT()
 
     -- BACKGROUND --{{{
     if not QSB.Settings.LockUI then
@@ -1683,6 +1695,7 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
     if QSB.Settings.LockUI then
         if tasks_pending then
             GreymindQuickSlotBarUI.data = {tooltipText = COOLDOWN_TT}
+
         else
             GreymindQuickSlotBarUI.data = {
                 tooltipText
@@ -1887,7 +1900,7 @@ end
 --]]
             --}}}
             -- COLOR [visualCueBorder] --{{{
-            if tasks_pending then
+            if tasks_pending or preset_pending then
                 color       = COLORCOOLDOWN
             elseif emptySlot then
                 color       = COLORNORMAL
@@ -1939,7 +1952,7 @@ end
 
             --}}}
             -- ALPHA [visualCueBorder] --{{{
-            if tasks_pending then
+            if tasks_pending or preset_pending then
                     alpha = 1.0
             elseif(slotIndex == current_slotIndex) then
                 if(slotItemCount <= slot_settings.QuantityWarning) then
@@ -1966,7 +1979,7 @@ end
             overground      : SetHidden(   (slot_settings.VisualCue == VISCUE_WAC) and (slotItemCount == 0)                        )
             keyLabel        : SetHidden(not slot_settings.ShowKeyBindings)
             quantityLabel   : SetHidden(not slot_settings.ShowQuantityLabels)
-            visualCueBorder : SetHidden(    slot_settings.VisualCue == VISCUE_OFF and not tasks_pending)
+            visualCueBorder : SetHidden(    slot_settings.VisualCue == VISCUE_OFF and not tasks_pending and not preset_pending)
 
             -- empty slots
             if emptySlot then
@@ -1976,7 +1989,7 @@ end
             -- UNLOCKED LAYOUT
             if not QSB.Settings.LockUI then
 
-                if tasks_pending then
+                if tasks_pending or preset_pending then
                     visualCueBorder:SetColor(COLORCOOLDOWN.R, COLORCOOLDOWN.G, COLORCOOLDOWN.B)
                 else
                     visualCueBorder:SetColor(COLORALERT.R   , COLORALERT.G   , COLORALERT.B   )
@@ -1997,10 +2010,16 @@ end
                 button:SetMouseEnabled( true) -- button click
 
                 button:SetNormalFontColor(1, 1, 1, 1)
-                if tasks_pending then
+
+                if preset_pending then
+                    button.data = {tooltipText = COOLDOWN_TP}
+
+                elseif tasks_pending then
                     button.data = {tooltipText = COOLDOWN_TT}
+
                 else
                     button.data = {tooltipText = get_tooltipText(bNum)}
+
                 end
             end
 
@@ -2018,7 +2037,7 @@ end
                     color   = COLORNORMAL
             end
 
-            if tasks_pending then
+            if tasks_pending or preset_pending then
                 color   = COLORCOOLDOWN
             end
 
@@ -3895,8 +3914,8 @@ D("BuildSettingsMenu()")
         type        = "checkbox",
         reference   = "QSB_DelayCombatPresetSwap",
         name        = "Delay In Combat "..COLOR_M.."Profile swap",
-        tooltip     = "Wheter to delay "..COLOR_M.."In-Combat preset swap|r\n"
-        ..            "until getting out of combat\n"
+        tooltip     = "Wheter a Profile swap while "..COLOR_M.."In-Combat|r (not allowed)\n"
+        ..            "should be activated when you get out of combat\n"
         ..            COLOR_M.."Trader08_mod",
         getFunc     = function()
             if( QSB.Settings.DelayCombatPresetSwap == nil) then
@@ -4122,7 +4141,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
         end
         
         -- Trader08_mod: AUTO CHANGE TO SELECTED PRESET WHEN OUT OF COMBAT
-        Process_preset_pending( inCombat_state )
+        Process_preset_pending_IN_COMBAT( inCombat_state )
 
         GameActionButtonHideHandler(false,"PLAYER_COMBAT_STATE")    -- Apply current user choice
 
@@ -4341,10 +4360,10 @@ function OnSlashCommand(arg)
     d("GQSB"..COLOR_C.." "..QSB.Version.." (190815)|r\n"
     .."GQSB"..COLOR_8.." Checked with Update 23 (5.1.5): Scalebreaker (API 100028)\n"
     .."GQSB"..COLOR_7.."Trader08_mod:\n"
-    .."GQSB"..COLOR_5.."- LockAllPresets|r option\n"
-    .."GQSB"..COLOR_7.." ...profiles not saved to allow temporary slottings\n"
-    .."GQSB"..COLOR_6.."- DelayCombatPresetSwap|r option\n"
-    .."GQSB"..COLOR_7.." ...switch profile when you get out of combat\n"
+    .."GQSB"..COLOR_5.."LockAllPresets|r option\n"
+    .."GQSB"..COLOR_7..". Profiles not saved to allow temporary slottings\n"
+    .."GQSB"..COLOR_6.."DelayCombatPresetSwap|r option\n"
+    .."GQSB"..COLOR_7..". Profile change while in combat (not allowed) activated when you get out of combat\n"
     .."GQSB"..COLOR_8.." "..QSB_SLASH_COMMAND.." -h for help|r\n"
     ..QSB_SLASH_COMMAND.." "..arg)
 
