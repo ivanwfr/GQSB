@@ -3,12 +3,12 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
-v2.4.8.2 release candidate {{{
-- [color="aaffaa"]190816[/color]
+v2.4.8.3 release candidate {{{
+- [color="aaffaa"]190817[/color]
 - Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
 -  [color="magenta"]Trader08_mod:[/color]
--  [color="green"]   - LockAllPresets[/color] option
--  [color="magenta"] ...profile save not locked when Settings menu is opened and each time LockAllPresets is CHECKED-ON[/color]
+-  [color="green"]   - LockThisPreset[/color] option
+-  [color="magenta"] ...profile save not locked when Settings menu is opened and each time LockThisPreset is CHECKED-ON[/color]
 }}}
 v2.4.8.1 release candidate {{{
 - [color="aaffaa"]190815[/color]
@@ -523,7 +523,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8.2 release candidate", -- 190816 previous: 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.8.3 release candidate", -- 190817 previous: 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -580,7 +580,7 @@ QSB.SettingsDefaults = {
     ButtonsDisplayed                    = QSB.ButtonCountMax,
     GameActionButtonHide                = false,
     LockUI                              = false,
-    LockAllPresets                      = false,
+    LockThisPreset                      = false,
     DelayCombatPresetSwap               = false,
     NextPrevWrap                        = false,
     NextAuto                            = false,
@@ -762,7 +762,7 @@ end --}}}
 local preset_pending_IN_COMBAT = -1
 --}}}
 function Set_preset_pending_IN_COMBAT( selectedPreset ) --{{{
-if(DEBUG_Trader08) then d(COLOR_M.."Set_preset_pending_IN_COMBAT(selectedPreset "..tostring(selectedPreset).. " )") end
+if(DEBUG_Trader08) then d(COLOR_M.."Set_preset_pending_IN_COMBAT: [Preset "..tostring(selectedPreset).. "]") end
 
     preset_pending_IN_COMBAT = selectedPreset
 
@@ -771,10 +771,9 @@ if(DEBUG_Trader08) then d(COLOR_M.."Set_preset_pending_IN_COMBAT(selectedPreset 
     Show_and_Refresh() -- COOLDOWN-BORDER .. COOLDOWN_TP
 end --}}}
 function Process_preset_pending_IN_COMBAT(inCombat_state) --{{{
-if(DEBUG_Trader08) then d(COLOR_4.."Process_preset_pending_IN_COMBAT(inCombat_state "..tostring(inCombat_state)..") .. [preset_pending_IN_COMBAT "..tostring(preset_pending_IN_COMBAT).."]") end
-
     if(preset_pending_IN_COMBAT == -1) then return end
 
+if(DEBUG_Trader08) then d(COLOR_4.."Process_preset_pending_IN_COMBAT: [preset "..tostring(preset_pending_IN_COMBAT).."] .. [inCombat "..tostring(inCombat_state).."]") end
     --zo_callLater(SelectPresetPending, 5000)
 
     SelectPreset( preset_pending_IN_COMBAT )
@@ -807,13 +806,18 @@ function SelectPreset(selectedPreset) --{{{
 D("SelectPreset("..COLOR_C..selectedPreset.."|r):")
 
 -- [Trader08_block]
-    -- SAVE CURRENT PRESET .. (unless LockAllPresets is ON and Settings menu is hidden) {{{
-if QSB.Settings.LockAllPresets and QSB.Panel:IsHidden() then
+    -- SAVE CURRENT PRESET .. (unless LockThisPreset is ON and Settings menu is hidden) {{{
+if QSB.Settings.LockThisPreset and QSB.Panel:IsHidden() then
 
-if(DEBUG_Trader08) then d(COLOR_M.."SelectedPreset .. saving currentPreset SKIPPED BY [Lock all preset]") end
+if(DEBUG_Trader08) then d(COLOR_M.."SelectedPreset .. SAVING SKIPPED BY "..COLOR_5.."LockThisPreset|r") end
 
 else
-    SaveCurrentPreset("SelectPreset")
+    local we_can_save_because -- LUA equivalent to ternary operator ?:
+    =    (not QSB.Settings.LockThisPreset)
+    and              COLOR_8.."NOT LOCKED"
+    or               COLOR_M.."LOCKED|r but "..COLOR_4.."MENU is OPENED"
+
+    SaveCurrentPreset(we_can_save_because)
 
     OnMouseEnter()
 end
@@ -826,7 +830,9 @@ end
 
     end
     --}}}
-    -- COPY WORKING PRESET {{{
+    -- LOAD SELECTED PRESET {{{
+if(DEBUG_Trader08) then d(COLOR_M.."LOAD PRESET ["..tostring(selectedPreset).."]") end
+
     local from = QSB.Settings.Presets[selectedPreset]
     local to   = QSB.Settings
     CopyNotNilSettingsFromTo(from, to)
@@ -862,17 +868,17 @@ D("...PRESET SELECTED:"..QSB.Settings.PresetName)
     GameActionButtonHideHandler(true,"SelectPreset")    -- Apply selected preset choice
 
     --}}}
-    -- UPDATE SETTINGS PANEL {{{
+    -- UPDATE SETTINGS PANEL .. (only if it is showing) {{{
     if not QSB.Panel:IsHidden() then Rebuild_LibAddonMenu() end
 
     --}}}
 end --}}}
 function SaveCurrentPreset(_caller) --{{{
 
-if(DEBUG_Trader08) then d(COLOR_M.."SaveCurrentPreset(".._caller..")") end
-
     local currentPreset = QSB.Settings.PresetName
 D("...PRESET __SAVING:".. currentPreset)
+
+if(DEBUG_Trader08) then d(COLOR_4.."SAVING PRESET "..COLOR_M.."["..tostring(currentPreset).."]: ".._caller) end
 
     -- DEFAULTS SETTINGS
     QSB.Settings.Presets[currentPreset] = DeepCopy(QSB.SettingsDefaults)
@@ -880,7 +886,8 @@ D("...PRESET __SAVING:".. currentPreset)
     -- SAVE CURRENT QUICK SLOT BAR CONTENT
     if is_SlotItemTable_empty() then populate_an_empty_SlotItemTable("SAVING CURRENT QUICK SLOT BAR") end
 
-    -- CURRENT SETTINGS
+    -- SAVE CURRENT PRESET
+
     local from = QSB.Settings
     local to   = QSB.Settings.Presets[currentPreset]
     CopyNotNilSettingsFromTo(from, to)
@@ -1496,7 +1503,7 @@ function CopyNotNilSettingsFromTo(orig, dest) --{{{
     if( orig.ButtonsDisplayed                         ~= nil) then dest.ButtonsDisplayed                         = orig.ButtonsDisplayed                         end
     if( orig.GameActionButtonHide                     ~= nil) then dest.GameActionButtonHide                     = orig.GameActionButtonHide                     end
     if( orig.LockUI                                   ~= nil) then dest.LockUI                                   = orig.LockUI                                   end
-    if( orig.LockAllPresets                           ~= nil) then dest.LockAllPresets                           = orig.LockAllPresets                           end
+    if( orig.LockThisPreset                           ~= nil) then dest.LockThisPreset                           = orig.LockThisPreset                           end
     if( orig.DelayCombatPresetSwap                    ~= nil) then dest.DelayCombatPresetSwap                    = orig.DelayCombatPresetSwap                    end
     if( orig.NextPrevWrap                             ~= nil) then dest.NextPrevWrap                             = orig.NextPrevWrap                             end
     if( orig.NextAuto                                 ~= nil) then dest.NextAuto                                 = orig.NextAuto                                 end
@@ -1537,7 +1544,7 @@ function CopySettingsDefaultsTo(dest) --{{{
     dest.ButtonsDisplayed                         = QSB.SettingsDefaults.ButtonsDisplayed
     dest.GameActionButtonHide                     = QSB.SettingsDefaults.GameActionButtonHide
     dest.LockUI                                   = QSB.SettingsDefaults.LockUI
-    dest.LockAllPresets                           = QSB.SettingsDefaults.LockAllPresets
+    dest.LockThisPreset                           = QSB.SettingsDefaults.LockThisPreset
     dest.DelayCombatPresetSwap                    = QSB.SettingsDefaults.DelayCombatPresetSwap
     dest.NextPrevWrap                             = QSB.SettingsDefaults.NextPrevWrap
     dest.NextAuto                                 = QSB.SettingsDefaults.NextAuto
@@ -2282,7 +2289,7 @@ D("...Show_handler()")
     QSB.IsVisible = true
     GreymindQuickSlotBarUI:SetHidden(false)
 
-    if(not QSB.Panel:IsHidden() and QSB.Settings.LockAllPresets) then
+    if(not QSB.Panel:IsHidden() and QSB.Settings.LockThisPreset) then
         OnMouseEnter()
     else
         OnMouseExit()
@@ -3020,7 +3027,7 @@ function QSB_Setting_Preset_Changed(q,l,presetName) --{{{
     k = "ButtonColumns"         ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "NextPrevWrap"          ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "LockUI"                ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "LockAllPresets"        ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "LockThisPreset"        ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "DelayCombatPresetSwap" ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "SwapBackgroundColors"  ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "ButtonFontSize"        ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
@@ -3842,53 +3849,50 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
 
--- Trader08_mod: [LockAllPresets]
+-- Trader08_mod: [LockThisPreset]
     -- Lock all preset (Checkbox) {{{
     control = {
         type        = "checkbox",
-        reference   = "QSB_LockAllPresets",
-        name        = "Lock all preset "..COLOR_M.."profiles\n",
-        tooltip     = "Whether to keep all profile's quickslots static\n"
-        ..            COLOR_9.."An "..COLOR_M.."per-session .. all-presets|r option\n"
+        reference   = "QSB_LockThisPreset",
+        name        = "Lock this preset "..COLOR_M.."profile\n",
+        tooltip     = "Whether to keep this profile's quickslots static\n"
         ..            COLOR_M.."Trader08_mod",
-        warning     = COLOR_3.."As this option prevents saving quickslots:\n"
-        ..            COLOR_9.."You need to turn it\n"
-        ..            COLOR_M.."ON |r to lock all profiles\n"
-        ..            COLOR_8.."OFF|r to update your current preset\n"
-        ..            COLOR_8.."(the load-time default)\n"
+        warning     = COLOR_3.."You can turn this option\n"
+        ..            COLOR_M.."ON |r to lock this profile\n"
+        ..            COLOR_8.."OFF|r to save it before loading another\n"
         ..            "\n"
-        ..            COLOR_2.."BTW this option has no chance to get saved in its ON state because "
-        ..            COLOR_8.."...well I'm pretty sure you can guess why!|r\n"
+        ..            COLOR_3.."About the locking mecanism:|r\n"
+        ..                     "The saving happens when you "..COLOR_4.."change profile|r "
+        ..                     "and when you "..COLOR_4.."leave the game|r\n"
         ..            "\n"
-        ..                     "This also means that anything you change in the Settings menu "
-        ..                     "during the "..COLOR_M.."ON|r state is "
-        ..            COLOR_2.."discarded when you change preset|r\n"
+        ..            COLOR_3.."WHEN THIS SETTINGS MENU IS OPENED:|r\n"
+        ..                     "You can update and force the saving of the current profile "
+        ..                      "by "..COLOR_4.."swiching this option from|r "..COLOR_8.."OFF|r "..COLOR_4.."to|r "..COLOR_M.."ON|r.\n"
+        ..                     "Also, "..COLOR_4.."Selecting another profile|r during a configuration will save "
+        ..                      "the one you just left, both its options and its slotted items.\n"
         ..            "\n"
-        ..            COLOR_M.."But, there is a way to overcome this saving lock:\n"
-        ..                     "The locking mecanism only happens "
-        ..                     "when you change profile or leave the game.\n"
+        ..            COLOR_3.."But when this option is "..COLOR_M.."ON"..COLOR_3..":|r\n"
+        ..                     "All you equip from your bags on the "..COLOR_4.."QSB wheel|r "
+        ..                     "wont be automatically saved in the current Preset anymore.\n"
+        ..                     "And this is by design, letting you mess-up your "..COLOR_M.."Locked bars|r "
+        ..                     "knowing you can restore them with a click on "..COLOR_4.."P1..P5|r or a "..COLOR_4.."shortcut|r key stroke.\n"
         ..            "\n"
-        ..                     "But, with this Settings menu opened:\n"
-        ..                     "1 - You can update and force the saving of the current profile "
-        ..                         "by swiching this option from "..COLOR_8.."OFF|r to "..COLOR_M.."ON|r.\n"
-        ..                     "2 - Selecting another profile during a configuration will also save "
-        ..                         "the one you just left with its options and slotted items."
+        ..            COLOR_3.."Conclusion:|r\n"
+        ..                     "Better do your homework in the "..COLOR_8.."OFF|r state "
+        ..                     "and only then, you can "..COLOR_M.."LOCK ON everything|r.\n"
         ..            "\n"
-        ..                     "Conclusion: Better do your homework in the "..COLOR_8.."OFF|r state "
-        ..                     "and only then, you can "..COLOR_M.."LOCK ON everything|r \n"
+        ..            COLOR_2.."You still can save a messed-up bar from here "
+        ..                     "if you forgot to reload it before opening this menu!\n"
         ..            "\n"
-        ..            COLOR_4.."In other words, this is a Session-level option\n"
-        ..            COLOR_4.."...as such, you have to set it ON after each game load"
-        ..            COLOR_4.." (after each reload as well)"
         ,
         getFunc     = function()
-            return QSB.Settings.LockAllPresets
+            return QSB.Settings.LockThisPreset
         end,
         setFunc     = function(value)
-            QSB.Settings.LockAllPresets = value
+            QSB.Settings.LockThisPreset = value
             -- FORCED SAVING CURRENT PROFILE CHECKED-ON
-            if( QSB.Settings.LockAllPresets ) then
-                SaveCurrentPreset("LockAllPresets JUST CHECKED-ON")
+            if( QSB.Settings.LockThisPreset ) then
+                SaveCurrentPreset("LockThisPreset JUST CHECKED-ON")
 
                 -- NOTIFY IN CHAT WINDOW
                 d("GQSB"..COLOR_M.." Profile "..COLOR_4.. QSB.Settings.PresetName ..COLOR_M.." saved and locked")
@@ -3917,6 +3921,31 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.DelayCombatPresetSwap = value
+        end,
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+-- Trader08_mod: [DEBUG_Trader08]
+    -- Delay In Combat Preset Swap (Checkbox) {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_DEBUG_Trader08",
+        name        =  "DEBUG "..COLOR_M.."Trader08_mod",
+        tooltip     = "Toggle chat traces for "..COLOR_M.."Profile Locking process",
+        getFunc     = function()
+            if( DEBUG_Trader08 == nil) then
+            	DEBUG_Trader08 = false
+            end
+            return DEBUG_Trader08
+        end,
+        setFunc     = function(value)
+            DEBUG_Trader08 = value
+            if(DEBUG_Trader08) then d("DEBUG_Trader08 "..COLOR_M.."ON" )
+                else                d("DEBUG_Trader08 "..COLOR_8.."OFF")
+                end
+            Show_and_Refresh("DEBUG_Trader08")
         end,
         width       = "half",
     }
@@ -4294,18 +4323,20 @@ end --}}}
 function OnClicked_handle( handleName ) --{{{
 D("OnClicked_handle("..tostring(handleName)..")")
 
-    local arg
+    -- LOCK PIN ------- [UI-LOCK .. TOGGLE]
     if handleName == "L" then
         QSB.Settings.LockUI = not QSB.Settings.LockUI
       --Rebuild_LibAddonMenu()
         Show_and_Refresh("OnClicked_handle L")
 
+    -- SETTINGS GEAR -- [MENU .. SHOW]
     elseif handleName == "S" then
         Rebuild_LibAddonMenu()
         Show_and_Refresh("OnClicked_handle "..handleName)
 
+    -- PRESET P1..P5 -- [PRESET .. SELECT]
     elseif    string.match(handleName, "P([1-5])") then
-        arg = string.match(handleName, "P([1-5])")
+        local arg = string.match(handleName, "P([1-5])")
 
         SelectPreset( PRESETNAMES[ tonumber(arg) ] )
         loadItemSlots()
@@ -4320,13 +4351,15 @@ function OnMouseEnter() --{{{
     if not QSB.UIHandles   then return end
     if not QSB.UIHandles.L then return end
 
+    -- LOCK PIN
     if  QSB.Settings.LockUI then
         QSB.UIHandles.L:SetColor(0,1,0) -- green = may unlock
     else
         QSB.UIHandles.L:SetColor(1,0,0) -- red   = should lock
     end
 
-    if  QSB.Settings.LockAllPresets then
+    -- SETTINGS GEAR
+    if  QSB.Settings.LockThisPreset then
         QSB.UIHandles.S:SetColor(1,0,1)
     else
         QSB.UIHandles.S:SetColor(1,1,1)
@@ -4340,6 +4373,7 @@ function OnMouseExit() --{{{
     if not QSB.UIHandles   then return end
     if not QSB.UIHandles.L then return end
 
+    -- LOCK PIN
     if  QSB.Settings.LockUI then
         HideUIHandles()
     else
@@ -4356,12 +4390,12 @@ end --}}}
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-    d("GQSB"..COLOR_C.." "..QSB.Version.." (190816)|r\n"
+    d("GQSB"..COLOR_C.." "..QSB.Version.." (190817)|r\n"
     .."GQSB"..COLOR_8.." Checked with Update 23 (5.1.5): Scalebreaker (API 100028)\n"
     .."GQSB"..COLOR_7.."Trader08_mod:\n"
-    .."GQSB"..COLOR_5.."LockAllPresets|r option\n"
-    .."GQSB"..COLOR_7..". Profiles not saved to allow temporary slottings\n"
-    .."GQSB"..COLOR_7..". Profile save not locked when Settings menu is opened and each time LockAllPresets is CHECKED-ON\n"
+    .."GQSB"..COLOR_5.."LockThisPreset|r option\n"
+    .."GQSB"..COLOR_7..". Profile not saved to allow temporary slottings\n"
+    .."GQSB"..COLOR_7..". Profile save not locked when Settings menu is opened and each time LockThisPreset is CHECKED-ON\n"
     .."GQSB"..COLOR_6.."DelayCombatPresetSwap|r option\n"
     .."GQSB"..COLOR_7..". Profile change while in combat (not allowed) activated when you get out of combat\n"
     .."GQSB"..COLOR_8.." "..QSB_SLASH_COMMAND.." -h for help|r\n"
