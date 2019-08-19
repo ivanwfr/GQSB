@@ -3,6 +3,12 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.4.8.5 release candidate {{{
+- [color="aaffaa"]190820[/color]
+- Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
+-  [color="magenta"]Trader08_mod:[/color]
+.  [color="Wheat"]PENDING SWAP COOLDOWN showing even whith WARNING and ALERT visual clues disabled[/color]
+}}}
 v2.4.8.4 release candidate {{{
 - [color="aaffaa"]190819[/color]
 - Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
@@ -2098,11 +2104,17 @@ end
             else
                 background      : SetHidden(    slot_settings.HideSlotBackground)
             end
-            button          : SetHidden(       (slot_settings.VisualCue == VISCUE_WAC) and (slotItemCount == 0))
-            overground      : SetHidden(       (slot_settings.VisualCue == VISCUE_WAC) and (slotItemCount == 0))
-            keyLabel        : SetHidden(    not slot_settings.ShowKeyBindings                                  )
-            quantityLabel   : SetHidden(    not slot_settings.ShowQuantityLabels                               )
-            visualCueBorder : SetHidden(        slot_settings.VisualCue == VISCUE_OFF                          )
+
+            if( tasks_pending ) then
+                visualCueBorder : SetHidden(false)
+            else
+                visualCueBorder : SetHidden(        slot_settings.VisualCue == VISCUE_OFF                          )
+            end
+
+            button              : SetHidden(       (slot_settings.VisualCue == VISCUE_WAC) and (slotItemCount == 0))
+            overground          : SetHidden(       (slot_settings.VisualCue == VISCUE_WAC) and (slotItemCount == 0))
+            keyLabel            : SetHidden(    not slot_settings.ShowKeyBindings                                  )
+            quantityLabel       : SetHidden(    not slot_settings.ShowQuantityLabels                               )
 
             -- empty slots
             if emptySlot then
