@@ -3,6 +3,11 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.4.8.6 release candidate {{{
+- [color="aaffaa"]190821[/color]
+- Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
+-  [color="magenta"]Trader08_mod: .. CLEANING UP[/color]
+}}}
 v2.4.8.5 release candidate {{{
 - [color="aaffaa"]190820[/color]
 - Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
@@ -315,28 +320,32 @@ v2.2.5 {{{
  :!start explorer "http://www.esoui.com/forums/showthread.php?p=31752"
  :!start explorer "http://www.esoui.com/forums/showthread.php?p=31942"
 
-[WIKI] APIVersion
+[APIVersion]
  :!start explorer "http://wiki.esoui.com/APIVersion"
 
-[OBJECTS] All 23507 GLOBAL objects as exported from the game
+[GLOBAL OBJECTS]
  :!start explorer "https://esoapi.uesp.net/100028/globals.html"
 :new $TEMP/globals.txt
 
-[SOURCE] Browse the 857 Lua source code files starting at the root directory
- :!start explorer "https://esoapi.uesp.net/100028/src/luadir.html"
+[GLOBAL FUNCTIONS]
+ :!start explorer "https://esoapi.uesp.net/100028/globalfuncs.txt"
+:new $TEMP/globalfuncs.txt
 
-[FUNCTIONS] An alphabetical listing of all 50331 Lua functions
+[FUNCTIONS]
  :!start explorer "https://esoapi.uesp.net/100028/functions.html"
 :new $TEMP/functioncalls.txt
 
-[actionbar quickslot tooltip hud inventory]
+[SOURCE FILES]
+ :!start explorer "https://esoapi.uesp.net/100028/src/luadir.html"
+
+[ACTIONBAR .. QUICKSLOT .. TOOLTIP .. HUD .. INVENTORY]
  :!start explorer "https://esoapi.uesp.net/100028/src/ingame/actionbar/luadir.html"
  :!start explorer "https://esoapi.uesp.net/100028/src/ingame/quickslot/luadir.html"
  :!start explorer "https://esoapi.uesp.net/100028/src/ingame/tooltip/luadir.html"
  :!start explorer "https://esoapi.uesp.net/100028/src/ingame/hud/luadir.html"
  :!start explorer "https://esoapi.uesp.net/100028/src/ingame/inventory/luadir.html"
 
-[COLLECTIONS_INVENTORY_SINGLETON]
+[COLLECTIONS]
  :!start explorer "https://esodata.uesp.net/100028/src/ingame/collections/collectionsinventorysingleton.lua.html"
  :!start explorer "https://esodata.uesp.net/100028/src/ingame/inventory/inventoryslot.lua.html"
 
@@ -349,15 +358,18 @@ local DEBUG_EQUIP     = false
 local DEBUG_EVENT     = false
 local DEBUG_TASKS     = false
 local DEBUG_STATION   = false
+local DEBUG_STATUS    = false
 local DEBUG_Trader08  = false
 
+-- LOCAL
+-- SYMBOLS {{{
+-- UNICODE -- (utf-8 is not supported by current font)
 --local SYMBOL_LARGE_CIRCLE        = "\226\172\164" -- â ¬ ¤  == 0xE2 0xAC 0xA4 == U+2B24
 --local SYMBOL_MEDIUM_BLACK_CIRCLE = "\226\154\171" -- â  «  == 0xE2 0x9A 0xAB == U+26AB
 --local SYMBOL_WHITE_CIRCLE        = "\226\151\139" -- â    == 0xE2 0x97 0x8B == U+25CB
 --local SYMBOL_GEAR                = "\226\154\153"
   local SYMBOL_GEAR                = " O"
-
--- LOCAL
+--}}}
 -- COLORS --{{{
 
 -- RGB
@@ -403,9 +415,9 @@ local COLOR_ACTIVEWEAPONPAIR2       = { R =0  , G =0.8, B =1  , A = 0.4 }
 -- CONSTANTS --{{{
 
 -- DELAYS
-local ZO_CALLLATER_DELAY_HIDE        =  500 -- Hide
-local ZO_CALLLATER_DELAY_SHOW        =   10 -- Show
-local ZO_CALLLATER_DELAY_CHECK       =  500 -- Check .. account for some delay between RETICLE_HIDDEN_UPDATE and windows reported as closed
+local ZO_CALLLATER_DELAY_HIDE        =  200 -- Hide
+local ZO_CALLLATER_DELAY_SHOW        =  200 -- Show
+local ZO_CALLLATER_DELAY_HANDLER     =  200 -- Show or Hide
 local ZO_CALLLATER_DELAY_NEXT        =  200 -- NextAuto
 local ZO_CALLLATER_DELAY_REFRESH     =   10 -- Refresh
 local ZO_CALLLATER_DELAY_REFRESH_MAX = 1000 -- Refresh burst
@@ -413,6 +425,8 @@ local ZO_CALLLATER_DELAY_SOUND       =   10 -- PlaySound
 local ZO_CALLLATER_DELAY_LIB         =   10 -- PlaySound
 local ZO_CALLLATER_DELAY_TASKS       =   20 -- clear_or_equip
 local ZO_COOL_DOWN_DELAY_TASKS       = 7000 -- tasks_cooldown_begin tasks_cooldown_end
+local ZO_CALLLATER_DELAY_ONMOUSEEXIT =  100 -- Hide Handles
+local ZO_MENU_SHOW_HIDE_DELAY        =  500
 
 -- QUICK SLOT WHEEL NUMBERING
 local WHEEL_LOOKUPTABLE       = { 12, 11, 10, 9, 16, 15, 14, 13 } -- holds, and hide, the ESO Wheel items order
@@ -569,6 +583,10 @@ local KEYBINDINGS_SWAPS = {
 
 --}}}
 -- ATTRIBUTES {{{
+
+local HAND18_FONT = "EsoUI/Common/Fonts/univers57.otf|18|soft-shadow-thin"
+local HAND24_FONT = "EsoUI/Common/Fonts/univers57.otf|24|soft-shadow-thin"
+
 local SETTINGSPANELNAME                 = COLOR_5.."G "..COLOR_3.."Quick "..COLOR_4.."Slot "..COLOR_6.."Bar"
 local QSB_SLASH_COMMAND                 = "/gqsb"
 local Loaded_QSB_Settings = {}
@@ -576,7 +594,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8.4 release candidate", -- 190819 previous: 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.8.4 release candidate", -- 190821 previous: 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -682,10 +700,11 @@ QSB.SettingsDefaults = {
 
 -- [Trader08_block]
 local Set_preset_pending_IN_COMBAT
-local Has_preset_pending_IN_COMBAT
+local Get_preset_pending_IN_COMBAT
 local Process_preset_pending_IN_COMBAT
 -- [Trader08_block]
 
+local D_STATUS
 local Adjust_ButtonColumns
 local Adjust_MainWindow
 local ApplyKeyBindingsModifier
@@ -702,17 +721,12 @@ local D
 local D_EVENT
 local D_ITEM
 local DeepCopy
-local ShowOrHide
 local GameActionButtonHideHandler
 local GetAlignmentXY
 local GetKeyBindInfo
 local GetSlotItemKeyName
 local slotIndex_to_bNum
 local bNum_to_slotIndex
-local Hide
-local Hide_handler
-local Hide_pending = false
-local HideUIHandles
 
 local Initialize
 local Load_ZO_SavedVars
@@ -740,9 +754,8 @@ local PlaySoundAlert
 local PlaySoundAlert_pending = false
 local PlaySoundSlotted
 local PlaySoundSlotted_pending = false
-local Show_and_Refresh
 local Refresh
-local Refresh_delayed
+local Refresh_handler
 local RegisterEventHandlers
 local Release_Settings_Locked
 local SelectButton
@@ -775,10 +788,18 @@ local  tasks_handler
 
 local SetUIHandlesVisibility
 local Settings_Locked
-local Show
-local Show_handler
-local Show_pending = false
+
+local ShowOrHide
+local Show_delayed
 local ShowUIHandles
+local ShowOrHideUIHandles
+local ShowOrHideUIHandles_handler
+
+local Hide_delayed
+local Hide_handler
+local Hide_pending = false
+local HideUIHandles
+
 local UIWindowChanged
 
 local BlockBarVisibility = false
@@ -808,24 +829,24 @@ d("...QSB: RESETING ALL PRESETS TO DEFAULT VALUES:")
 
     ButtonSizeChanged()
 
-    Show_and_Refresh("Load_Defaults")
+    Refresh("LOAD DEFAULTS")
 end
 --}}}
 
 -- [Trader08_block]
 --{{{
-local preset_pending_IN_COMBAT = -1
+local presetName_pending_IN_COMBAT = ""
 --}}}
 -- Set_preset_pending_IN_COMBAT {{{
 function Set_preset_pending_IN_COMBAT( selectedPreset )
 
     -- NEW PRESET REQUESTED
-    if( preset_pending_IN_COMBAT ~= selectedPreset) then
+    if( presetName_pending_IN_COMBAT ~= selectedPreset) then
 if(DEBUG_Trader08) then d(COLOR_M.."Set_preset_pending_IN_COMBAT: ["..tostring(selectedPreset).. " REQUEST PENDING]") end
 
         PlaySound( SOUNDS.ACTIVE_SKILL_MORPH_CHOSEN )
 
-        preset_pending_IN_COMBAT  = selectedPreset
+        presetName_pending_IN_COMBAT  = selectedPreset
 
     -- SAME PRESET REQUESTED .. CANCEL REQUEST
     else
@@ -833,33 +854,30 @@ if(DEBUG_Trader08) then d(COLOR_3.."Set_preset_pending_IN_COMBAT: ["..tostring(s
 
         PlaySound( SOUNDS.GROUP_PROMOTE )
 
-        preset_pending_IN_COMBAT  = -1
+        presetName_pending_IN_COMBAT  = ""
     end
-
-    -- SYNC UI COLORS AND TOOLTIPS
-    Show_and_Refresh()
 
 end
 --}}}
 -- Process_preset_pending_IN_COMBAT {{{
 function Process_preset_pending_IN_COMBAT(inCombat_state)
-    if(preset_pending_IN_COMBAT == -1) then return end
+    if(presetName_pending_IN_COMBAT == "") then return end
 
-if(DEBUG_Trader08) then d(COLOR_4.."Process_preset_pending_IN_COMBAT: [preset "..tostring(preset_pending_IN_COMBAT).."] .. [inCombat "..tostring(inCombat_state).."]") end
+if(DEBUG_Trader08) then d(COLOR_4.."Process_preset_pending_IN_COMBAT: [preset "..tostring(presetName_pending_IN_COMBAT).."] .. [inCombat "..tostring(inCombat_state).."]") end
     --zo_callLater(SelectPresetPending, 5000)
 
-    SelectPreset( preset_pending_IN_COMBAT )
-    preset_pending_IN_COMBAT     = -1
+    SelectPreset( presetName_pending_IN_COMBAT )
+    presetName_pending_IN_COMBAT     = ""
 
     loadItemSlots()
 
-    Show_and_Refresh("Process_preset_pending_IN_COMBAT")
+    Refresh("PENDING IN COMBAT")
 end
 --}}}
--- Has_preset_pending_IN_COMBAT {{{
-function Has_preset_pending_IN_COMBAT()
+-- Get_preset_pending_IN_COMBAT {{{
+function Get_preset_pending_IN_COMBAT()
 
-    return (preset_pending_IN_COMBAT ~= -1)
+    return presetName_pending_IN_COMBAT
 
 end
 --}}}
@@ -890,21 +908,21 @@ D("SelectPreset("..COLOR_C..selectedPreset.."|r):")
 
 -- [Trader08_block]
     -- SAVE CURRENT PRESET .. (unless LockThisPreset is ON and Settings menu is hidden) {{{
-if QSB.Settings.LockThisPreset and QSB.Panel:IsHidden() then
+    if QSB.Settings.LockThisPreset and QSB.Panel:IsHidden() then
 
 if(DEBUG_Trader08) then d(COLOR_M.."SelectedPreset .. SAVING SKIPPED BY "..COLOR_5.."LockThisPreset|r") end
 
-else
-    local we_can_save_because -- LUA equivalent to ternary operator ?:
-    =    (not QSB.Settings.LockThisPreset)
-    and              COLOR_8.."NOT LOCKED"
-    or               COLOR_M.."LOCKED|r but "..COLOR_4.."MENU is OPENED"
+    else
+        local we_can_save_because -- LUA equivalent to ternary operator ?:
+        =    (not QSB.Settings.LockThisPreset)
+        and              COLOR_8.."NOT LOCKED"
+        or               COLOR_M.."LOCKED|r but "..COLOR_4.."MENU is OPENED"
 
-    SaveCurrentPreset(we_can_save_because)
+        SaveCurrentPreset(we_can_save_because)
 
-    OnMouseEnter()
-end
---}}}
+        ShowUIHandles("SelectPreset( "..selectedPreset.." )")
+    end
+    --}}}
 -- [Trader08_block]
 
     -- MainWindow {{{
@@ -947,9 +965,9 @@ D("...PRESET SELECTED:"..QSB.Settings.PresetName)
 
     --}}}
     -- UPDATE DEPENDENCIES {{{
-    ButtonSizeChanged()                                 -- UI geometry
-    GameActionButtonHideHandler(true,"SelectPreset")    -- Apply selected preset choice
+    ButtonSizeChanged()
 
+    GameActionButtonHideHandler("SelectPreset")
     --}}}
     -- UPDATE SETTINGS PANEL .. (only if it is showing) {{{
     if not QSB.Panel:IsHidden() then Rebuild_LibAddonMenu() end
@@ -1000,7 +1018,7 @@ D_ITEM("check_QSB_BAG_BACKPACK_slotId_to_check:")
     local itemLevel = QSB_BAG_BACKPACK_UPDATE_itemLevel; QSB_BAG_BACKPACK_UPDATE_itemLevel = -1
 D_ITEM("slotId=["..tostring(slotId).."] itemName=["..tostring(itemName).."] itemLevel=["..tostring(itemLevel).."]")
 
-    QSB_BAG_BACKPACK_UPDATE_mutex = true -- cleared by Refresh_delayed
+    QSB_BAG_BACKPACK_UPDATE_mutex = true
 
     for bNum = 1, QSB.ButtonCountMax do
         if(     QSB.Settings.SlotItemTable[bNum].itemName  == itemName ) then
@@ -1031,7 +1049,7 @@ D_EQUIP(COLOR_6.."loadItemSlots: "..COLOR_8.." SlotItemTable is EMPTY |r")
     end
     --}}}
     -- MUTEX: to ignore self-induced ACTION_SLOT_UPDATED events
-    QSB_BAG_BACKPACK_UPDATE_mutex = true -- cleared by Refresh_delayed
+    QSB_BAG_BACKPACK_UPDATE_mutex = true
     tasks_loaded = {}
     -- 1/2 CLEAR slots containing UNSELECTED or DIFFERENT ITEMS {{{
     local itemName, slotIndex, slotName, emptySlot
@@ -1220,7 +1238,7 @@ if(DEBUG_TASKS) then d(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_4.."POSTING ".
     else
 if(DEBUG_TASKS) then d(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_8.."NO MORE LOADED TASKS") end
 
-        Show_and_Refresh("tasks_cooldown_end")
+        Refresh("TASKS COOLDOWN END")
     end
 
 end
@@ -1657,35 +1675,71 @@ function CopySettingsDefaultsTo(dest)
 end
 --}}}
 
--- UI .. [BUILD .. REFRESH]
--- Show_and_Refresh {{{
-function Show_and_Refresh(caller)
-D_EVENT("Show_and_Refresh("..tostring(caller)..") "..COLOR_7.."Vis "..QSB.Settings.Visibility)
---if(DEBUG_Trader08) then d(COLOR_4.."Show_and_Refresh "..tostring(caller)) end
+-- UI .BUILD
+-- BuildUIHandles {{{
+function BuildUIHandles()
+D("BuildUIHandles():")
 
-    if(not (QSB.Settings.Visibility == VIS_NEVER) and not ForceBarVisibility) then
-        Show(caller)
+    local handleSize = 32
+    local offsetX    = -handleSize -2
+
+    local button, texture, label
+    for hNum, hName in pairs( QSB.UIHandleNames ) do
+
+        -- button
+        button = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum, GreymindQuickSlotBarUI, CT_BUTTON)
+        button:SetDimensions(handleSize, handleSize)
+        button:SetAnchor(BOTTOMLEFT, GreymindQuickSlotBarUI, TOPLEFT, offsetX, 0)
+        offsetX = offsetX + 2 + handleSize
+
+        -- events
+        button:SetHandler("OnClicked"   , function() OnClicked_handle(hName) end)
+        button:SetHandler("OnMouseEnter", OnMouseEnter)
+      --button:SetHandler("OnMouseExit" , OnMouseExit ) -- delegated to buttons
+
+        if    hName == "L" then
+            button:SetDimensions(32,32)
+            texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
+            texture:SetTexture("/esoui/art/quest/tracked_pin.dds")
+            texture:SetAnchorFill(button)
+            QSB.UIHandles[hName] = texture
+
+        elseif hName == "S" then
+            button:SetDimensions(32,32)
+            texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
+            texture:SetTexture("/esoui/art/menubar/menubar_mainmenu_over.dds")
+            texture:SetAnchorFill(button)
+            QSB.UIHandles[hName] = texture
+
+        else
+            label = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum.."_label", GreymindQuickSlotBarUI, CT_LABEL)
+            label:SetAnchor(CENTER, button, CENTER, 0, 0)
+            label:SetFont(HANDLE_FONT)
+            label:SetText(hName)
+            QSB.UIHandles[hName] = label
+
+        end
     end
-
-    Refresh(caller)
 
 end
 --}}}
+
+-- UI REFRESH
 -- Refresh {{{
 local Refresh_count_down  = 0
 local Refresh_last_caller = ""
 
-function Refresh(caller)
-D("Refresh("..tostring(caller)..")")
+function Refresh(_caller, delay)
+--if(DEBUG_Trader08) then d(COLOR_4.."Refresh "..tostring(_caller)) end
+
+    if(not delay) then delay = ZO_CALLLATER_DELAY_REFRESH end
 
     if not QSB.Settings               then return end
     if     QSB.Moving or QSB.Resizing then return end
 
-    if not ZO_Skills:IsHidden() then  D(COLOR_5.."Refresh: not ZO_Skills:IsHidden()"); return end
-
     -- first call will be handled very quick
     local delay
-    = (Refresh_count_down == 0) and ZO_CALLLATER_DELAY_REFRESH
+    = (Refresh_count_down == 0) and delay
     or                              ZO_CALLLATER_DELAY_REFRESH * 5 * Refresh_count_down
 
     -- following calls will queued .. until no more incoming .. (but not forever)
@@ -1693,24 +1747,24 @@ D("Refresh("..tostring(caller)..")")
 
     Refresh_count_down  = Refresh_count_down + 1
 
-    Refresh_last_caller = tostring(caller)
+    Refresh_last_caller = tostring(_caller)
 
-    zo_callLater(Refresh_delayed, delay)
+    zo_callLater(Refresh_handler, delay)
 
 end
 --}}}
--- Refresh_delayed {{{
-function Refresh_delayed()
+-- Refresh_handler {{{
+function Refresh_handler()
 -- Refresh_count_down {{{
---[[
-if(DEBUG or DEBUG_Trader08) then d("...Refresh_delayed() .. ".. tostring(Refresh_count_down).." "..tostring(Refresh_last_caller)) end
---]]
+if(DEBUG_TASKS) then d("...Refresh_handler() .. ".. tostring(Refresh_count_down)) end
 
     -- look for the last call .. ignore preceding ones
     Refresh_count_down = Refresh_count_down -1
     if( Refresh_count_down > 0) then return end
 
-    GameActionButtonHideHandler(false,"Refresh_delayed") -- (190819) (160218)
+if(DEBUG_TASKS) then d("...Refresh_handler() .. "..tostring(Refresh_last_caller)) end
+
+    GameActionButtonHideHandler("Refresh_handler") -- (190819) (160218)
 
     if(QSB_BAG_BACKPACK_UPDATE_slotId >= 0) then
         check_QSB_BAG_BACKPACK_slotId_to_check()
@@ -1722,21 +1776,13 @@ if(DEBUG or DEBUG_Trader08) then d("...Refresh_delayed() .. ".. tostring(Refresh
 
     local tasks_pending     = (#tasks_loaded > 0) or (#tasks_posted > 0)
 
-    local preset_locked     =          QSB.Settings.LockThisPreset
+    local preset_delayed    =  QSB.Settings.DelayPresetSwapWhileInCombat
+    local preset_pending    = (Get_preset_pending_IN_COMBAT() ~= "")
+    local preset_locked     =  QSB.Settings.LockThisPreset
+
+    local inventory_showing = not ZO_PlayerInventory:IsHidden()
     local quickslot_showing = not ZO_QuickSlot:IsHidden()
 
-    local preset_delayed    =          QSB.Settings.DelayPresetSwapWhileInCombat
-    local preset_pending    = Has_preset_pending_IN_COMBAT()
-
-
-if(DEBUG_Trader08) then d(COLOR_M.."["..               QSB.Settings.PresetName  .."]  "..(tasks_pending     and COLOR_4 or COLOR_8).."[tasks_pending     "..tostring(tasks_pending    ) .."]") end
-if(DEBUG_Trader08) then d(COLOR_2.."[preset_locked " ..tostring(preset_locked ) .."]  "..(quickslot_showing and COLOR_4 or COLOR_8).."[quickslot_showing "..tostring(quickslot_showing) .."]") end
-if(DEBUG_Trader08) then d(COLOR_5.."[preset_delayed "..tostring(preset_delayed) .."]  "..(preset_pending    and COLOR_4 or COLOR_8).."[preset_pending    "..tostring(preset_pending   ) .."]") end
-
---[[{{{
-if(DEBUG_Trader08) then d(COLOR_M.." PRESET PENDING "..Refresh_last_caller) end
-if(DEBUG_Trader08) then d(COLOR_M.." PRESET  LOCKED "..Refresh_last_caller) end
---}}}]]
     --}}}
     -- BACKGROUND COLORS .. f(STATES) {{{
     local                                           background_color = nil
@@ -1745,7 +1791,8 @@ if(DEBUG_Trader08) then d(COLOR_M.." PRESET  LOCKED "..Refresh_last_caller) end
     local g = 0
     local b = 0
 
-    if preset_locked  and quickslot_showing then r = 1; end -- showing that changes wont be saved
+    if preset_locked  and inventory_showing then r = 1; end -- showing that slotted items wont be saved
+    if preset_locked  and quickslot_showing then r = 1; end -- showing that slotted items wont be saved
     if preset_pending and preset_delayed    then g = 1; end -- showing that an combat preset request is pending
 
     if((r ~= 0) or (g ~= 0) or (b ~= 0)) then
@@ -1835,11 +1882,14 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
             =  QSB.Name.." "..QSB.Version.." Scalebreaker\n"
             ..(QSB.AccountWideSettings.SaveAccountWide and COLOR_3.."Account-wide Settings"
             or                                             COLOR_6..GetUnitName("player").."|r Character Settings"
-            ) 
+            )
         }
 
     end
     --}}}
+
+    ----- button_font = "EsoUI/Common/Fonts/esocartographer-bold.otf".."|"..tostring(QSB.Settings.ButtonFontSize).."|".."outline"
+    local button_font = "EsoUI/Common/Fonts/univers57.otf"           .."|"..tostring(QSB.Settings.ButtonFontSize).."|".."soft-shadow-thin"
 
     local x, y, hAlign, vAlign, row, col, color, alpha
     row = 0
@@ -1860,7 +1910,9 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
             button:SetVerticalAlignment(1)
             button:SetHandler("OnClicked"   , function() OnClicked_bNum(bNum) end)
             button:SetHandler("OnMouseEnter", ZO_Options_OnMouseEnter)
+            button:SetHandler("OnMouseEnter",            OnMouseEnter)
             button:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
+            button:SetHandler("OnMouseExit" ,            OnMouseExit)
 
             QSB.Basegrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBaseground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local baseground            = QSB.Basegrounds[bNum]
@@ -1927,11 +1979,9 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
         end
         --}}}
         -- Update with settings that may have changed {{{
-        local font_arg = "EsoUI/Common/Fonts/univers57.otf"           .."|"..tostring(QSB.Settings.ButtonFontSize).."|".."soft-shadow-thin"
-        ----- font_arg = "EsoUI/Common/Fonts/esocartographer-bold.otf".."|"..tostring(QSB.Settings.ButtonFontSize).."|".."outline"
-        button       : SetFont( font_arg )
-        keyLabel     : SetFont( font_arg )
-        quantityLabel: SetFont( font_arg )
+        button       : SetFont( button_font )
+        keyLabel     : SetFont( button_font )
+        quantityLabel: SetFont( button_font )
 
         --}}}
         -- Start with elements not displayed --{{{
@@ -2159,7 +2209,6 @@ end
 
             elseif QSB.Settings.SwapBackgroundColors then
                 local activeWeaponPair = GetActiveWeaponPairInfo()
---d("Refresh: activeWeaponPair=["..tostring( activeWeaponPair ).."]")
                 if(activeWeaponPair == 1) then
                     color   = COLOR_ACTIVEWEAPONPAIR1
                 else
@@ -2176,275 +2225,97 @@ end
         end
     end
 
-if(DEBUG_Trader08) then d("\r\n\r\n") end
     ShowOrHide()
-
-end
---}}}
--- BuildUIHandles {{{
-function BuildUIHandles()
-D("BuildUIHandles():")
-
-    local font_arg   = "EsoUI/Common/Fonts/univers57.otf|18|soft-shadow-thin"
-    local handleSize = 32
-    local offsetX    = -handleSize -2
-
-    local button, texture, label
-    for hNum, hName in pairs( QSB.UIHandleNames ) do
-
-        -- button
-        button = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum, GreymindQuickSlotBarUI, CT_BUTTON)
-        button:SetDimensions(handleSize, handleSize)
-        button:SetAnchor(BOTTOMLEFT, GreymindQuickSlotBarUI, TOPLEFT, offsetX, 0)
-        offsetX = offsetX + 2 + handleSize
-
-        -- events
-        button:SetHandler("OnClicked"   , function() OnClicked_handle(hName) end)
-        button:SetHandler("OnMouseEnter", OnMouseEnter)
-        button:SetHandler("OnMouseExit" , OnMouseExit )
-
-        if    hName == "L" then
-            button:SetDimensions(32,32)
-            texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
-            texture:SetTexture("/esoui/art/quest/tracked_pin.dds")
-            texture:SetAnchorFill(button)
-            QSB.UIHandles[hName] = texture
-
-        elseif hName == "S" then
-            button:SetDimensions(32,32)
-            texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
-            texture:SetTexture("/esoui/art/menubar/menubar_mainmenu_over.dds")
-            texture:SetAnchorFill(button)
-            QSB.UIHandles[hName] = texture
-
-        else
-            label = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum.."_label", GreymindQuickSlotBarUI, CT_LABEL)
-            label:SetAnchor(CENTER, button, CENTER, 0, 0)
-            label:SetFont(font_arg)
-            label:SetText(hName)
-            QSB.UIHandles[hName] = label
-
-        end
-    end
-
 end
 --}}}
 -- GameActionButtonHideHandler {{{DEBUG_Trader08
-function GameActionButtonHideHandler(just_changed, _caller)
-D(COLOR_5.."GameActionButtonHideHandler(just_changed="..tostring(just_changed)..COLOR_3.." _caller=[".. _caller .."]):|r")
+function GameActionButtonHideHandler(_caller)
 
-    if     QSB.Settings.GameActionButtonHide then
+    if QSB.Settings.GameActionButtonHide then
+
         if not ActionButton9:IsHidden() then
-            D(COLOR_6.."- @@@ HIDING Game Action Slot Button"..COLOR_3.." _caller=[".. _caller .."]|r")  --(160218)
+D(COLOR_6.."- @@@ HIDING Game Action Slot Button"..COLOR_3.." _caller=[".. _caller .."]|r")  --(160218)
             ActionButton9:SetHidden(true)
         end
 
     else
-        -- if asked not to handle button anymore, make it visible again in case it is hidden
-        if just_changed then
+
             if ActionButton9:IsHidden() then
-                D(COLOR_5.."- @@@ RESTORING Game Action Slot Button"..COLOR_3.." _caller=[".. _caller .."]|r")  --(160218)
+D(COLOR_5.."- @@@ RESTORING Game Action Slot Button"..COLOR_3.." _caller=[".. _caller .."]|r")  --(160218)
                 ActionButton9:SetHidden(false)
             end
-        end
 
     end
 
 end
 --}}}
--- ShowUIHandles {{{
-function ShowUIHandles()
-    if not QSB.UIHandles then return end
 
-    SetUIHandlesVisibility( true )
-
-end
---}}}
--- HideUIHandles {{{
-function HideUIHandles()
---D("HideUIHandles")
-    if not QSB.UIHandles then return end
-
-    SetUIHandlesVisibility( false )
-
-end
---}}}
--- SetUIHandlesVisibility {{{
-function SetUIHandlesVisibility( visible )
---D("SetUIHandlesVisibility("..tostring(visible)..")")
-    if not QSB.UIHandles then return end
-
-    for k, v in pairs( QSB.UIHandles ) do
-        if not visible then
-            QSB.UIHandles[k]:SetAlpha(0)
-        else
-            -- P1..P5 {{{
-            if string.match(k, "P([1-5])")     then      -- preset
-
-                if k == QSB.Settings.PresetName then
-                    if  QSB.Settings.DelayPresetSwapWhileInCombat then
-                        QSB.UIHandles[k]:SetColor(0,1,0) -- green
-                    else
-                        QSB.UIHandles[k]:SetColor(1,1,1) -- white
-                    end
-                    QSB.UIHandles[k]:SetAlpha(1.0)       -- current
-                else
-                    QSB.UIHandles[k]:SetColor(1,0.7,0)   -- orange
-
-                    QSB.UIHandles[k]:SetAlpha(0.5)       -- can be selected
-                end
-
-                --}}}
-                -- SETTINGS GEAR {{{
-            elseif string.match(k, "S")        then      -- settings
-                if QSB.Settings.LockThisPreset then QSB.UIHandles.S:SetColor(1,0,0) -- red
-                else                                QSB.UIHandles.S:SetColor(1,1,1) -- white
-                end
-                QSB.UIHandles[k]:SetAlpha(1)
-
-                --}}}
-                -- LockUI {{{
-            elseif string.match(k, "L") then             -- lock
-                if  QSB.Settings.LockUI then QSB.UIHandles.L:SetColor(0,1,0) -- green .. may unlock
-                else                         QSB.UIHandles.L:SetColor(1,0,0) -- red   .. should lock
-
-                    QSB.UIHandles[k]:SetAlpha(1)
-                end
-                --}}}
-            end
-        end
-
-    end
-end
---}}}
-
--- UI (Show Hide)
+-- UI SHOW
 -- ShowOrHide {{{
 function ShowOrHide()
+
     if not QSB.Settings then return end
-if(DEBUG_STATION)       then d(COLOR_3.."Visibility "..COLOR_5..QSB.Settings.Visibility) end
 
-    if     not QSB.Settings.LockUI               then --{{{ SHOW .. LOCKED
-        local msg = "ShowOrHide: NOT LOCKED ON SCREEN ..  SHOWING"
-if(DEBUG_STATION) then d(COLOR_5..msg) end
 
-        Show( msg )
-        --}}}
-    elseif BlockBarVisibility                    then --{{{ HIDE .. BLOCKED
-        local msg = "ShowOrHide: BLOCKED .. HIDING"
-if(DEBUG_STATION) then d(COLOR_5..msg) end
+    local inventory_showing = not ZO_PlayerInventory:IsHidden()
+    local qsb_panel_showing = not QSB.Panel:IsHidden()
+    local quickslot_showing = not ZO_QuickSlot:IsHidden()
+    local qsb_panel_showing = not QSB.Panel:IsHidden()
 
-        Hide( msg )
-    --}}}
-    elseif ForceBarVisibility                    then --{{{ SHOW .. FORCED
-        local msg = "ShowOrHide: FORCED .. SHOWING"
-if(DEBUG_STATION) then d(COLOR_5..msg) end
+    local visibility        = QSB.Settings.Visibility
 
-        Show( msg )
-    --}}}
-    elseif QSB.Settings.Visibility == VIS_NEVER  then --{{{ HIDE .. NEVER
-        local msg = "ShowOrHide: VIS_NEVER .. HIDING"
+    local show_msg = ""
+    local hide_msg = ""
 
-        Hide( msg )
-    --}}}
-    elseif QSB.Settings.Visibility == VIS_ALWAYS then --{{{ SHOW .. ALWAYS
-        local     msg = "ShowOrHide: VIS_ALWAYS .. SHOWING"
-if(DEBUG_STATION) then d(COLOR_5..msg) end
+    if     not QSB.Settings.LockUI                 then show_msg = "NOT LOCKED ON SCREEN"
 
-        Show( msg )
-        --}}}
-    elseif QSB.Settings.Visibility == VIS_RETICLE then --{{{ SHOW or HIDE .. (if no menu on screen)
+    elseif     BlockBarVisibility                  then hide_msg = "BLOCKED"
+    elseif     ForceBarVisibility                  then show_msg = "FORCED"
 
-        if Reticle_isHidden then
-            local msg = "ShowOrHide: VIS_RETICLE .. RETICLE HIDDEN .. HIDING"
-if(DEBUG_STATION) then d(COLOR_5..msg) end
+    elseif ZO_CraftingUtils_IsCraftingWindowOpen() then hide_msg = "WHILE CRAFTING"
+    elseif not ZO_Skills:IsHidden()                then hide_msg = "WHILE SKILL TUNING"
 
-            Hide( msg )
-        else
-            local msg = "ShowOrHide: VIS_RETICLE .. RETICLE ON SCREEN .. SHOWING"
-if(DEBUG_STATION) then d(COLOR_5..msg) end
+    elseif     visibility == VIS_NEVER             then hide_msg = visibility
+    elseif     visibility == VIS_ALWAYS            then show_msg = visibility
 
-            Show( msg )
-        end
-        --}}}
-    elseif QSB.Settings.Visibility == VIS_COMBAT then --{{{ SHOW or HIDE .. (if no menu on screen)
-
-        if IsUnitInCombat('player') then
-            local msg = "ShowOrHide: VIS_COMBAT .. IN COMBAT .. SHOWING"
-if(DEBUG_STATION) then d(COLOR_5..msg) end
-
-            Show( msg )
-        elseif Reticle_isHidden then
-            local msg = "ShowOrHide: VIS_COMBAT .. MENU ON SCREEN .. SHOWING"
-if(DEBUG_STATION) then d(COLOR_5..msg) end
-
-            Show( msg )
-        else
-            local msg = "ShowOrHide: VIS_COMBAT .. NOT IN COMBAT .. HIDING"
-if(DEBUG_STATION) then d(COLOR_5..msg) end
-
-            Hide( msg )
-        end
-        --}}}
-    else  ----------------------------------------------{{{ ------- HIDE .. (if no menu on screen)
-
-        if Reticle_isHidden then
-            local msg = "ShowOrHide: VIS_BLINK_CHANGES .. MENU ON SCREEN .. SHOWING"
-if(DEBUG_STATION) then d(COLOR_5..msg) end
-
-            Show( msg )
-        else
-            local msg = "ShowOrHide: VIS_BLINK_CHANGES .. HIDING"
-if(DEBUG_STATION) then d(COLOR_5..msg) end
-
-            Hide( msg )
+    elseif     visibility == VIS_RETICLE           then
+        if not Reticle_isHidden                    then show_msg = visibility.." .. RETICLE ON SCREEN"
+        elseif inventory_showing                   then show_msg = visibility.." .. INVENTORY SHOWING"
+        elseif quickslot_showing                   then show_msg = visibility.." .. QSB-WHEEL SHOWING"
+        elseif qsb_panel_showing                   then show_msg = visibility.." .. SETTINGS  SHOWING"
+        else                                            hide_msg = visibility.." .. RETICLE HIDDEN"
         end
 
+    elseif     visibility == VIS_COMBAT            then
+        if     IsUnitInCombat('player')            then show_msg = visibility.." .. IN COMBAT"
+        elseif inventory_showing                   then show_msg = visibility.." .. INVENTORY SHOWING"
+        elseif quickslot_showing                   then show_msg = visibility.." .. QSB-WHEEL SHOWING"
+        elseif qsb_panel_showing                   then show_msg = visibility.." .. SETTINGS  SHOWING"
+        else                                            hide_msg = visibility.." .. NOT IN COMBAT"
+        end
+
+    else
+        if     inventory_showing                   then show_msg = visibility.." .. INVENTORY SHOWING"
+        elseif quickslot_showing                   then show_msg = visibility.." .. QSB-WHEEL SHOWING"
+        elseif qsb_panel_showing                   then show_msg = visibility.." .. SETTINGS  SHOWING"
+        else                                            hide_msg = visibility.." .. RETICLE ON SCREEN"
+        end
     end
-    --}}}
+
+    -- UI BUTTONS
+    if(show_msg ~= "") then Show_delayed( show_msg ) end
+    if(hide_msg ~= "") then Hide_delayed( hide_msg ) end
+
+    -- UI HANDLES
+    if(show_msg ~= "") then ShowOrHideUIHandles( show_msg ) end
+
 end
 --}}}
--- Show {{{
-function Show(_caller)
-if(DEBUG) then d("Show: "..COLOR_3..tostring(_caller)) end
+-- Show_delayed {{{
+function Show_delayed(msg)
 
-    -- HIDE WHILE CRAFTING {{{
-    if not GreymindQuickSlotBarUI:IsHidden() then
-        if ZO_CraftingUtils_IsCraftingWindowOpen() then
-            if not ForceBarVisibility then
-                if(DEBUG_STATION) then d(COLOR_3.." Show: CRAFTING WINDOW IS OPENED"); end
+if(DEBUG_STATUS) then d("SHOWING: "..COLOR_4..msg) end
 
-                Hide_handler()
-                return
-            end
-        else
-            if(DEBUG) then d(COLOR_8.." Show: NO CRAFTING WINDOW OPENED"); end
-
-        end
-    end
-    --}}}
-    -- HIDE WHILE SKILL TUNING {{{
-    if not GreymindQuickSlotBarUI:IsHidden() then
-        if not ZO_Skills:IsHidden() then
-            if(DEBUG_STATION) then d(COLOR_5.." Show: SKILLS WINDOW IS OPENED"); end
-            Hide_handler()
-            -- SKILLS WINDOW TAKES TIME TO CLOSE .. HAVE TO CHECK AGAIN LATER
-            --zo_callLater(Show, ZO_CALLLATER_DELAY_HIDE)
-            return
-        else
-            if(DEBUG) then d(COLOR_8.." Show: NO SKILLS WINDOW OPENED"); end
-        end
-    end
-    --}}}
-    -- HIDE ON VIS_NEVER WITH (not ForceBarVisibility) {{{
-    if not GreymindQuickSlotBarUI:IsHidden() then
-        if((QSB.Settings.Visibility == VIS_NEVER) and (not ForceBarVisibility)) then
-            Hide_handler()
-
-            return
-        end
-    end
-    --}}}
     if(not Show_pending) then
         Show_pending = true
         zo_callLater(Show_handler, ZO_CALLLATER_DELAY_SHOW)
@@ -2452,32 +2323,10 @@ if(DEBUG) then d("Show: "..COLOR_3..tostring(_caller)) end
 
 end
 --}}}
--- Show_handler {{{
-function Show_handler()
-D("...Show_handler()")
-    Show_pending = false
+-- Hide_delayed {{{
+function Hide_delayed(msg)
 
-    if BlockBarVisibility then return end
-
-    QSB.IsVisible = true
-    GreymindQuickSlotBarUI:SetHidden(false)
-
-    -- show UI icons when showing user interface
-    local qsb_panel_showing = not QSB.Panel:IsHidden()
-    local quickslot_showing = not ZO_QuickSlot:IsHidden()
-    local preset_locked     = QSB.Settings.LockThisPreset
-
-    if(qsb_panel_showing or quickslot_showing or preset_locked) then
-        OnMouseEnter()
-    else
-        OnMouseExit()
-    end
-
-end
---}}}
--- Hide {{{
-function Hide(_caller)
-if(DEBUG) then d("Hide: "..COLOR_3..tostring(_caller)) end
+if(DEBUG_STATUS) then d("_HIDING: "..COLOR_8..msg) end
 
     if(not Hide_pending) then
         Hide_pending = true
@@ -2485,15 +2334,136 @@ if(DEBUG) then d("Hide: "..COLOR_3..tostring(_caller)) end
     end
 end
 --}}}
+-- Show_handler {{{
+function Show_handler()
+    Show_pending  = false
+
+    QSB.IsVisible = true
+    GreymindQuickSlotBarUI:SetHidden(false)
+end
+--}}}
 -- Hide_handler {{{
 function Hide_handler()
-D("...Hide_handler()")
-    Hide_pending = false
-
-    if ForceBarVisibility and not BlockBarVisibility then return end
+    Hide_pending  = false
 
     QSB.IsVisible = false
     GreymindQuickSlotBarUI:SetHidden(true)
+end
+--}}}
+
+-- UI SHOW HANDLES
+-- ShowOrHideUIHandles {{{
+local ShowOrHideUIHandles_pending = false
+local ShowOrHideUIHandles_caller  = ""
+
+function ShowOrHideUIHandles(_caller)
+D("...ShowOrHideUIHandles(".._caller..")")
+
+    if(ShowOrHideUIHandles_pending) then return end
+
+    ShowOrHideUIHandles_caller  = _caller
+    ShowOrHideUIHandles_pending = true
+    zo_callLater(ShowOrHideUIHandles_handler, ZO_CALLLATER_DELAY_HANDLER)
+end
+--}}}
+-- ShowOrHideUIHandles_handler {{{
+function ShowOrHideUIHandles_handler()
+
+    ShowOrHideUIHandles_pending = false
+
+    -- SHOW UI HANDLES when showing GAME INTERFACE
+    local qsb_panel_showing = not QSB.Panel:IsHidden()
+    local interface_showing =     Reticle_isHidden
+
+    if(qsb_panel_showing or interface_showing or Get_preset_pending_IN_COMBAT()) then
+        ShowUIHandles( ShowOrHideUIHandles_caller )
+    else
+        HideUIHandles( ShowOrHideUIHandles_caller )
+    end
+
+end
+--}}}
+-- ShowUIHandles {{{
+function ShowUIHandles(_caller)
+    if not QSB.UIHandles then return end
+
+    SetUIHandlesVisibility(true, _caller)
+
+  --Refresh(_caller)
+
+end
+--}}}
+-- HideUIHandles {{{
+function HideUIHandles(_caller)
+--D("HideUIHandles")
+    if not QSB.UIHandles then return end
+
+    SetUIHandlesVisibility(false, _caller)
+
+end
+--}}}
+-- SetUIHandlesVisibility {{{
+function SetUIHandlesVisibility(visible, _caller)
+if(DEBUG_STATUS) then D_STATUS(
+    (visible and COLOR_4 or COLOR_8).."HANDLES VISIBILITY "..(visible and "ON" or "OFF")
+    .." ".._caller
+    )
+end
+    if not QSB.UIHandles then return end
+
+    local preset_pending = Get_preset_pending_IN_COMBAT()
+
+    for hName, handle in pairs( QSB.UIHandles ) do
+        if not visible then
+            handle:SetAlpha(0)
+        else
+            -- P1..P5 {{{
+            if string.match(hName, "P([1-5])")     then      -- preset
+
+                if(hName == QSB .Settings.PresetName) then
+                    if  QSB .Settings.DelayPresetSwapWhileInCombat then
+                        handle:SetColor(0,1,0)      -- green
+                    else
+                        handle:SetColor(1,1,1)      -- white
+                    end
+                    handle:SetAlpha(1.0)            -- opaque .. current
+                else
+                    if(hName == preset_pending) then
+                        handle:SetColor(1,0,0)      -- red
+                    else
+                        handle:SetColor(1,0.7,0)    -- orange
+                    end
+
+                    handle:SetAlpha(0.5)            -- dimmed .. not selected
+                end
+
+                if(hName == preset_pending) then
+                    handle:SetFont(HAND24_FONT)     -- font BIGGER
+                else
+                    handle:SetFont(HAND18_FONT)     -- font smaller
+                end
+
+                --}}}
+                -- SETTINGS GEAR {{{
+            elseif string.match(hName, "S")        then      -- settings
+                if QSB.Settings.LockThisPreset then QSB.UIHandles.S:SetColor(1,0,0) -- red
+                else                                QSB.UIHandles.S:SetColor(1,1,1) -- white
+                end
+                handle:SetAlpha(1)
+
+                --}}}
+                -- LockUI {{{
+            elseif string.match(hName, "L") then             -- lock
+                if  QSB.Settings.LockUI then QSB.UIHandles.L:SetColor(0,1,0) -- green .. may unlock
+                else                         QSB.UIHandles.L:SetColor(1,0,0) -- red   .. should lock
+
+                    handle:SetAlpha(1)
+                end
+                --}}}
+            end
+        end
+
+    end
 end
 --}}}
 
@@ -2881,11 +2851,11 @@ function QSB_Item8() SelectButton(8) end
 
 --}}}
 -- KEYBOARD-SHORTCUTS: P[1..5] {{{
-function QSB_P1()    SelectPreset( PRESETNAMES[1] ); loadItemSlots(); Show_and_Refresh("P1"); end
-function QSB_P2()    SelectPreset( PRESETNAMES[2] ); loadItemSlots(); Show_and_Refresh("P2"); end
-function QSB_P3()    SelectPreset( PRESETNAMES[3] ); loadItemSlots(); Show_and_Refresh("P3"); end
-function QSB_P4()    SelectPreset( PRESETNAMES[4] ); loadItemSlots(); Show_and_Refresh("P4"); end
-function QSB_P5()    SelectPreset( PRESETNAMES[5] ); loadItemSlots(); Show_and_Refresh("P5"); end
+function QSB_P1()    SelectPreset( PRESETNAMES[1] ); loadItemSlots(); Refresh("P1"); end
+function QSB_P2()    SelectPreset( PRESETNAMES[2] ); loadItemSlots(); Refresh("P2"); end
+function QSB_P3()    SelectPreset( PRESETNAMES[3] ); loadItemSlots(); Refresh("P3"); end
+function QSB_P4()    SelectPreset( PRESETNAMES[4] ); loadItemSlots(); Refresh("P4"); end
+function QSB_P5()    SelectPreset( PRESETNAMES[5] ); loadItemSlots(); Refresh("P5"); end
 
 --}}}
 
@@ -3158,6 +3128,53 @@ function D_EQUIP(msg)
 end
 
 --}}}
+-- D_STATUS {{{
+function D_STATUS(_caller)
+d("\r\n".._caller..":")
+
+    -- OPTIONS
+    d(COLOR_8..COLOR_4.."[".. QSB.Settings.PresetName.."]"
+    .. (QSB.Settings.LockThisPreset               and COLOR_2.." LOCKED"          or "")
+    .. (QSB.Settings.DelayPresetSwapWhileInCombat and COLOR_5.." DELAY-IN-COMBAT" or "")
+    )
+
+    -- TASKS
+    local preset_pending_name =  Get_preset_pending_IN_COMBAT()
+    local preset_pending      = (preset_pending_name ~= "")
+    local tasks_pending       = (#tasks_loaded > 0) or (#tasks_posted > 0)
+
+    if(    tasks_pending
+        or preset_pending
+        ) then
+
+        d(COLOR_8.."TASKS"
+        ..(tasks_pending     and COLOR_4.." COOLDOWN ["..#tasks_loaded.." loaded] ["..#tasks_posted.." posted]" or "")
+        ..(preset_pending    and COLOR_4.."  DELAYED ["..preset_pending_name.."]"                               or "")
+        )
+    end
+
+    -- INTERFACE
+    local interface_showing =     Reticle_isHidden
+    local inventory_showing = not ZO_PlayerInventory:IsHidden()
+    local qsb_panel_showing = not QSB.Panel:IsHidden()
+    local quickslot_showing = not ZO_QuickSlot:IsHidden()
+
+    if(    qsb_panel_showing
+        or interface_showing
+        or inventory_showing
+        or quickslot_showing
+        ) then
+
+        d((interface_showing and COLOR_3.." INTERFACE" or "")
+        ..(quickslot_showing and COLOR_4.." QSB-WHEEL" or "")
+        ..(inventory_showing and COLOR_5.." INVENTORY" or "")
+        ..(qsb_panel_showing and COLOR_7.." SETTINGS"  or "")
+        )
+    end
+
+    --d(debug.traceback())
+end
+--}}}
 
 -- EVENTS (public handlers)
 -- Initialize {{{
@@ -3239,20 +3256,13 @@ d("LOADING "..COLOR_3..GetUnitName("player").."|r Character Settings")
     else
         if( changed ) then
 d(COLOR_2.." GQSB RELOADING\n"..COLOR_2..tostring(changed))
-            zo_callLater(QSB_ReloadUI, 3000)
---[[--{{{
---d("...SHOULD "..COLOR_2.." QSB_ReloadUI")
-            Rebuild_LibAddonMenu()
-            Refresh("Load_ZO_SavedVars")
-            Show("Load_ZO_SavedVars")
-            loadItemSlots()
---]]--}}}
-        else
---d("...CALLING "..COLOR_5.." Rebuild_LibAddonMenu .. Refresh .. Show")
 
+            zo_callLater(QSB_ReloadUI, 3000)
+        else
             Rebuild_LibAddonMenu()
+
             loadItemSlots()
-            Show_and_Refresh("Load_ZO_SavedVars")
+            Refresh("Load_ZO_SavedVars")
         end
     end
     --}}}
@@ -3407,7 +3417,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.LockUI = value
-            Show_and_Refresh("LockUI")
+            Refresh("LockUI")
         end,
         width       = "full",
         warning     = "Disabling the lock will "..COLOR_3.."force UI visibility|r and the background to show so you can reposition it with guidance",
@@ -3428,7 +3438,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.Visibility = value
-                Show_and_Refresh("Visibility")
+                Refresh("Visibility")
             end
         end,
         width       = "full",
@@ -3458,7 +3468,7 @@ D("BuildSettingsMenu()")
             value = math.min(value, 64)
             QSB.Settings.ButtonSize = value
             ButtonSizeChanged()
-            Show_and_Refresh("SlotItem_ButtonSize")
+            Refresh("SlotItem_ButtonSize")
         end,
         width       = "full",
     }
@@ -3483,7 +3493,7 @@ D("BuildSettingsMenu()")
             value = math.max(value, 12)
             value = math.min(value, 32)
             QSB.Settings.ButtonFontSize = value
-            Show_and_Refresh("SlotItem_ButtonFontSize")
+            Refresh("SlotItem_ButtonFontSize")
         end,
         width       = "full",
     }
@@ -3508,7 +3518,7 @@ D("BuildSettingsMenu()")
             value = math.max(value,   0)
             value = math.min(value, 100)
             QSB.Settings.SlotItem.NotSelectedButtonOpacity = value
-            Show_and_Refresh("SlotItem_NotSelectedButtonOpacity")
+            Refresh("SlotItem_NotSelectedButtonOpacity")
         end,
         width       = "full",
     }
@@ -3533,7 +3543,7 @@ D("BuildSettingsMenu()")
             value = math.max(value,   0)
             value = math.min(value, 100)
             QSB.Settings.SlotItem.OverlayButtonOpacity = value
-            Show_and_Refresh("SlotItem_OverlayButtonOpacity")
+            Refresh("SlotItem_OverlayButtonOpacity")
         end,
         width       = "full",
     }
@@ -3557,7 +3567,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.SlotItem.VisualCue = value
-                Show_and_Refresh("VisualCue")
+                Refresh("VisualCue")
             end
         end,
         width       = "full",
@@ -3586,7 +3596,7 @@ D("BuildSettingsMenu()")
                 clamped = not QSB.Panel:IsHidden()
             end
             QSB.Settings.SlotItem.QuantityWarning = value
-            Show_and_Refresh("SlotItem_WarningQuantity")
+            Refresh("SlotItem_WarningQuantity")
             if clamped then Rebuild_LibAddonMenu() end
         end,
         width       = "full",
@@ -3616,7 +3626,7 @@ D("BuildSettingsMenu()")
                 clamped = not QSB.Panel:IsHidden()
             end
             QSB.Settings.SlotItem.QuantityAlert = value
-            Show_and_Refresh("SlotItem_AlertQuantity")
+            Refresh("SlotItem_AlertQuantity")
             if clamped then Rebuild_LibAddonMenu() end
         end,
         width       = "full",
@@ -3640,7 +3650,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SlotItem.ShowKeyBindings = value
-            Show_and_Refresh("ShowKeyBindings")
+            Refresh("ShowKeyBindings")
         end,
         width       = "full",
     }
@@ -3661,7 +3671,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.SlotItem.KeyBindAlignV = value
-                Show_and_Refresh("SlotItem_KeyBindPositionVertical")
+                Refresh("SlotItem_KeyBindPositionVertical")
             end
         end,
         width       = "full",
@@ -3683,7 +3693,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.SlotItem.KeyBindAlignH = value
-                Show_and_Refresh("SlotItem_KeyBindPositionHorizontal")
+                Refresh("SlotItem_KeyBindPositionHorizontal")
             end
         end,
         width       = "full",
@@ -3706,7 +3716,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SlotItem.ShowQuantityLabels = value
-            Show_and_Refresh("ShowQuantityLabels")
+            Refresh("ShowQuantityLabels")
         end,
         width       = "full",
     }
@@ -3727,7 +3737,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.SlotItem.QuantityLabelPositionVertical = value
-                Show_and_Refresh("SlotItem_QuantityLabelPositionVertical")
+                Refresh("SlotItem_QuantityLabelPositionVertical")
             end
         end,
         width       = "full",
@@ -3749,7 +3759,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             if not Are_Settings_Locked(controlName, value) then
                 QSB.Settings.SlotItem.QuantityLabelPositionHorizontal = value
-                Show_and_Refresh("SlotItem_QuantityLabelPositionHorizontal")
+                Refresh("SlotItem_QuantityLabelPositionHorizontal")
             end
         end,
         width       = "full",
@@ -3791,7 +3801,7 @@ D("BuildSettingsMenu()")
             end
             SelectPreset(value)
             loadItemSlots()
-            Show_and_Refresh("Presets")
+            Refresh("Preset Selection")
         end,
         width       = "full",
     }
@@ -3811,7 +3821,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.CloneCurrentToEmtpyPreset = value
-            Show_and_Refresh("CloneCurrentToEmtpyPreset")
+            Refresh("CloneCurrentToEmtpyPreset")
         end,
         width       = "full",
     }
@@ -3934,7 +3944,8 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.GameActionButtonHide = value
-            GameActionButtonHideHandler(true,"Settings.control")    -- Apply new user choice
+
+            GameActionButtonHideHandler("Settings.control")
         end,
         width       = "half",
     }
@@ -3990,7 +4001,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.NextAuto = value
-            Show_and_Refresh("NextAuto")
+            Refresh("NextAuto")
         end,
         width       = "half",
     }
@@ -4010,7 +4021,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.NextPrevWrap = value
-            Show_and_Refresh("NextPrevWrap")
+            Refresh("NextPrevWrap")
         end,
         width       = "half",
     }
@@ -4032,7 +4043,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SlotItem.HideSlotBackground = value
-            Show_and_Refresh("SlotItem_ShowBackground")
+            Refresh("SlotItem_ShowBackground")
         end,
         width       = "half",
     }
@@ -4052,7 +4063,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SwapBackgroundColors = value
-            Show_and_Refresh("SwapBackgroundColors")
+            Refresh("SwapBackgroundColors")
         end,
         width       = "half",
     }
@@ -4071,7 +4082,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.ShowBackground = value
-            Show_and_Refresh("ShowBackground")
+            Refresh("ShowBackground")
         end,
         width       = "half",
     }
@@ -4091,7 +4102,7 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.SlotItem.ShowNumbers = value
-            Show_and_Refresh("ShowNumbers")
+            Refresh("ShowNumbers")
         end,
         width       = "half",
     }
@@ -4114,7 +4125,7 @@ D("BuildSettingsMenu()")
             QSB.Settings.SlotItem.PrintDescription = value
             if(value) then
                 QSB_SetCurrentQuickslot(GetCurrentQuickslot(), "QSB_PrintDescription")
-                Show_and_Refresh("PrintDescription")
+                Refresh("PrintDescription")
             end
         end,
         width       = "half",
@@ -4182,7 +4193,7 @@ D("BuildSettingsMenu()")
                 d("GQSB"..COLOR_M.." Profile "..COLOR_4.. QSB.Settings.PresetName ..COLOR_M.." saved and locked")
             end
 
-            Show_and_Refresh("LockThisPreset")
+            Refresh("LockThisPreset")
         end,
         width       = "half",
     }
@@ -4218,7 +4229,7 @@ D("BuildSettingsMenu()")
         setFunc     = function(value)
             QSB.Settings.DelayPresetSwapWhileInCombat = value
 
-            Show_and_Refresh("DelayPresetSwapWhileInCombat")
+            Refresh("DelayPresetSwapWhileInCombat")
         end,
         width       = "half",
     }
@@ -4243,7 +4254,7 @@ D("BuildSettingsMenu()")
                 else                d("DEBUG_Trader08 "..COLOR_8.."OFF")
                 end
 
-            Show_and_Refresh("DEBUG_Trader08")
+            Refresh("DEBUG_Trader08")
         end,
         width       = "half",
     }
@@ -4342,7 +4353,7 @@ D_ITEM(COLOR_5.."handle_ACTION_SLOT_UPDATED(bNum "..bNum..") .. CALLED" )
         end
 
         --SelectNextAuto("SLOT UPDATED")
-        Show_and_Refresh("ACTION_SLOT_UPDATED")
+        Refresh("ACTION_SLOT_UPDATED")
     end)
 
     --}}}
@@ -4352,7 +4363,7 @@ D_ITEM(COLOR_5.."handle_ACTION_SLOT_UPDATED(bNum "..bNum..") .. CALLED" )
     , function(event, slotIndex)
 D_ITEM("ITEM_SLOT_CHANGED: slotIndex=["..slotIndex.."]")
 
-        Show_and_Refresh("ITEM_SLOT_CHANGED")
+        Refresh("ITEM_SLOT_CHANGED")
     end)
 
     --}}}
@@ -4363,7 +4374,7 @@ D_ITEM("ITEM_SLOT_CHANGED: slotIndex=["..slotIndex.."]")
 D_ITEM("ACTIVE_QUICKSLOT_CHANGED: slotIndex=["..slotIndex.."]")
 
       --SelectNextAuto("QUICKSLOT CHANGED")
-        Show_and_Refresh("ACTIVE_QUICKSLOT_CHANGED")
+        Refresh("ACTIVE_QUICKSLOT_CHANGED")
     end)
 
     --}}}
@@ -4402,48 +4413,9 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
     , EVENT_RETICLE_HIDDEN_UPDATE
     , function(...)
         Reticle_isHidden = select(2,...)
-        D_EVENT("RETICLE_HIDDEN_UPDATE: Reticle_isHidden="..tostring(Reticle_isHidden))
+D_EVENT("RETICLE_HIDDEN_UPDATE: Reticle_isHidden="..tostring(Reticle_isHidden))
 
-        -- always show when unlocked
-        if not QSB.Settings.LockUI then
-            return
-        end
-
-        ZO_OptionsWindow:SetHidden(true) -- may have been opened by handle
-               QSB.Panel:SetHidden(true)
-
-        if not QSB.Settings then return end
-
-        -- done with UI settings, get back to normal opacity
-        if QSB.SomeSlotItemChanged then
-            QSB.SomeSlotItemChanged = false
-            Refresh("RETICLE_HIDDEN_UPDATE")
-        end
-
-        -- Show / Hide
-
-        if     QSB.Settings.Visibility == VIS_ALWAYS   then
-            zo_callLater(Show, ZO_CALLLATER_DELAY_CHECK)
-
-        elseif QSB.Settings.Visibility == VIS_BLINK_CHANGES  then
-            if not Reticle_isHidden then Hide("RETICLE_HIDDEN_UPDATE.VIS_BLINK_CHANGES") end -- done with UI settings
-
-        elseif QSB.Settings.Visibility == VIS_COMBAT  then
-            if not Reticle_isHidden then Hide("RETICLE_HIDDEN_UPDATE.VIS_COMBAT") end -- done with UI settings
-
-        elseif QSB.Settings.Visibility == VIS_NEVER   then
-            if not Reticle_isHidden then Hide("RETICLE_HIDDEN_UPDATE.VIS_NEVER") end -- done with UI settings
-
-        elseif QSB.Settings.Visibility == VIS_RETICLE then
-            if(Reticle_isHidden) then
-                Hide("RETICLE_HIDDEN_UPDATE.VIS_RETICLE")
-            else
-                zo_callLater(Show, ZO_CALLLATER_DELAY_CHECK)
-            end
-        end
-
-        GameActionButtonHideHandler(false,"RETICLE_HIDDEN_UPDATE")  -- Apply current user choice
-
+        Refresh("RETICLE_HIDDEN_UPDATE", ZO_MENU_SHOW_HIDE_DELAY)
     end)
 
     --}}}
@@ -4455,7 +4427,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
         D_EVENT("RETICLE_TARGET_CHANGED")
         if not QSB.Settings then return end
 
-        GameActionButtonHideHandler(false,"RETICLE_TARGET_CHANGED") -- Apply current user choice
+        GameActionButtonHideHandler("RETICLE_TARGET_CHANGED")
 
     end)
 
@@ -4466,24 +4438,14 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
     , EVENT_PLAYER_COMBAT_STATE
     , function(...)
         D_EVENT("PLAYER_COMBAT_STATE")
-        if not QSB.Settings then return end
 
+        Refresh("PLAYER_COMBAT_STATE")
+
+        -- Trader08_mod: AUTO CHANGE TO SELECTED PRESET WHEN OUT OF COMBAT
         local inCombat_state = select(2,...)
-
-        if (QSB.Settings.Visibility ~= VIS_COMBAT) then
-            ShowOrHide()
-        else
-            if(inCombat_state) then
-                Show("PLAYER_COMBAT_STATE")
-            else
-                Hide("PLAYER_COMBAT_STATE (not inCombat_state)")
-            end
-        end
-
--- Trader08_mod: AUTO CHANGE TO SELECTED PRESET WHEN OUT OF COMBAT
         Process_preset_pending_IN_COMBAT( inCombat_state )
 
-        GameActionButtonHideHandler(false,"PLAYER_COMBAT_STATE")    -- Apply current user choice
+        GameActionButtonHideHandler("PLAYER_COMBAT_STATE")
 
     end)
 
@@ -4494,6 +4456,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
     , EVENT_PLAYER_ACTIVATED
     , function(self)
         D_EVENT("PLAYER_ACTIVATED")
+
         Refresh("PLAYER_ACTIVATED")
     end)
 
@@ -4518,7 +4481,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
     , EVENT_KEYBINDING_SET
     , function(self)
         D_EVENT("KEYBINDING_SET")
-        Show_and_Refresh("KEYBINDING_SET")
+        Refresh("KEYBINDING_SET")
     end)
 
     --}}}
@@ -4527,7 +4490,7 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
     , EVENT_KEYBINDING_CLEARED
     , function(self)
         D_EVENT("KEYBINDING_CLEARED")
-        Show_and_Refresh("KEYBINDING_CLEARED")
+        Refresh("KEYBINDING_CLEARED")
     end)
 
     --}}}
@@ -4549,6 +4512,16 @@ D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tost
         Refresh("END_FAST_TRAVEL_KEEP_INTERACTION")
     end)
 
+    --}}}
+    -- (QSB-Wheel .. LOOKING FOR EVENT)
+    -- PLAYER_STATUS_CHANGED  --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.PLAYER_STATUS_CHANGED "
+    , EVENT_PLAYER_STATUS_CHANGED
+    , function(eventCode, oldStatus, newStatus)
+if(DEBUG_STATUS) then D_STATUS(COLOR_M.."PLAYER_STATUS_CHANGED (eventCode=["..eventCode.."], oldStatus=["..oldStatus.."], newStatus=["..newStatus.."])") end
+
+        Refresh("EVENT_PLAYER_STATUS_CHANGED ")
+    end)
     --}}}
 
     -- DELAYED UI DISPLAY {{{
@@ -4579,7 +4552,6 @@ D("OnMoveStop: MouseDown=["..tostring(MouseDown).."]")
     else
         UIWindowChanged()
     end
-    --Refresh("OnMoveStop")
 end
 --}}}
 -- OnResizeStart {{{
@@ -4626,7 +4598,6 @@ D("OnMouseClicked: MouseDown=["..tostring(MouseDown).."]")
     if not QSB.Settings.LockUI then
         QSB.Settings.LockUI = true
         Refresh("OnMouseClicked")
-        Show("OnMouseClicked")
     end
 
 end
@@ -4641,12 +4612,12 @@ D("OnClicked_handle("..tostring(handleName)..")")
     if handleName == "L" then
         QSB.Settings.LockUI = not QSB.Settings.LockUI
       --Rebuild_LibAddonMenu()
-        Show_and_Refresh("OnClicked_handle L")
+        Refresh("OnClicked_handle L")
 
     -- SETTINGS GEAR -- [MENU .. SHOW]
     elseif handleName == "S" then
         Rebuild_LibAddonMenu()
-        Show_and_Refresh("OnClicked_handle "..handleName)
+        Refresh("OnClicked_handle "..handleName, ZO_MENU_SHOW_HIDE_DELAY)
 
     -- PRESET P1..P5 -- [PRESET .. SELECT]
     elseif    string.match(handleName, "P([1-5])") then
@@ -4654,39 +4625,33 @@ D("OnClicked_handle("..tostring(handleName)..")")
 
         SelectPreset( PRESETNAMES[ tonumber(arg) ] )
         loadItemSlots()
-        Show_and_Refresh("OnClicked_handle "..handleName)
+        Refresh("OnClicked_handle "..handleName)
 
     end
 
 end
 --}}}
--- OnMouseEnter {{{
+-- OnMouseEnter .. OnMouseExit {{{
+local      MouseOver         = false
+local    OnMouseExit_pending = false
+
 function OnMouseEnter()
---D("OnMouseEnter")
-
-    ShowUIHandles()
+           MouseOver = true
+    ShowUIHandles("OnMouseEnter")
 end
---}}}
--- OnMouseExit {{{
+
 function OnMouseExit()
---D("OnMouseExit")
-
-    if not QSB.UIHandles   then return end
-    if not QSB.UIHandles.L then return end
-
-    -- UI LOCKED
-    if  QSB.Settings.LockUI then
-        -- HIDE HANDLES
-        if(QSB.Panel:IsHidden() and ZO_QuickSlot:IsHidden()) then 
-            HideUIHandles()
-        end
-    -- UI NOT LOCKED
-    else
-        -- SHOW HANDLES
-        QSB.UIHandles.L:SetColor(1,0,0) -- red = should lock
-        ShowUIHandles()
+           MouseOver = false
+    if not OnMouseExit_pending then
+        zo_callLater(OnMouseExit_handler, ZO_CALLLATER_DELAY_ONMOUSEEXIT)
     end
+end
 
+function OnMouseExit_handler()
+    OnMouseExit_pending = false
+    if not MouseOver then
+        ShowOrHideUIHandles("OnMouseExit")
+    end
 end
 --}}}
 -- OnClicked_bNum {{{
@@ -4699,7 +4664,7 @@ end
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-    d("GQSB"..COLOR_C.." "..QSB.Version.." (190819)|r\n"
+    d("GQSB"..COLOR_C.." "..QSB.Version.." (190821)|r\n"
     .."GQSB"..COLOR_8.." Checked with Update 23 (5.1.5): Scalebreaker (API 100028)\n"
     .."GQSB"..COLOR_7.."Trader08_mod:\n"
     .."GQSB"..COLOR_5.."LockThisPreset|r option\n"
@@ -4760,8 +4725,8 @@ function OnSlashCommand(arg)
         getItem_bagId_slotId(bag, name)
 
     -- hide show refresh reset p1-5 kbclr kbmod {{{
-    elseif(arg == "hide"   ) then Hide("OnSlashCommand /"..arg)
-    elseif(arg == "show"   ) then Show("OnSlashCommand /"..arg)
+    elseif(arg == "hide"   ) then Hide_delayed("OnSlashCommand /"..arg)
+    elseif(arg == "show"   ) then Show_delayed("OnSlashCommand /"..arg)
     elseif(arg == "refresh") then Refresh("OnSlashCommand")
     elseif(arg == "reset"  ) then Load_Defaults()
     elseif(arg == "account") then Load_ZO_SavedVars(not QSB.AccountWideSettings.SaveAccountWide)
@@ -4818,7 +4783,7 @@ function OnSlashCommand(arg)
         else
             d(COLOR_4.." @@@ SHOWING|r Default Quick Slot Button")
         end
-        GameActionButtonHideHandler(true,"OnSlashCommand")
+        GameActionButtonHideHandler("OnSlashCommand")
 
     --}}}
     -- settings {{{
@@ -4850,6 +4815,7 @@ function OnSlashCommand(arg)
     elseif(arg == "debug_item"    ) then DEBUG_ITEM     = not DEBUG_ITEM    ; d("...DEBUG_ITEM.....=[" ..tostring( DEBUG_ITEM     ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_tasks"   ) then DEBUG_TASKS    = not DEBUG_TASKS   ; d("...DEBUG_TASKS....=[" ..tostring( DEBUG_TASKS    ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_station" ) then DEBUG_STATION  = not DEBUG_STATION ; d("...DEBUG_STATION..=[" ..tostring( DEBUG_STATION  ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_status"  ) then DEBUG_STATUS   = not DEBUG_STATUS  ; d("...DEBUG_STATUS...=[" ..tostring( DEBUG_STATUS   ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_trader"  ) then DEBUG_Trader08 = not DEBUG_Trader08; d("...DEBUG_Trader08.=[" ..tostring( DEBUG_Trader08 ).. "]"); ui_may_have_changed = true
 --      get_collId_itemName(0)
     --}}}
@@ -4908,13 +4874,14 @@ function OnSlashCommand(arg)
     if presetName ~= "" then
         SelectPreset( presetName )
         loadItemSlots()
+        Refresh("OnClicked_handle "..handleName)
 
         ui_may_have_changed = true
     end
     --}}}
 
     if(ui_may_have_changed) then
-        Show_and_Refresh("OnSlashCommand /"..arg)
+        Refresh("OnSlashCommand /"..arg)
     end
 
 end
