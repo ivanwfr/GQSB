@@ -6,7 +6,8 @@
 v2.4.8.6 release candidate {{{
 - [color="aaffaa"]190821[/color]
 - Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
--  [color="magenta"]Trader08_mod: .. CLEANING UP[/color]
+- [color="magenta"]Trader08_mod: refactoring and cleaning up[/color]
+- [color="Wheat"]Adjusted UI and Tags visibility for the best possible feedback about what's happening[/color]
 }}}
 v2.4.8.5 release candidate {{{
 - [color="aaffaa"]190820[/color]
@@ -415,18 +416,19 @@ local COLOR_ACTIVEWEAPONPAIR2       = { R =0  , G =0.8, B =1  , A = 0.4 }
 -- CONSTANTS --{{{
 
 -- DELAYS
-local ZO_CALLLATER_DELAY_HIDE        =  200 -- Hide
-local ZO_CALLLATER_DELAY_SHOW        =  200 -- Show
-local ZO_CALLLATER_DELAY_HANDLER     =  200 -- Show or Hide
-local ZO_CALLLATER_DELAY_NEXT        =  200 -- NextAuto
-local ZO_CALLLATER_DELAY_REFRESH     =   10 -- Refresh
-local ZO_CALLLATER_DELAY_REFRESH_MAX = 1000 -- Refresh burst
-local ZO_CALLLATER_DELAY_SOUND       =   10 -- PlaySound
-local ZO_CALLLATER_DELAY_LIB         =   10 -- PlaySound
-local ZO_CALLLATER_DELAY_TASKS       =   20 -- clear_or_equip
-local ZO_COOL_DOWN_DELAY_TASKS       = 7000 -- tasks_cooldown_begin tasks_cooldown_end
-local ZO_CALLLATER_DELAY_ONMOUSEEXIT =  100 -- Hide Handles
-local ZO_MENU_SHOW_HIDE_DELAY        =  500
+local ZO_CALLLATER_DELAY_HIDE         =  200 -- Hide
+local ZO_CALLLATER_DELAY_SHOW         =  200 -- Show
+local ZO_CALLLATER_DELAY_HANDLER      =  200 -- Show   or Hide
+local ZO_CALLLATER_DELAY_BLINK_CHANGE =  500 -- Show then Hide
+local ZO_CALLLATER_DELAY_NEXT         =  200 -- NextAuto
+local ZO_CALLLATER_DELAY_REFRESH      =   10 -- Refresh
+local ZO_CALLLATER_DELAY_REFRESH_MAX  = 1000 -- Refresh burst
+local ZO_CALLLATER_DELAY_SOUND        =   10 -- PlaySound
+local ZO_CALLLATER_DELAY_LIB          =   10 -- PlaySound
+local ZO_CALLLATER_DELAY_TASKS        =   20 -- clear_or_equip
+local ZO_COOL_DOWN_DELAY_TASKS        = 7000 -- tasks_cooldown_begin tasks_cooldown_end
+local ZO_CALLLATER_DELAY_ONMOUSEEXIT  =  100 -- Hide Handles
+local ZO_MENU_SHOW_HIDE_DELAY         =  500
 
 -- QUICK SLOT WHEEL NUMBERING
 local WHEEL_LOOKUPTABLE       = { 12, 11, 10, 9, 16, 15, 14, 13 } -- holds, and hide, the ESO Wheel items order
@@ -594,7 +596,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8.4 release candidate", -- 190821 previous: 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.8.6 release candidate", -- 190821 previous: 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2253,62 +2255,63 @@ end
 -- UI SHOW
 -- ShowOrHide {{{
 function ShowOrHide()
-
     if not QSB.Settings then return end
-
 
     local inventory_showing = not ZO_PlayerInventory:IsHidden()
     local qsb_panel_showing = not QSB.Panel:IsHidden()
     local quickslot_showing = not ZO_QuickSlot:IsHidden()
-    local qsb_panel_showing = not QSB.Panel:IsHidden()
+    local          crafting = ZO_CraftingUtils_IsCraftingWindowOpen()
+    local               vis = QSB.Settings.Visibility
+    local          show_msg = ""
+    local          hide_msg = ""
 
-    local visibility        = QSB.Settings.Visibility
+    if     not QSB.Settings.LockUI      then show_msg = "NOT LOCKED ON SCREEN"
 
-    local show_msg = ""
-    local hide_msg = ""
+    elseif     BlockBarVisibility       then hide_msg = "BLOCKED"
+    elseif     ForceBarVisibility       then show_msg = "FORCED"
 
-    if     not QSB.Settings.LockUI                 then show_msg = "NOT LOCKED ON SCREEN"
+    elseif     crafting                 then hide_msg = "WHILE CRAFTING"
+    elseif not ZO_Skills:IsHidden()     then hide_msg = "WHILE SKILL TUNING"
 
-    elseif     BlockBarVisibility                  then hide_msg = "BLOCKED"
-    elseif     ForceBarVisibility                  then show_msg = "FORCED"
+    elseif     vis == VIS_NEVER         then hide_msg = "VIS-"..vis
+    elseif     vis == VIS_ALWAYS        then show_msg = "VIS-"..vis
 
-    elseif ZO_CraftingUtils_IsCraftingWindowOpen() then hide_msg = "WHILE CRAFTING"
-    elseif not ZO_Skills:IsHidden()                then hide_msg = "WHILE SKILL TUNING"
-
-    elseif     visibility == VIS_NEVER             then hide_msg = visibility
-    elseif     visibility == VIS_ALWAYS            then show_msg = visibility
-
-    elseif     visibility == VIS_RETICLE           then
-        if not Reticle_isHidden                    then show_msg = visibility.." .. RETICLE ON SCREEN"
-        elseif inventory_showing                   then show_msg = visibility.." .. INVENTORY SHOWING"
-        elseif quickslot_showing                   then show_msg = visibility.." .. QSB-WHEEL SHOWING"
-        elseif qsb_panel_showing                   then show_msg = visibility.." .. SETTINGS  SHOWING"
-        else                                            hide_msg = visibility.." .. RETICLE HIDDEN"
+    elseif     vis == VIS_BLINK_CHANGES then
+        if     inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
+        elseif quickslot_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
+        elseif qsb_panel_showing        then show_msg = "VIS-"..vis.." .. SETTINGS  SHOWING"
+        else             Show_handler();     Hide_delayed(vis, ZO_CALLLATER_DELAY_BLINK_CHANGE)
         end
 
-    elseif     visibility == VIS_COMBAT            then
-        if     IsUnitInCombat('player')            then show_msg = visibility.." .. IN COMBAT"
-        elseif inventory_showing                   then show_msg = visibility.." .. INVENTORY SHOWING"
-        elseif quickslot_showing                   then show_msg = visibility.." .. QSB-WHEEL SHOWING"
-        elseif qsb_panel_showing                   then show_msg = visibility.." .. SETTINGS  SHOWING"
-        else                                            hide_msg = visibility.." .. NOT IN COMBAT"
+    elseif     vis == VIS_RETICLE       then
+        if not Reticle_isHidden         then show_msg = "VIS-"..vis.." .. RETICLE ON SCREEN"
+        elseif inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
+        elseif quickslot_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
+        elseif qsb_panel_showing        then show_msg = "VIS-"..vis.." .. SETTINGS  SHOWING"
+        else                                 hide_msg = "VIS-"..vis.." .. RETICLE HIDDEN"
+        end
+
+    elseif     vis == VIS_COMBAT        then
+        if     IsUnitInCombat('player') then show_msg = "VIS-"..vis.." .. IN COMBAT"
+        elseif inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
+        elseif quickslot_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
+        elseif qsb_panel_showing        then show_msg = "VIS-"..vis.." .. SETTINGS  SHOWING"
+        else                                 hide_msg = "VIS-"..vis.." .. NOT IN COMBAT"
         end
 
     else
-        if     inventory_showing                   then show_msg = visibility.." .. INVENTORY SHOWING"
-        elseif quickslot_showing                   then show_msg = visibility.." .. QSB-WHEEL SHOWING"
-        elseif qsb_panel_showing                   then show_msg = visibility.." .. SETTINGS  SHOWING"
-        else                                            hide_msg = visibility.." .. RETICLE ON SCREEN"
+        if     inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
+        elseif quickslot_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
+        elseif qsb_panel_showing        then show_msg = "VIS-"..vis.." .. SETTINGS  SHOWING"
+        else                                 hide_msg = "VIS-"..vis.." .. RETICLE ON SCREEN"
         end
     end
 
     -- UI BUTTONS
-    if(show_msg ~= "") then Show_delayed( show_msg ) end
-    if(hide_msg ~= "") then Hide_delayed( hide_msg ) end
-
+    if(show_msg ~= "")                  then Show_delayed( show_msg ) end
+    if(hide_msg ~= "")                  then Hide_delayed( hide_msg ) end
     -- UI HANDLES
-    if(show_msg ~= "") then ShowOrHideUIHandles( show_msg ) end
-
+    if(show_msg ~= "")                  then ShowOrHideUIHandles( show_msg ) end
 end
 --}}}
 -- Show_delayed {{{
@@ -2324,13 +2327,14 @@ if(DEBUG_STATUS) then d("SHOWING: "..COLOR_4..msg) end
 end
 --}}}
 -- Hide_delayed {{{
-function Hide_delayed(msg)
+function Hide_delayed(msg, delay)
 
-if(DEBUG_STATUS) then d("_HIDING: "..COLOR_8..msg) end
+    if(not delay) then delay = ZO_CALLLATER_DELAY_HIDE end
+if(DEBUG_STATUS) then d("_HIDING: "..COLOR_8..msg.." (in "..tostring(delay).."ms)") end
 
     if(not Hide_pending) then
         Hide_pending = true
-        zo_callLater(Hide_handler, ZO_CALLLATER_DELAY_HIDE)
+        zo_callLater(Hide_handler, delay)
     end
 end
 --}}}
@@ -2371,11 +2375,17 @@ function ShowOrHideUIHandles_handler()
 
     ShowOrHideUIHandles_pending = false
 
-    -- SHOW UI HANDLES when showing GAME INTERFACE
-    local qsb_panel_showing = not QSB.Panel:IsHidden()
-    local interface_showing =     Reticle_isHidden
+    -- SHOW UI HANDLES WHEN:
+    local  qsb_panel_showing = not QSB.Panel:IsHidden()
+    local  quickslot_showing = not ZO_QuickSlot:IsHidden()
+    local  preset_pending    = Get_preset_pending_IN_COMBAT()
+    local  visibility_forced = ForceBarVisibility and not BlockBarVisibility -- precedence!
 
-    if(qsb_panel_showing or interface_showing or Get_preset_pending_IN_COMBAT()) then
+    if(    visibility_forced
+        or qsb_panel_showing
+        or quickslot_showing
+        or (preset_pending ~= "")
+        ) then
         ShowUIHandles( ShowOrHideUIHandles_caller )
     else
         HideUIHandles( ShowOrHideUIHandles_caller )
