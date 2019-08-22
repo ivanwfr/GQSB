@@ -629,12 +629,20 @@ local QSB = {
     SomeSlotItemChanged                 = false,
     CloneCurrentToEmtpyPreset           = true,
 
-    -- small helper windows
-    UIHandleNames    = { "L", "P1", "P2", "P3", "P4", "P5", "S" },
-    UIHandles        = {},
+    -- small helper tags
+    UIHandles_label_tooltip             = {
+        {   label="L"  , tooltip="Lock UI"      }
+        , { label="P1" , tooltip="Preset 1"     }
+        , { label="P2" , tooltip="Preset 2"     }
+        , { label="P3" , tooltip="Preset 3"     }
+        , { label="P4" , tooltip="Preset 4"     }
+        , { label="P5" , tooltip="Preset 5"     }
+        , { label="S"  , tooltip="Settings menu"}
+    },
+    UIHandles                           = {},
 
     -- Settings-Menu entries to be updated at each Preset activation
-    SettingsControls = {},
+    SettingsControls                    = {},
 
 } --}}}
 -- DEFAULTS --{{{
@@ -1686,39 +1694,44 @@ D("BuildUIHandles():")
     local offsetX    = -handleSize -2
 
     local button, texture, label
-    for hNum, hName in pairs( QSB.UIHandleNames ) do
+    for h_num, hNameTooltip in pairs( QSB.UIHandles_label_tooltip ) do
+
+        local hLabel   = hNameTooltip.label
+        local hTooltip = hNameTooltip.tooltip
 
         -- button
-        button = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum, GreymindQuickSlotBarUI, CT_BUTTON)
+        button = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..h_num, GreymindQuickSlotBarUI, CT_BUTTON)
         button:SetDimensions(handleSize, handleSize)
         button:SetAnchor(BOTTOMLEFT, GreymindQuickSlotBarUI, TOPLEFT, offsetX, 0)
         offsetX = offsetX + 2 + handleSize
 
         -- events
-        button:SetHandler("OnClicked"   , function() OnClicked_handle(hName) end)
-        button:SetHandler("OnMouseEnter", OnMouseEnter)
-      --button:SetHandler("OnMouseExit" , OnMouseExit ) -- delegated to buttons
+        button:SetHandler("OnClicked"   , function() OnClicked_handle( hLabel ) end)
 
-        if    hName == "L" then
+        button.data      = { tooltipText = hTooltip   } -- required by ZO_Options_OnMouseEnter .. called by local OnMouseEnter
+        button:SetHandler("OnMouseEnter", OnMouseEnter)
+        button:SetHandler("OnMouseExit" , OnMouseExit )
+
+        if    hLabel == "L" then
             button:SetDimensions(32,32)
-            texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
+            texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..h_num.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
             texture:SetTexture("/esoui/art/quest/tracked_pin.dds")
             texture:SetAnchorFill(button)
-            QSB.UIHandles[hName] = texture
+            QSB.UIHandles[hLabel] = texture
 
-        elseif hName == "S" then
+        elseif hLabel == "S" then
             button:SetDimensions(32,32)
-            texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
+            texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..h_num.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
             texture:SetTexture("/esoui/art/menubar/menubar_mainmenu_over.dds")
             texture:SetAnchorFill(button)
-            QSB.UIHandles[hName] = texture
+            QSB.UIHandles[hLabel] = texture
 
         else
-            label = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..hNum.."_label", GreymindQuickSlotBarUI, CT_LABEL)
+            label = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..h_num.."_label", GreymindQuickSlotBarUI, CT_LABEL)
             label:SetAnchor(CENTER, button, CENTER, 0, 0)
             label:SetFont(HANDLE_FONT)
-            label:SetText(hName)
-            QSB.UIHandles[hName] = label
+            label:SetText(hLabel)
+            QSB.UIHandles[hLabel] = label
 
         end
     end
@@ -1840,17 +1853,14 @@ if(DEBUG_Trader08) then d("background_color=[ R="..r.." G="..g.." B="..b.." ]") 
     end
 
     GreymindQuickSlotBarUI:SetMouseEnabled   (true)
-
-    GreymindQuickSlotBarUI:SetHandler("OnMouseEnter" , OnMouseEnter )
-    GreymindQuickSlotBarUI:SetHandler("OnMouseExit"  , OnMouseExit  )
-
     GreymindQuickSlotBarUI:SetHandler("OnMoveStart"  , OnMoveStart  )
     GreymindQuickSlotBarUI:SetHandler("OnMoveStop"   , OnMoveStop   )
 
     GreymindQuickSlotBarUI:SetHandler("OnResizeStart", OnResizeStart)
     GreymindQuickSlotBarUI:SetHandler("OnResizeStop" , OnResizeStop )
-GreymindQuickSlotBarUI:SetHandler("OnMouseEnter", ZO_Options_OnMouseEnter)
-GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
+
+    GreymindQuickSlotBarUI:SetHandler("OnMouseEnter", ZO_Options_OnMouseEnter)
+    GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
 
     --}}}
     -- BACKGROUND --{{{
@@ -1911,11 +1921,9 @@ GreymindQuickSlotBarUI:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
             button:SetEnabled(true)
             button:SetVerticalAlignment(1)
             button:SetHandler("OnClicked"   , function() OnClicked_bNum(bNum) end)
-            button:SetHandler("OnMouseEnter", ZO_Options_OnMouseEnter)
-            button:SetHandler("OnMouseEnter",            OnMouseEnter)
-            button:SetHandler("OnMouseExit" , ZO_Options_OnMouseExit)
-            button:SetHandler("OnMouseExit" ,            OnMouseExit)
 
+            button:SetHandler("OnMouseEnter",            OnMouseEnter)
+            button:SetHandler("OnMouseExit" ,            OnMouseExit )
             QSB.Basegrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBaseground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local baseground            = QSB.Basegrounds[bNum]
             baseground                  :SetTexture(BASEBACKGROUNDTEXTURE)
@@ -2182,7 +2190,7 @@ end
                 button:SetNormalFontColor(1, 0, 0, 1)
                 button:SetFont("EsoUI/Common/Fonts/univers57.otf|"..tostring(math.floor(0.8 * QSB.Settings.ButtonSize)))
                 button:SetText("X")
-                button.data = {tooltipText = UNLOCKED_TT}
+                button.data                            = { tooltipText = UNLOCKED_TT           }
 
                 button:SetMouseEnabled(false) -- UI move and resize through
 
@@ -2192,14 +2200,9 @@ end
 
                 button:SetNormalFontColor(1, 1, 1, 1)
 
-                if preset_pending then
-                    button.data = {tooltipText = PENDING_TT}
-
-                elseif tasks_pending then
-                    button.data = {tooltipText = COOLDOWN_TT}
-
-                else
-                    button.data = {tooltipText = get_tooltipText(bNum)}
+                if     preset_pending then button.data = { tooltipText = PENDING_TT            }
+                elseif tasks_pending  then button.data = { tooltipText = COOLDOWN_TT           }
+                else                       button.data = { tooltipText = get_tooltipText(bNum) }
 
                 end
             end
@@ -2423,14 +2426,14 @@ end
 
     local preset_pending = Get_preset_pending_IN_COMBAT()
 
-    for hName, handle in pairs( QSB.UIHandles ) do
+    for hLabel, handle in pairs( QSB.UIHandles ) do
         if not visible then
             handle:SetAlpha(0)
         else
             -- P1..P5 {{{
-            if string.match(hName, "P([1-5])")     then      -- preset
+            if string.match(hLabel, "P([1-5])")     then      -- preset
 
-                if(hName == QSB .Settings.PresetName) then
+                if(hLabel == QSB .Settings.PresetName) then
                     if  QSB .Settings.DelayPresetSwapWhileInCombat then
                         handle:SetColor(0,1,0)      -- green
                     else
@@ -2438,7 +2441,7 @@ end
                     end
                     handle:SetAlpha(1.0)            -- opaque .. current
                 else
-                    if(hName == preset_pending) then
+                    if(hLabel == preset_pending) then
                         handle:SetColor(1,0,0)      -- red
                     else
                         handle:SetColor(1,0.7,0)    -- orange
@@ -2447,7 +2450,7 @@ end
                     handle:SetAlpha(0.5)            -- dimmed .. not selected
                 end
 
-                if(hName == preset_pending) then
+                if(hLabel == preset_pending) then
                     handle:SetFont(HAND24_FONT)     -- font BIGGER
                 else
                     handle:SetFont(HAND18_FONT)     -- font smaller
@@ -2455,7 +2458,7 @@ end
 
                 --}}}
                 -- SETTINGS GEAR {{{
-            elseif string.match(hName, "S")        then      -- settings
+            elseif string.match(hLabel, "S")        then      -- settings
                 if QSB.Settings.LockThisPreset then QSB.UIHandles.S:SetColor(1,0,0) -- red
                 else                                QSB.UIHandles.S:SetColor(1,1,1) -- white
                 end
@@ -2463,7 +2466,7 @@ end
 
                 --}}}
                 -- LockUI {{{
-            elseif string.match(hName, "L") then             -- lock
+            elseif string.match(hLabel, "L") then             -- lock
                 if  QSB.Settings.LockUI then QSB.UIHandles.L:SetColor(0,1,0) -- green .. may unlock
                 else                         QSB.UIHandles.L:SetColor(1,0,0) -- red   .. should lock
 
@@ -4645,13 +4648,21 @@ end
 local      MouseOver         = false
 local    OnMouseExit_pending = false
 
-function OnMouseEnter()
-           MouseOver = true
+function OnMouseEnter(control)
+
+    MouseOver = true
+
+    ZO_Options_OnMouseEnter(control)
+
     ShowUIHandles("OnMouseEnter")
 end
 
-function OnMouseExit()
-           MouseOver = false
+function OnMouseExit(control)
+
+    MouseOver = false
+
+    ZO_Options_OnMouseExit(control)
+
     if not OnMouseExit_pending then
         zo_callLater(OnMouseExit_handler, ZO_CALLLATER_DELAY_ONMOUSEEXIT)
     end
