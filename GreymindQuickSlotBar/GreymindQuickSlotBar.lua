@@ -3,21 +3,26 @@
 --}}}
 -- CHANGELOG --{{{
 --[[
+v2.4.8.7 release candidate {{{
+- [color="aaffaa"]190824[/color]
+- Clarified the term [color="Wheat"]Preset [/color] as being a collection of 8 Slotted Items.
+- Clarified the term [color="Wheat"]Profile[/color] as being a collection of 5 Presets.
+- All characters have their [color="Wheat"]Own Profile[/color].
+- All characters can use the single [color="Wheat"]Account-Wide Profile[/color] or their own (one or the other).
+- WIP: looking into a way to handle Items with the same name, different flavor or level...
+}}}
 v2.4.8.6 release candidate {{{
 - [color="aaffaa"]190821[/color]
-- Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
 - [color="magenta"]Trader08_mod: refactoring and cleaning up[/color]
 - [color="Wheat"]Adjusted UI and Tags visibility for the best possible feedback about what's happening[/color]
 }}}
 v2.4.8.5 release candidate {{{
 - [color="aaffaa"]190820[/color]
-- Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
 -  [color="magenta"]Trader08_mod:[/color]
 .  [color="Wheat"]PENDING SWAP COOLDOWN showing even whith WARNING and ALERT visual clues disabled[/color]
 }}}
 v2.4.8.4 release candidate {{{
 - [color="aaffaa"]190819[/color]
-- Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
 -  [color="magenta"]Trader08_mod:[/color]
 -  [color="magenta"  ] Visual cues symbol and border colors to show: [/color]
 .  [color="Wheat"    ] PENDING SWAP    while ON COOLDOWN             [/color]
@@ -26,27 +31,24 @@ v2.4.8.4 release candidate {{{
 }}}
 v2.4.8.3 release candidate {{{
 - [color="aaffaa"]190817[/color]
-- Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
 -  [color="magenta"]Trader08_mod:[/color]
 -  [color="green"]   - LockThisPreset[/color] option
--  [color="magenta"] ...profile save not locked when Settings menu is opened and each time LockThisPreset is CHECKED-ON[/color]
+-  [color="magenta"] ...preset save not locked when Settings menu is opened and each time LockThisPreset is CHECKED-ON[/color]
 }}}
 v2.4.8.1 release candidate {{{
 - [color="aaffaa"]190815[/color]
-- Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
 -  All USE and CHANGE events display suppressed by [color="ee00ee"]Show policy Never[/color] option
 -  [color="ee00ee"]Default Show Policy[/color] set to [Never] instead of [Always]
 -  [color="ee00ee"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
 -  [color="ee00ee"]UI layout[/color] may be reduced to a single [1x1 cell] .. down from [2R x 1C]
 -  [color="magenta"]Trader08_mod:[/color]
 -  [color="green"]   - LockAllPresets[/color] option
--  [color="magenta"] ...profiles not saved to allow temporary slottings[/color]
+-  [color="magenta"] ...preset not saved to allow temporary slotting[/color]
 -  [color="blue"]    - DelayPresetSwapWhileInCombat[/color] option
--  [color="magenta"] ...forbidden profile change while in combat activated later, when you get out of combat[/color]
+-  [color="magenta"] ...forbidden preset change while in combat activated later, when you get out of combat[/color]
 }}}
 v2.4.8 {{{
 - [color="aaffaa"]190814[/color]
-- Checked with Update 23 (5.1.5): [color="00ff00"]Scalebreaker[/color] - APIVersion: 100028.
 -  All USE and CHANGE events display suppressed by [color="ee00ee"]Show policy Never[/color] option
 -  [color="ee00ee"]Default Show Policy[/color] set to [Never] instead of [Always]
 -  [color="ee00ee"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
@@ -225,7 +227,7 @@ v2.3.2.1 {{{
 [color="00DD00"]- get_slotId_itemName:[/color]
  . Access a BAG_BACKPACK [slotID] item name.
 
-[color="00DD00"]- loadItemSlots:[/color]
+[color="00DD00"]- loadPresetSlots:[/color]
  . Clear PRESET-UNCONFIGURED Quick Bar Slots,
  . Equip PRESET-CONFIGURED   Quick Bar Slots,
  . Nothing happens when upgrading from previous addon-version,
@@ -242,7 +244,7 @@ v2.3.2.1 {{{
 [color="00DD00"]- clear_bNum:[/color]
  . Clears a Quick Slot Bar entry based on intentionally-left-empty PRESET slot.
 
-[color="00DD00"]- equip_bNum_item_slotId:[/color]
+[color="00DD00"]- equip_bNum_itemName_itemId:[/color]
  . Equip a Quick Slot Bar entry based on an configured PRESET slot.
 
 [color="00DD00"]- handle_ACTION_SLOT_UPDATED:[/color]
@@ -254,7 +256,7 @@ v2.3.2.1 {{{
  . save one of the CURRENT PRESET slot item: [item-name] [BAG_BACKPACK slotID] [button texture]
 
 [color="00DD00"]- getItem_slotId:[/color]
- . Search the BAG_BACKPACK to get the Item ID passed to equip_bNum_item_slotId.
+ . Search the BAG_BACKPACK to get the Item ID passed to equip_bNum_itemName_itemId.
 
 [color="00DD00"]- get_tooltipText:[/color]
  . get information about currently EQUIPPED or SAVED item name.
@@ -596,7 +598,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8.6 release candidate", -- 190821 previous: 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
+    Version                             = "v2.4.8.7 release candidate", -- 190824 previous: 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 150218
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -760,6 +762,7 @@ local OnMouseDown
 local OnMouseClicked
 
 local OnSlashCommand
+local d_signature
 local PlaySoundAlert
 local PlaySoundAlert_pending = false
 local PlaySoundSlotted
@@ -778,11 +781,11 @@ local SelectPreset
 local SaveCurrentPreset
 local  check_QSB_BAG_BACKPACK_slotId_to_check
 local  get_slotId_itemName
-local  loadItemSlots
+local  loadPresetSlots
 local  is_SlotItemTable_empty
 local  populate_an_empty_SlotItemTable
 local  clear_bNum
-local  equip_bNum_item_slotId
+local  equip_bNum_itemName_itemId
 local  handle_ACTION_SLOT_UPDATED
 local  save_QSB_to_SlotItemTable
 local  getItem_slotId
@@ -835,7 +838,7 @@ d("...QSB: RESETING ALL PRESETS TO DEFAULT VALUES:")
     SelectPreset( PRESETNAMES[4] ); CopySettingsDefaultsTo(QSB.Settings)
     SelectPreset( PRESETNAMES[5] ); CopySettingsDefaultsTo(QSB.Settings)
 
-    loadItemSlots()
+    loadPresetSlots()
 
     ButtonSizeChanged()
 
@@ -879,7 +882,7 @@ if(DEBUG_Trader08) then d(COLOR_4.."Process_preset_pending_IN_COMBAT: [preset ".
     SelectPreset( presetName_pending_IN_COMBAT )
     presetName_pending_IN_COMBAT     = ""
 
-    loadItemSlots()
+    loadPresetSlots()
 
     Refresh("PENDING IN COMBAT")
 end
@@ -897,7 +900,7 @@ end
 function SelectPreset(selectedPreset)
 
 -- [Trader08_block]
--- Delay In Combat Profile swap {{{
+-- Delay In Combat Preset swap {{{
     if IsUnitInCombat('player') then
 if(DEBUG_Trader08) then QSB_ClearChat(); d(COLOR_M.."=== CHAT CLEARED BY DEBUG_Trader08 ===") end
 
@@ -1015,8 +1018,8 @@ local QSB_BAG_BACKPACK_UPDATE_slotId    = -1
 local QSB_BAG_BACKPACK_UPDATE_itemLevel = -1
 local QSB_BAG_BACKPACK_UPDATE_mutex     = false
 
-local tasks_loaded = {} -- collection of [clear_bNum .. equip_bNum_item_slotId]
-local tasks_posted = {} -- atomically-cloned-version (for independent in-progress handling)
+local tasks_loaded = {} -- collection of [clear_bNum .. equip_bNum_itemName_itemId]
+local tasks_posted = {} -- atomically-cloned-version (for thread-proof in-progress handling)
 local tasks_cooldown_inprogress
 --}}}
 -- check_QSB_BAG_BACKPACK_slotId_to_check {{{
@@ -1035,192 +1038,199 @@ D_ITEM("slotId=["..tostring(slotId).."] itemName=["..tostring(itemName).."] item
             if( QSB.Settings.SlotItemTable[bNum].itemLevel ~= itemLevel) then
                 QSB.Settings.SlotItemTable[bNum].itemLevel  = itemLevel
             end
-            equip_bNum_item_slotId(bNum, itemName, slotId)
+            equip_bNum_itemName_itemId(bNum, itemName, slotId)
             return
         end
     end
 D_ITEM("---")
 end
 --}}}
--- loadItemSlots {{{
-function loadItemSlots()
-    -- FIRST TIME USING SlotItemTable {{{
-    if (QSB.Settings.SlotItemTable == nil) then
-D_EQUIP(COLOR_6.." loadItemSlots: "..COLOR_2.." (QSB.Settings.SlotItemTable == nil)|r")
-        return
+-- loadPresetSlots_checkSlotItemTable {{{
+function loadPresetSlots_checkSlotItemTable(log_this)
+if(log_this) then d(COLOR_4.."LOADING "..QSB.Settings.PresetName.." SLOTS") end
+
+    if(QSB.Settings.SlotItemTable == nil) then
+
+if(log_this) then d(COLOR_2.." nothing to load|r") end
+
+        return false
     end
-    --}}}
-    -- EMPTY SlotItemTable .. leave Quick Slot Bar as is {{{
+
     if is_SlotItemTable_empty() then
-D_EQUIP(COLOR_6.."loadItemSlots: "..COLOR_8.." SlotItemTable is EMPTY |r")
---[[
-        return
---]]
+
+if(log_this) then d(COLOR_8.." preset is empty|r") end
+
     end
+
+    return true
+end
+--}}}
+--FIXME
+-- loadPresetSlots {{{
+function loadPresetSlots()
+local log_this = DEBUG_Trader08 or DEBUG_TASKS or DEBUG_STATUS or DEBUG_EQUIP or DEBUG_ITEM
+--    log_this = true--//FIXME
+    -- SETTINGS CHECK .. (nothing to load when just installed) {{{
+    if not loadPresetSlots_checkSlotItemTable(log_this) then return end
+
     --}}}
-    -- MUTEX: to ignore self-induced ACTION_SLOT_UPDATED events
+    -- MUTEX RAISE .. (to ignore self-induced ACTION_SLOT_UPDATED events) {{{
     QSB_BAG_BACKPACK_UPDATE_mutex = true
+
     tasks_loaded = {}
-    -- 1/2 CLEAR slots containing UNSELECTED or DIFFERENT ITEMS {{{
-    local itemName, slotIndex, slotName, emptySlot
+    --}}}
+    -- CLEAR TASKS .. (empty and changed slots) {{{
     for bNum = 1, QSB.ButtonCountMax do
-        itemName  = tostring(QSB.Settings.SlotItemTable[bNum].itemName)
-        emptySlot = (itemName == nil) or (itemName == "")
-        if emptySlot then
-            slotIndex = bNum_to_slotIndex( bNum      )
-            slotName  = GetSlotName      ( slotIndex )
-            if(slotName ~= "") then
-if(DEBUG_TASKS) then d(COLOR_6.."....CLEAR UNUSED ["..tostring(slotName).."]") end
-
-                tasks_loaded[#tasks_loaded + 1] = { clear_bNum , bNum , "CLEAR UNUSED" }
+        -- TASK: [CLEAR EMPTY PRESET SLOT] {{{
+        local presetItemName        = tostring(QSB.Settings.SlotItemTable[bNum].itemName)
+        local slotIndex       = bNum_to_slotIndex( bNum )
+        local slottedName        = GetSlotName( slotIndex )
+        local emptyPresetSlot = (presetItemName == nil) or (presetItemName == "")
+        if(   emptyPresetSlot ) then
+            if(slottedName == "") then
+                if(log_this) then d(COLOR_8.."TASK: SKIP  EMPTY") end
             else
-if(DEBUG_TASKS) then d(COLOR_8.."....SKIP  EMPTY") end
+                if(log_this) then d(COLOR_8.."TASK: CLEAR UNUSED ["..tostring(slottedName).."]") end
 
+                tasks_loaded[#tasks_loaded + 1] = { clear_bNum , bNum , "CLEAR  UNUSED", log_this}
             end
 
+            --}}}
+        -- TASK: [CLEAR CHANGED PRESET SLOT] {{{
         else
-            slotIndex = bNum_to_slotIndex( bNum      )
-            slotName  = GetSlotName      ( slotIndex )
-            if(slotName ~= itemName) then
-if(DEBUG_TASKS) then d(COLOR_5.."....SET  CHANGED ["..tostring(slotName).."] ~= ["..tostring(itemName).."]") end
+            if(slottedName ~= presetItemName) then
+                if(log_this) then d(COLOR_8.."TASK: CLEAR CHANGED ["..tostring(slottedName).."] ~= ["..tostring(presetItemName).."]") end
 
-                tasks_loaded[#tasks_loaded + 1] = { clear_bNum , bNum , "SET CHANGED"}
+                tasks_loaded[#tasks_loaded + 1] = { clear_bNum , bNum , "CLEAR CHANGED", log_this}
             end
         end
+        --}}}
     end
     --}}}
-
-    -- 2/2 EQUIP SELECTED ITEMS (possibly available in BAG_BACKPACK) {{{
-    local msg = ""
-    local slotId
-D_EQUIP("loadItemSlots:")
-
+    -- EQUIP TASKS .. (equip preset items) {{{
     for bNum = 1, QSB.ButtonCountMax do
-        itemName  = tostring(QSB.Settings.SlotItemTable[bNum].itemName)
-D_ITEM("."..bNum.." itemName=["..itemName.."]")
+        local    presetItemName  = QSB.Settings.SlotItemTable[bNum].itemName
+        if(     (presetItemName ~= nil)
+            and (presetItemName ~= "" )
+            and (presetItemName ~= GetSlotName( bNum_to_slotIndex(bNum)))) then
+                if(log_this) then d(COLOR_9.."TASK: EQUIP         ["..tostring(presetItemName).."]") end
 
-
-        if (itemName ~= nil) and (itemName ~= "") then
-
-            slotIndex    = bNum_to_slotIndex( bNum      )
-D_ITEM("..slotIndex=["..slotIndex.."]")
-            slotName     = GetSlotName      ( slotIndex )
-D_ITEM("...slotName=["..slotName.."]")
-
-            if(slotName == itemName) then
-D_ITEM(".....SAME ITEM NAME")
-if(DEBUG_TASKS) then d(COLOR_8.."...SAME ITEM NAME ["..tostring(slotName).."]") end
-
-            else
-                if(slotName ~= "") then
-                    slotId   = getItem_slotId(slotName)
-                else
-                    slotId   = -1
-                end
-D_ITEM("....slotId=["..slotId.."]")
-
-                if((slotId ~= -1) and (slotId == QSB.Settings.SlotItemTable[bNum].slotId)) then
-D_ITEM(".....SAME ITEM ID")
-if(DEBUG_TASKS) then d(COLOR_8.."...SAME ITEM ID   ["..tostring(slotId).."]") end
-
-                    if DEBUG_EQUIP then
-                        msg  = msg.."\n"..COLOR_6..".UNCHANGED ["..COLOR_6..bNum.."=="..slotIndex.."|r] ID["..tostring(slotId).."] ["..COLOR_6..tostring(itemName).."|r] .. slotId=["..tostring(slotId).."]"
-                    end
-                else
-                    slotId   = QSB.Settings.SlotItemTable[bNum].slotId
-D_ITEM(".....EQUIP ITEM ID")
-if(DEBUG_TASKS) then d(COLOR_7.."...EQUIP ITEM ID  ["..tostring(slotId).."]") end
-
-                    if DEBUG_EQUIP then
-                        msg  = msg.."\n"..COLOR_3..".EQUIPMENT ["..COLOR_6..bNum.."=="..slotIndex.."|r] ID["..tostring(slotId).."] ["..COLOR_6..tostring(itemName).."|r] .. slotId=["..tostring(slotId).."]"
-                    end
-
-                    tasks_loaded[#tasks_loaded + 1] = { equip_bNum_item_slotId , bNum , itemName , slotId }
-                end
-
-            end
+            tasks_loaded[#tasks_loaded + 1] = { equip_bNum_itemName_itemId , bNum , presetItemName , QSB.Settings.SlotItemTable[bNum].slotId, log_this}
         end
     end
     --}}}
-
---d("XXX loadItemSlots: overriding Loaded_QSB_Settings = DeepCopy(QSB.Settings)")
+    -- PRESET SELECTED .. (equipment still pending) {{{
     Loaded_QSB_Settings = DeepCopy(QSB.Settings)
-if(msg ~= "") then D_EQUIP(msg) end
 
-    -- EQUIP TASK COOLDOWN {{{
+    --}}}
+    -- TASKS START OR COOLDOWN {{{
     if(#tasks_loaded > 0) then
         if not tasks_cooldown_inprogress then
-if(DEBUG_TASKS) then d(COLOR_C.."TASK #"..tostring(#tasks_loaded).." .. NOT ON COOLDOWN") end
+            if(log_this) then d(COLOR_C.."TASK #"..tostring(#tasks_loaded).." .. NOT ON COOLDOWN") end
             tasks_post(ZO_CALLLATER_DELAY_TASKS)
         else
-if(DEBUG_TASKS) then d(COLOR_M.."TASK #"..tostring(#tasks_loaded).." .. ON COOLDOWN .. POSTPONING") end
+            if(log_this) then d(COLOR_M.."TASK #"..tostring(#tasks_loaded).." .. ON COOLDOWN .. POSTPONING") end
             tasks_cooldown_begin()
             return
         end
 
     end
     --}}}
-
 end
 --}}}
--- clear_bNum {{{
-function clear_bNum(bNum)
-    local slotIndex = bNum_to_slotIndex( bNum      )
-    local slotName  = GetSlotName      ( slotIndex )
-    if(   slotName ~= "") then
-D_ITEM("..CLEARING ["..COLOR_6..slotIndex_to_bNum(slotIndex).."=="..slotIndex.."|r] ["..COLOR_6..tostring( slotName).."|r]")
-    else
-D_ITEM("..CLEARING ["..COLOR_6..slotIndex_to_bNum(slotIndex).."=="..slotIndex.."|r]")
-    end
-    CallSecureProtected("ClearSlot", slotIndex)
-end
---}}}
--- equip_bNum_item_slotId {{{
-function equip_bNum_item_slotId(bNum, itemName, itemId)
-    -- [slotIndex] {{{
-    local slotIndex = bNum_to_slotIndex( bNum )
-D_ITEM(".EQUIPPING ["..COLOR_6..bNum.."=="..slotIndex.."|r] itemId["..tostring(itemId).."] ["..COLOR_6..tostring(itemName).."]")
-
-    --}}}
-    -- 1/2 - BAG ITEM {{{
+--FIXME
+-- equip_bNum_itemName_itemId {{{
+function equip_bNum_itemName_itemId(bNum, itemName, itemId)
+--{{{
+local log_this = DEBUG_Trader08 or DEBUG_TASKS or DEBUG_STATUS or DEBUG_EQUIP or DEBUG_ITEM
+--    log_this = true --//FIXME
 
 -- Trader08_mod: itemId (coming from slotID)
 -- Trader08_mod: to be updated with present inventory slotID
 -- Trader08_mod: (instead of from old saved dynamic slotID)
 
-    local        from_bag  = getItem_BAG_BACKPACK_slotId(itemName)
-    if(          from_bag >= 0) then
-    	itemId = from_bag
-        local _, count = GetItemInfo(BAG_BACKPACK, itemId)
-        if(count > 0) then
-D_ITEM("SelectSlotItem.......(itemId=["..tostring(itemId).."], slotIndex=["..tostring(slotIndex).."])")
+local slotIndex = bNum_to_slotIndex( bNum )
+--}}}
+    -- BAG [nameId_count   ] {{{
+    local   nameId_count = 0
+    local       nameId_msg = ""
+    local nameId           = getItem_BAG_BACKPACK_slotId( itemName )
+    if(   nameId >= 0) then
+        local _, count = GetItemInfo(BAG_BACKPACK, nameId)
+        if(count >  0) then
+            nameId_count    = count
 
-            CallSecureProtected("SelectSlotItem"       , BAG_BACKPACK, itemId, slotIndex)
+            if(log_this) then nameId_msg = "\n_ "..COLOR_5.."BAG ITEM BY [NAME] "        ..COLOR_8.."x"..count end
         end
+    end
     --}}}
-    -- 2/2 OR COLLECTIBLE {{{
-    else
-        -- TODO check if available
---[[ --{{{
-:new C:/LOCAL/GAMES/TESO/ADDONS/13_StaticsQuickslotProfiles/StaticsQuickslotProfiles/StaticsQuickslotProfiles.lua
- :!start explorer "https://www.esoui.com/downloads/fileinfo.php?id=258#comments"
- :!start explorer "https://www.esoui.com/downloads/download1775-StaticsQuickslotProfiles"
- :!start explorer "https://esoapi.uesp.net/100028/data/s/e/l/SelectSlotSimpleAction.html"
- :!start explorer "https://esoapi.uesp.net/100028/src/ingame/inventory/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100028/src/ingame/inventory/inventoryslot.lua.html"
+    -- BAG [itemId_count   ] {{{
+    local   itemId_count = 0
+    local   itemId_msg   = ""
+    local _, count = GetItemInfo(BAG_BACKPACK, itemId)
+    if(count > 0) then
+        itemId_count    = count
 
--- COLLECTIONS_BOOK_SINGLETON
- :!start explorer "http://esoapi.uesp.net/100017/src/ingame/collections/collectionsinventorysingleton.lua.html"
- :!start explorer "http://esoapi.uesp.net/100022/src/ingame/collections/collectionsbook_manager.lua.html"
+        if(log_this) then     itemId_msg = "\n_ "..COLOR_6.."BAG ITEM BY [ID="..itemId.."] "..COLOR_8.."x"..count end
+    end
+    --}}}
+    -- OR COLLECTIBLE {{{
+    local collec_msg = ""
+    if(     (nameId_count    <= 0)
+        and (itemId_count      <= 1)) then
 
---]] --}}}
-D_ITEM("SelectSlotCollectible(itemId=["..tostring(itemId).."], slotIndex=["..tostring(slotIndex).."])")
-      --CallSecureProtected("SelectSlotCollectible" ,                          itemId, slotIndex)
-        CallSecureProtected("SelectSlotSimpleAction", ACTION_TYPE_COLLECTIBLE, itemId, slotIndex)
-    end --}}}
+        if(log_this) then     collec_msg = "\n_ "..COLOR_7.."COLLECTIBLE [ID "..itemId.."]" end
+    end
+    --}}}
+    -- LOG FOUND {{{
+    if(log_this) then
+        d("\r\nEQUIP ".. bNum .." "..itemName
+        ..               nameId_msg
+        ..               itemId_msg
+        ..               collec_msg
+        )
+    end
 
+    --}}}
+    -- EQUIP FOUND {{{
+    if(    nameId_count > 0) then CallSecureProtected("SelectSlotItem"        , BAG_BACKPACK           , nameId, slotIndex)
+    elseif(itemId_count > 0) then CallSecureProtected("SelectSlotItem"        , BAG_BACKPACK           , itemId, slotIndex)
+    else                          CallSecureProtected("SelectSlotSimpleAction", ACTION_TYPE_COLLECTIBLE, itemId, slotIndex)
+    end
+    --}}}
 end
 --}}}
+--FIXME
+-- clear_bNum {{{
+function clear_bNum(bNum, reason, log_this)
+
+    local slotIndex    = bNum_to_slotIndex( bNum      )
+    local slottedName  = GetSlotName      ( slotIndex )
+    if(   slottedName ~= "") then
+if(log_this) then d("_CLEARING ["..COLOR_6..bNum.."|r] ["..COLOR_8..reason.."|r] ["..COLOR_6..tostring( slottedName).."|r]") end
+
+    else
+if(log_this) then d("_CLEARING ["..COLOR_6..bNum.."|r] ["..COLOR_8..reason.."|r] ["..COLOR_8.."no name]") end
+
+    end
+    CallSecureProtected("ClearSlot", slotIndex)
+end
+--}}}
+--[[ TODO check if item available --{{{
+
+:new C:/LOCAL/GAMES/TESO/ADDONS/13_StaticsQuickslotProfiles/StaticsQuickslotProfiles/StaticsQuickslotProfiles.lua
+
+:!start explorer "https://www.esoui.com/downloads/fileinfo.php?id=258#comments"
+:!start explorer "https://www.esoui.com/downloads/download1775-StaticsQuickslotProfiles"
+:!start explorer "https://esoapi.uesp.net/100028/data/s/e/l/SelectSlotSimpleAction.html"
+:!start explorer "https://esoapi.uesp.net/100028/src/ingame/inventory/luadir.html"
+:!start explorer "https://esoapi.uesp.net/100028/src/ingame/inventory/inventoryslot.lua.html"
+
+-- COLLECTIONS_BOOK_SINGLETON
+:!start explorer "http://esoapi.uesp.net/100017/src/ingame/collections/collectionsinventorysingleton.lua.html"
+:!start explorer "http://esoapi.uesp.net/100022/src/ingame/collections/collectionsbook_manager.lua.html"
+
+--]]--}}}
 
 -- tasks_cooldown_begin {{{
 function tasks_cooldown_begin()
@@ -1273,13 +1283,13 @@ if(DEBUG_TASKS) then d(COLOR_8.."TASK .. NO PENDING TASK") end
     local  tasks_entry = table.remove(tasks_posted, 1)
     if not tasks_entry then return end
 
-    local  clear_or_equip,bNum,itemName_or_reason,slotId = unpack(tasks_entry)
+    local  clear_or_equip, bNum, itemName_or_reason, slotId, log_this = unpack(tasks_entry)
     --}}}
 --{{{
     if    (clear_or_equip == clear_bNum            ) then
 if(DEBUG_TASKS) then d(COLOR_6.."TASK .. CLEAR BNUM("..COLOR_8..tostring(bNum)..") .. "..COLOR_6..tostring(itemName_or_reason)) end
 
-    elseif(clear_or_equip == equip_bNum_item_slotId) then
+    elseif(clear_or_equip == equip_bNum_itemName_itemId) then
 if(DEBUG_TASKS) then d(COLOR_4.."TASK ,, EQUIP BNUM("..COLOR_7..tostring(bNum)..") .. "..COLOR_4..tostring(itemName_or_reason).." "..COLOR_8.." slotId="..tostring(slotId)..")") end
 
     else
@@ -1294,7 +1304,7 @@ end
     end
 --}}}
     -- execute fetched task {{{
-    clear_or_equip(bNum,itemName_or_reason,slotId)
+    clear_or_equip(bNum, itemName_or_reason,slotId, log_this)
 
     --}}}
     -- 1/2 post next task {{{
@@ -1364,17 +1374,17 @@ D_ITEM("save_QSB_to_SlotItemTable("..bNum.."):")
 
     local slotIndex = bNum_to_slotIndex( bNum      )
     local texture   = GetSlotTexture   ( slotIndex )
-    local slotName  = GetSlotName      ( slotIndex )
+    local slottedName  = GetSlotName      ( slotIndex )
     local slotId    = -1
-    if( slotName   ~= nil) and (slotName ~= "") then
-        slotId      = getItem_slotId(slotName)
+    if( slottedName   ~= nil) and (slottedName ~= "") then
+        slotId      = getItem_slotId(slottedName)
     end
 
     if(slotId == -1) then slotId = GetCollectibleIdFromLink( GetSlotItemLink(slotIndex) ) end
 D_ITEM("+++slotId...f(slotIndex).=["..tostring( slotId    ).."]")
 
     -- SINGLE-POINT-INITIALIZATION
-    QSB.Settings.SlotItemTable[bNum].itemName  = slotName
+    QSB.Settings.SlotItemTable[bNum].itemName  = slottedName
     QSB.Settings.SlotItemTable[bNum].itemLevel = get_slotId_itemLevel(slotId)
     QSB.Settings.SlotItemTable[bNum].slotId    = slotId
     QSB.Settings.SlotItemTable[bNum].texture   = texture
@@ -1529,22 +1539,25 @@ end
 --}}}
 -- getItem_bagId_slotId {{{
 function getItem_bagId_slotId(bagId, itemName)
+local log_this = DEBUG_ITEM
 
-    bagId    = tonumber(bagId)
-    itemName = tostring(itemName)
-D_ITEM("getItem_bagId_slotId("..bagId..","..itemName..")")
+    bagId    = tonumber( bagId    )
+    itemName = tostring( itemName )
+
+if(log_this) then d("getItem_bagId_slotId("..bagId..","..itemName..")") end
 
     for _, data in pairs(SHARED_INVENTORY.bagCache[bagId]) do
         if data ~= nil then
-            local slotName  = GetItemName(bagId, data.slotIndex)
-            if(   slotName == itemName) then
-D_ITEM(            "...return ["..tostring(data.slotIndex).."]")
+            local bagItemName  = GetItemName(bagId, data.slotIndex)
+            if(   bagItemName == itemName) then
+
+if(log_this) then d(COLOR_3.."...return [data.slotIndex "..tostring(data.slotIndex).."]") end
                   return data.slotIndex
             end
         end
     end
 
-D_ITEM("getItem_bagId_slotId("..COLOR_3..bagId..", "..COLOR_4..tostring(itemName).."): return [-1]")
+if(log_this) then d(COLOR_8.."...return [-1]") end
     return -1
 end
 --}}}
@@ -2400,7 +2413,7 @@ end
 function ShowUIHandles(_caller)
     if not QSB.UIHandles then return end
 
-    SetUIHandlesVisibility(true, _caller)
+    SetUIHandlesVisibility(true , _caller)
 
   --Refresh(_caller)
 
@@ -2864,11 +2877,11 @@ function QSB_Item8() SelectButton(8) end
 
 --}}}
 -- KEYBOARD-SHORTCUTS: P[1..5] {{{
-function QSB_P1()    SelectPreset( PRESETNAMES[1] ); loadItemSlots(); Refresh("P1"); end
-function QSB_P2()    SelectPreset( PRESETNAMES[2] ); loadItemSlots(); Refresh("P2"); end
-function QSB_P3()    SelectPreset( PRESETNAMES[3] ); loadItemSlots(); Refresh("P3"); end
-function QSB_P4()    SelectPreset( PRESETNAMES[4] ); loadItemSlots(); Refresh("P4"); end
-function QSB_P5()    SelectPreset( PRESETNAMES[5] ); loadItemSlots(); Refresh("P5"); end
+function QSB_P1()    SelectPreset( PRESETNAMES[1] ); loadPresetSlots(); Refresh("P1"); end
+function QSB_P2()    SelectPreset( PRESETNAMES[2] ); loadPresetSlots(); Refresh("P2"); end
+function QSB_P3()    SelectPreset( PRESETNAMES[3] ); loadPresetSlots(); Refresh("P3"); end
+function QSB_P4()    SelectPreset( PRESETNAMES[4] ); loadPresetSlots(); Refresh("P4"); end
+function QSB_P5()    SelectPreset( PRESETNAMES[5] ); loadPresetSlots(); Refresh("P5"); end
 
 --}}}
 
@@ -3274,7 +3287,7 @@ d(COLOR_2.." GQSB RELOADING\n"..COLOR_2..tostring(changed))
         else
             Rebuild_LibAddonMenu()
 
-            loadItemSlots()
+            loadPresetSlots()
             Refresh("Load_ZO_SavedVars")
         end
     end
@@ -3813,7 +3826,7 @@ D("BuildSettingsMenu()")
                 end
             end
             SelectPreset(value)
-            loadItemSlots()
+            loadPresetSlots()
             Refresh("Preset Selection")
         end,
         width       = "full",
@@ -4161,23 +4174,23 @@ D("BuildSettingsMenu()")
     control = {
         type        = "checkbox",
         reference   = "QSB_LockThisPreset",
-        name        = "LOCK This Profile "..COLOR_M..SYMBOL_GEAR,
-        tooltip     = "Whether to keep this profile's quickslots static\n"
+        name        = "Lock This Preset "..COLOR_M..SYMBOL_GEAR,
+        tooltip     = "Whether to keep this Preset's quickslots static\n"
         ..            COLOR_M.."Trader08_mod",
         warning     = COLOR_3.."You can turn this option\n"
         ..            "\n"
-        ..            COLOR_M.."ON |r to lock this profile\n"
+        ..            COLOR_M.."ON |r to lock this Preset\n"
         ..            "\n"
         ..            COLOR_8.."OFF|r to save it before loading another\n"
         ..            "\n"
         ..            COLOR_3.."About the locking mecanism:|r\n"
-        ..                     "The saving happens when you "..COLOR_4.."change profile|r "
+        ..                     "The saving happens when you "..COLOR_4.."change Preset|r "
         ..                     "and when you "..COLOR_4.."leave the game.|r\n"
         ..            "\n"
         ..            COLOR_3.."WHEN THIS SETTINGS MENU IS OPENED:|r\n"
-        ..                     "You can update and force the saving of the current profile "
+        ..                     "You can update and force the saving of the current Preset "
         ..                      "by "..COLOR_4.."swiching this option from|r "..COLOR_8.."OFF|r "..COLOR_4.."to|r "..COLOR_M.."ON|r.\n"
-        ..                     "Also, "..COLOR_4.."Selecting another profile|r during a configuration will save "
+        ..                     "Also, "..COLOR_4.."Selecting another Preset|r during a configuration will save "
         ..                      "the one you just left, both its options and its slotted items.\n"
         ..            "\n"
         ..            COLOR_3.."But when this option is "..COLOR_M.."ON"..COLOR_3..":|r\n"
@@ -4198,12 +4211,12 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             QSB.Settings.LockThisPreset = value
-            -- FORCED SAVING CURRENT PROFILE CHECKED-ON
+            -- FORCED SAVING CURRENT PRESET CHECKED-ON
             if( QSB.Settings.LockThisPreset ) then
                 SaveCurrentPreset("LockThisPreset JUST CHECKED-ON")
 
                 -- NOTIFY IN CHAT WINDOW
-                d("GQSB"..COLOR_M.." Profile "..COLOR_4.. QSB.Settings.PresetName ..COLOR_M.." saved and locked")
+                d("GQSB"..COLOR_M.." Preset "..COLOR_4.. QSB.Settings.PresetName ..COLOR_M.." saved and locked")
             end
 
             Refresh("LockThisPreset")
@@ -4217,8 +4230,8 @@ D("BuildSettingsMenu()")
     control = {
         type        = "checkbox",
         reference   = "QSB_DelayCombatPresetSwap",
-        name        = "DELAY In Combat Profile Swap"..COLOR_5..SYMBOL_GEAR,
-        tooltip     = "Wheter a profile swap while "..COLOR_5.."In-Combat|r "..COLOR_8.."(not allowed)|r "
+        name        = "DELAY In Combat Preset Swap"..COLOR_5..SYMBOL_GEAR,
+        tooltip     = "Wheter a Preset swap while "..COLOR_5.."In-Combat|r "..COLOR_8.."(not allowed)|r "
         ..            "should be remembered to be executed later.\n"
         ..            COLOR_M.."Trader08_mod",
         warning     = COLOR_3.."You can turn this option to handle UNAUTHORIZED PRESET-CHANGES while "..COLOR_R.."IN-COMBAT|r\n"
@@ -4254,7 +4267,7 @@ D("BuildSettingsMenu()")
         type        = "checkbox",
         reference   = "QSB_DEBUG_Trader08",
         name        =  "DEBUG "..COLOR_M.."Trader08_mod",
-        tooltip     = "Toggle chat traces for "..COLOR_M.."Profile Locking process",
+        tooltip     = "Toggle chat traces for "..COLOR_M.."Preset Locking process",
         getFunc     = function()
             if( DEBUG_Trader08 == nil) then
             	DEBUG_Trader08 = false
@@ -4407,10 +4420,10 @@ D_ITEM(COLOR_8.."ITEM REMOVED")
         else
             local itemName  = get_slotId_itemName ( slotId )
             local itemLevel = get_slotId_itemLevel( slotId )
-D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring(slotId).."] itemName=["..tostring(itemName).."] (level "..tostring(itemLevel).."]")
+D_ITEM(COLOR_5.."ITEM UPDATED: slotId=["..tostring( slotId ).."] itemName=["..tostring(itemName).."] (level "..tostring(itemLevel).."]")
 
-            QSB_BAG_BACKPACK_UPDATE_slotId    = slotId
-            QSB_BAG_BACKPACK_UPDATE_itemLevel = itemLevel
+            QSB_BAG_BACKPACK_UPDATE_slotId        = slotId
+            QSB_BAG_BACKPACK_UPDATE_itemLevel     = itemLevel
         end
         --}}}
 
@@ -4637,7 +4650,7 @@ D("OnClicked_handle("..tostring(handleName)..")")
         local arg = string.match(handleName, "P([1-5])")
 
         SelectPreset( PRESETNAMES[ tonumber(arg) ] )
-        loadItemSlots()
+        loadPresetSlots()
         Refresh("OnClicked_handle "..handleName)
 
     end
@@ -4685,27 +4698,19 @@ end
 
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
-    d("GQSB"..COLOR_C.." "..QSB.Version.." (190821)|r\n"
-    .."GQSB"..COLOR_8.." Checked with Update 23 (5.1.5): Scalebreaker (API 100028)\n"
-    .."GQSB"..COLOR_7.."Trader08_mod:\n"
-    .."GQSB"..COLOR_5.."LockThisPreset|r option\n"
-    .."GQSB"..COLOR_7..". Profile not saved to allow temporary slottings\n"
-    .."GQSB"..COLOR_7..". Profile save not locked when Settings menu is opened and each time LockThisPreset is CHECKED-ON\n"
-    .."GQSB"..COLOR_5.."DelayPresetSwapWhileInCombat|r option\n"
-    .."GQSB"..COLOR_7..". Profile change while in combat (not allowed) activated at the end of the fight\n"
-    .."GQSB"..COLOR_8.." "..QSB_SLASH_COMMAND.." -h for help|r\n"
-    ..QSB_SLASH_COMMAND.." "..arg)
+    -- arg {{{
+    if(arg == "")  then d_signature()
+    else                d(QSB_SLASH_COMMAND.." "..arg) end
 
+    --}}}
     local ui_may_have_changed = false
-    local presetName = ""
-    local lua_expr
-
+    local          presetName = ""
     -- help --{{{
-    if (arg == "")
-    then
-        d("GQSB Current Settings: "
+    if (arg == "") then
+        d("→ GQSB Current Settings: "
         ..(QSB.AccountWideSettings.SaveAccountWide and COLOR_6.." Account-wide"
         or                                             COLOR_2..GetUnitName("player").."|r Character"))
+        d("\r\n")
 
     elseif (arg ==  "-h"   )
     or     (arg == "--h"   )
@@ -4720,9 +4725,9 @@ function OnSlashCommand(arg)
         d(QSB_SLASH_COMMAND..   " refresh .. rebuild and redisplay UI")
         d(QSB_SLASH_COMMAND..     " clone .. auto-clone previous-to-empty preset (toggle)")
         d(QSB_SLASH_COMMAND..     " clear .. to clear Current-Preset-Items")
-        d(QSB_SLASH_COMMAND..     " reset .. RESETS ALL CHARACTER SETTINGS TO DEFAULT")
-        d(QSB_SLASH_COMMAND..     " force .. to force Bar Visiblity")
-        d(QSB_SLASH_COMMAND..     " block .. to block Bar Visiblity (overrides force)")
+        d(QSB_SLASH_COMMAND..     " reset .. RESETS ALL PRESETS SETTINGS TO DEFAULT")
+        d(QSB_SLASH_COMMAND..     " force .. to toggle FORCE Bar Visiblity")
+        d(QSB_SLASH_COMMAND..     " block .. to toggle BLOCK Bar Visiblity (overrides force)")
         d(QSB_SLASH_COMMAND..   " account .. to toggle between "..GetUnitName("player").." and Account-wide Settings")
         if DEBUG_ITEM then
             d(QSB_SLASH_COMMAND.. '     _G["ZO_ChatWindowTemplate1Buffer"]')
@@ -4738,13 +4743,12 @@ function OnSlashCommand(arg)
       --d(QSB_SLASH_COMMAND.. " kbmod ... Apply KeyBindings Modifier")
 
     --}}}
+    -- bag bagId , itemName {{{
+    elseif(string.match(arg,                      "%s*bag%s+(%d)%s*,%s*(.*)")   ) then
+        local bagId, itemName = string.match(arg, "%s*bag%s+(%d)%s*,%s*(.*)"    )
 
-    elseif(string.match(arg,                "%s*bag%s+(%d)%s*,%s*(.*)")) then
-        local bag, name = string.match(arg, "%s*bag%s+(%d)%s*,%s*(.*)")
-        bag  = tonumber(bag)
-        name = tostring(name)
-        getItem_bagId_slotId(bag, name)
-
+        getItem_bagId_slotId(tonumber(bagId), tostring(itemName))
+    --}}}
     -- hide show refresh reset p1-5 kbclr kbmod {{{
     elseif(arg == "hide"   ) then Hide_delayed("OnSlashCommand /"..arg)
     elseif(arg == "show"   ) then Show_delayed("OnSlashCommand /"..arg)
@@ -4775,15 +4779,16 @@ function OnSlashCommand(arg)
     --}}}
     -- clear {{{
     elseif(arg == "clear"       ) then
+        local log_this = true
         for bNum = 1, QSB.ButtonCountMax do
-            clear_bNum(bNum)
+            clear_bNum(bNum, log_this)
             QSB.Settings.SlotItemTable[bNum].itemName  = nil
             QSB.Settings.SlotItemTable[bNum].itemLevel = nil
             QSB.Settings.SlotItemTable[bNum].slotId    = nil
             QSB.Settings.SlotItemTable[bNum].texture   = nil
        end
 
-       loadItemSlots()
+       loadPresetSlots()
 
         d("..."..COLOR_2.."QSB.Settings.SlotItemTable CLEARED|r\n")
 
@@ -4842,7 +4847,7 @@ function OnSlashCommand(arg)
     --}}}
     else
         -- _G --{{{
-        lua_expr = string.match(arg, "^%s*_G% *(%a*)") -- as a global var name
+        local lua_expr = string.match(arg, "^%s*_G% *(%a*)") -- as a global var name
         if lua_expr then
         --QSB_ClearChat()
             local   o  =  _G[lua_expr]
@@ -4891,19 +4896,35 @@ function OnSlashCommand(arg)
         end
         --}}}
     end
-    -- CHANGE PRESET {{{
+    -- SelectPreset .. f(presetName) {{{
     if presetName ~= "" then
         SelectPreset( presetName )
-        loadItemSlots()
+        loadPresetSlots()
         Refresh("OnClicked_handle "..handleName)
 
         ui_may_have_changed = true
     end
     --}}}
-
+    -- Refresh .. f(ui_may_have_changed) {{{
     if(ui_may_have_changed) then
         Refresh("OnSlashCommand /"..arg)
+
     end
+    --}}}
+end
+--}}}
+-- d_signature {{{
+function d_signature()
+
+    d("→ GQSB"..COLOR_C.." "..QSB.Version.." (190824)|r\n"
+    .."→ "..COLOR_8.." Checked with Update 23 (5.1.5): Scalebreaker (API 100028)\n"
+    .."→ "..COLOR_7.."- Trader08_mod:\n"
+    .."→ "..COLOR_5.."- LockThisPreset|r option\n"
+    .."→ "..COLOR_7.."...Preset not saved to allow temporary slottings\n"
+    .."→ "..COLOR_5.."- DelayPresetSwapWhileInCombat|r option\n"
+    .."→ "..COLOR_7.."...Preset changed at the end of a fight\n"
+    .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
+    )
 
 end
 --}}}
