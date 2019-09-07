@@ -1,10 +1,10 @@
 -- Greymind Quick Slot Bar --{{{
 --  Feature Author: ivanwfr
 --}}}
--- CHANGELOG 190904
+-- CHANGELOG 190907
 --{{{
 --[[
-v2.4.8 release candidate {{{
+v2.4.8 {{{
 - [color="aaffaa"]190907[/color]
 - [color="magenta"]Trader08_mod:[/color]
 - [color="magenta"][b]LockThisPreset[/b][/color]
@@ -270,7 +270,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8 release candidate", -- 190907 previous: 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.8", -- 190907 previous: 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -3582,6 +3582,27 @@ D("BuildSettingsMenu()")
     --}}}
     control = { type  = "header", name  = COLOR_2.."2 BEHAVIOR",    width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --{{{
+    -- Show Policy {{{
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_Visibility",
+        name        = "Show|r Policy",
+        tooltip     = "Choose when you'd like Quick Slot Bar displayed or hidden",
+        choices     = QSB.Visibility_ChoiceList,
+        getFunc     = function()
+            return QSB.Settings.Visibility or QSB.SettingsDefaults.Visibility
+        end,
+        setFunc     = function(value)
+            if not Are_Settings_Locked(controlName, value) then
+                QSB.Settings.Visibility = value
+                Refresh("Visibility")
+            end
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
     -- Auto-select next not empty slot --{{{
     control = {
         type        = "checkbox",
@@ -3603,7 +3624,7 @@ D("BuildSettingsMenu()")
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
-    --- Next <-o-> Previous Wrap --{{{
+    -- Next <-o-> Previous Wrap --{{{
     control = {
         type        = "checkbox",
         reference   = "QSB_NextPrevWrap",
@@ -3663,89 +3684,7 @@ D("BuildSettingsMenu()")
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
     --}}}
-    control = { type  = "header", name  = COLOR_3.."3 VISUAL CUE",  width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --{{{
-    -- VisualCue_ChoiceList {{{
-    control = {
-        type        = "dropdown",
-        reference   = "QSB_VisualCue",
-        name        = "Visual Cue Display Policy",
-        tooltip     = "Choose how visual cues should be displayed",
-        choices     = QSB.VisualCue_ChoiceList,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.VisualCue or QSB.SettingsDefaults.SlotItem.VisualCue
-        end,
-        setFunc     = function(value)
-            if not Are_Settings_Locked(controlName, value) then
-                QSB.Settings.SlotItem.VisualCue = value
-                Refresh("VisualCue")
-            end
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- QuantityWarning {{{
-    control = {
-        type        = "slider",
-        reference   = "QSB_SlotItem_WarningQuantity",
-        name        = "Visual Cue Warning Quantity",
-        tooltip     = "The value at (and below) which the Warning Visual Cue is shown",
-        min         = 0,
-        max         = 50,
-        step        = 1,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.QuantityWarning
-        end,
-        setFunc     = function(value)
-            value = tonumber(value); if not value then return end
-            local clamped = false
-            if(value   <= QSB.Settings.SlotItem.QuantityAlert) then
-                value   = QSB.Settings.SlotItem.QuantityAlert+1
-                clamped = not QSB.Panel:IsHidden()
-            end
-            QSB.Settings.SlotItem.QuantityWarning = value
-            Refresh("SlotItem_WarningQuantity")
-            if clamped then Rebuild_LibAddonMenu() end
-        end,
-        width       = "full",
-        warning     = "* must be higher than "..COLOR_3.."Alert Quantity|r"
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- QuantityAlert {{{
-    control = {
-        type        = "slider",
-        reference   = "QSB_SlotItem_AlertQuantity",
-        name        = "Visual Cue Alert Quantity",
-        tooltip     = "The value at (and below) which the Alert Visual Cue is shown",
-        min         = 0,
-        max         = 50,
-        step        = 1,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.QuantityAlert
-        end,
-        setFunc     = function(value)
-            value = tonumber(value); if not value then return end
-            local clamped = false
-            if(value   >= QSB.Settings.SlotItem.QuantityWarning) then
-                value   = QSB.Settings.SlotItem.QuantityWarning-1
-                clamped = not QSB.Panel:IsHidden()
-            end
-            QSB.Settings.SlotItem.QuantityAlert = value
-            Refresh("SlotItem_AlertQuantity")
-            if clamped then Rebuild_LibAddonMenu() end
-        end,
-        width       = "full",
-        warning     = "* must be lower than "..COLOR_3.."Warning Quantity|r",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    --}}}
-    control = { type  = "header", name  = COLOR_4.."4 LAYOUT",      width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    control = { type  = "header", name  = COLOR_3.."3 LAYOUT",      width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --{{{
     -- ButtonSize {{{
     control = {
@@ -3790,27 +3729,6 @@ D("BuildSettingsMenu()")
             value = math.min(value, 32)
             QSB.Settings.ButtonFontSize = value
             Refresh("SlotItem_ButtonFontSize")
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- Show Policy {{{
-    control = {
-        type        = "dropdown",
-        reference   = "QSB_Visibility",
-        name        = "Show|r Policy",
-        tooltip     = "Choose when you'd like Quick Slot Bar displayed or hidden",
-        choices     = QSB.Visibility_ChoiceList,
-        getFunc     = function()
-            return QSB.Settings.Visibility or QSB.SettingsDefaults.Visibility
-        end,
-        setFunc     = function(value)
-            if not Are_Settings_Locked(controlName, value) then
-                QSB.Settings.Visibility = value
-                Refresh("Visibility")
-            end
         end,
         width       = "full",
     }
@@ -3916,6 +3834,88 @@ D("BuildSettingsMenu()")
             Refresh("SlotItem_OverlayButtonOpacity")
         end,
         width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    --}}}
+    control = { type  = "header", name  = COLOR_4.."4 VISUAL CUE",  width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --{{{
+    -- VisualCue_ChoiceList {{{
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_VisualCue",
+        name        = "Visual Cue Display Policy",
+        tooltip     = "Choose how visual cues should be displayed",
+        choices     = QSB.VisualCue_ChoiceList,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.VisualCue or QSB.SettingsDefaults.SlotItem.VisualCue
+        end,
+        setFunc     = function(value)
+            if not Are_Settings_Locked(controlName, value) then
+                QSB.Settings.SlotItem.VisualCue = value
+                Refresh("VisualCue")
+            end
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- QuantityWarning {{{
+    control = {
+        type        = "slider",
+        reference   = "QSB_SlotItem_WarningQuantity",
+        name        = "Visual Cue Warning Quantity",
+        tooltip     = "The value at (and below) which the Warning Visual Cue is shown",
+        min         = 0,
+        max         = 50,
+        step        = 1,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.QuantityWarning
+        end,
+        setFunc     = function(value)
+            value = tonumber(value); if not value then return end
+            local clamped = false
+            if(value   <= QSB.Settings.SlotItem.QuantityAlert) then
+                value   = QSB.Settings.SlotItem.QuantityAlert+1
+                clamped = not QSB.Panel:IsHidden()
+            end
+            QSB.Settings.SlotItem.QuantityWarning = value
+            Refresh("SlotItem_WarningQuantity")
+            if clamped then Rebuild_LibAddonMenu() end
+        end,
+        width       = "full",
+        warning     = "* must be higher than "..COLOR_3.."Alert Quantity|r"
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- QuantityAlert {{{
+    control = {
+        type        = "slider",
+        reference   = "QSB_SlotItem_AlertQuantity",
+        name        = "Visual Cue Alert Quantity",
+        tooltip     = "The value at (and below) which the Alert Visual Cue is shown",
+        min         = 0,
+        max         = 50,
+        step        = 1,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.QuantityAlert
+        end,
+        setFunc     = function(value)
+            value = tonumber(value); if not value then return end
+            local clamped = false
+            if(value   >= QSB.Settings.SlotItem.QuantityWarning) then
+                value   = QSB.Settings.SlotItem.QuantityWarning-1
+                clamped = not QSB.Panel:IsHidden()
+            end
+            QSB.Settings.SlotItem.QuantityAlert = value
+            Refresh("SlotItem_AlertQuantity")
+            if clamped then Rebuild_LibAddonMenu() end
+        end,
+        width       = "full",
+        warning     = "* must be lower than "..COLOR_3.."Warning Quantity|r",
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
@@ -5056,13 +5056,12 @@ end
 function d_signature()
 
     d("\r\n"
-    .."→ GQSB"..COLOR_C.." "..QSB.Version.." (190907)\n"
-    .."→ "..COLOR_8.."Checked with Update 23 (5.1.5): Scalebreaker (API 100028)\n"
-    .."→ "..COLOR_7.." Trader08_mod:\n"
-    .."→ "..COLOR_2.." LockThisPreset\n"
-    .."→ "..COLOR_5.." DelayPresetSwapWhileInCombat\n"
-    .."→ "..COLOR_6.." behaves with Item Types and Levels\n"
-    .."→ "..COLOR_6.." ...and trying to with Siege Weapons\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (190907)\n"
+    .."!!"..COLOR_8.." Update 23 (5.1.5): Scalebreaker (API 100028)\n"
+    .."→ "..COLOR_7.."Trader08_mod:\n"
+    .."→ "..COLOR_2.."- LockThisPreset\n"
+    .."→ "..COLOR_5.."- DelayPresetSwapWhileInCombat\n"
+    .."→ "..COLOR_6.."- behaves with Item Types and Levels\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
