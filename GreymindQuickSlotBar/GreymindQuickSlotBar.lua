@@ -5,14 +5,19 @@
 --{{{
 --[[
 v2.4.8 release candidate {{{
-- [color="aaffaa"]190904[/color]
-- [color="magenta"]LockThisPreset[/color] option
-- [color="magenta"]DelayPresetSwapWhileInCombat[/color] option
-- [color="magenta"]Trader08_mod:[/color] Found a way to handle Items with the same name but different Flavor or Level.
-- Support for items with [color="green"]same Id but different Level[/color].
-- [color="green"]Default Show Policy[/color] set to [Never] instead of [Always]
-- [color="green"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
-- [color="green"]UI layout[/color] may be reduced to a single [1x1 cell] .. down from [2R x 1C]
+- [color="aaffaa"]190907[/color]
+- [color="magenta"]Trader08_mod:[/color]
+- [color="magenta"][b]LockThisPreset[/b][/color]
+- [color="magenta"][b]DelayPresetSwapWhileInCombat[/b][/color]
+- [color="magenta"]a few hacks helping for items with [color="green"]same Id but different Level[/color].
+- [color="blue"][b]LinkToChatOnClick[/b][/color]
+- [color="blue"]ChatMax[/color] utility option to unlock Chat Window maximum size.
+- [color="blue"]Default Show Policy[/color] set to [Never] instead of [Always]
+- [color="blue"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
+- [color="blue"]UI layout[/color] may be reduced to a single [1x1 cell] .. down from [2R x 1C]
+- [color="blue"][X] Defaults Settings button[/color] will only reset the Current Preset.
+- You can use the [color="red"]/resetall[/color] slash-command to reset all 5 Preset at once.
+- [color="blue"]Re-shuffled Settings Menu.[/color]
 
 }}}
 --]]
@@ -265,7 +270,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8 release candidate", -- 190904 previous: 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.8 release candidate", -- 190907 previous: 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -329,6 +334,7 @@ QSB.SettingsDefaults = {
     ButtonSize                          = 36,
     ButtonsDisplayed                    = QSB.ButtonCountMax,
     GameActionButtonHide                = false,
+    ChatMax                             = false,
     LockUI                              = false,
     LockThisPreset                      = false,
     DelayPresetSwapWhileInCombat        = false,
@@ -377,6 +383,10 @@ QSB.SettingsDefaults = {
 -- FORWARD DECLARATION OF LOCAL FUNCTIONS --{{{
 -- ...so we can call them before their definition in this file
 
+local d_table
+local d_signature
+local SetChatMax
+
 local Set_preset_pending_IN_COMBAT
 local Get_preset_pending_IN_COMBAT
 local Process_preset_pending_IN_COMBAT
@@ -411,7 +421,8 @@ local QSB_Settings_Changed
 local QSB_Setting_Preset_Changed
 
 local IsEmptySlot
-local Load_Defaults
+local ResetAllPresets
+local ResetThisPreset
 
 local OnClicked_bNum
 local OnClicked_handle
@@ -427,7 +438,6 @@ local OnMouseDown
 local OnMouseClicked
 
 local OnSlashCommand
-local d_signature
 local PlaySoundAlert
 local PlaySoundAlert_pending = false
 local PlaySoundSlotted
@@ -487,15 +497,9 @@ local Reticle_isHidden   = false
 --}}}
 
 -- PRESET
--- Load_Defaults {{{
-function Load_Defaults()
-D("Load_Defaults()")
-
-    -- revert to default values
---  CopyFromTo(QSB.SettingsDefaults, QSB.Settings)
---  QSB.Settings = DeepCopy(QSB.SettingsDefaults)
-
-d("...QSB: RESETING ALL PRESETS TO DEFAULT VALUES:")
+-- ResetAllPresets {{{
+function ResetAllPresets()
+d("QSB: RESETING ALL PRESETS TO DEFAULT VALUES")
 
     SelectPreset( PRESETNAMES[1] ); CopySettingsDefaultsTo(QSB.Settings)
     SelectPreset( PRESETNAMES[2] ); CopySettingsDefaultsTo(QSB.Settings)
@@ -507,7 +511,22 @@ d("...QSB: RESETING ALL PRESETS TO DEFAULT VALUES:")
 
     ButtonSizeChanged()
 
-    Refresh("LOAD DEFAULTS")
+    Refresh("ResetAllPresets")
+end
+--}}}
+-- ResetThisPreset {{{
+function ResetThisPreset()
+d("QSB: reseting this preset to default values")
+
+    -- KEEP CURRENTLY SELECTED PRESET
+
+    CopySettingsDefaultsTo(QSB.Settings)
+
+    loadPresetSlots()
+
+    ButtonSizeChanged()
+
+    Refresh("ResetThisPreset")
 end
 --}}}
 -- TRADER08_MOD
@@ -558,7 +577,6 @@ function Get_preset_pending_IN_COMBAT()
 
 end
 --}}}
-
 -- SelectPreset {{{
 function SelectPreset(selectedPreset)
 -- Delay In Combat Preset swap {{{
@@ -679,6 +697,7 @@ if(log_this) then d(COLOR_4.."SAVING PRESET "..COLOR_M.."["..tostring(currentPre
 
 end
 --}}}
+
 -- ITEM EQUIP
 --{{{
 local QSB_BAG_BACKPACK_UPDATE_bagIndex  = -1
@@ -730,7 +749,8 @@ if(log_this) then D_EQUIP(ITEM_6_CHECK, bNum, itemId, itemType, itemLevel, itemL
             , itemId
             , itemType
             , QSB.Settings.SlotItemTable[bNum].itemLevel
-            , itemLink)
+            , itemLink
+            , QSB.Settings.SlotItemTable[bNum].texture)
 
             return
         end
@@ -827,6 +847,7 @@ if(log_this) then d(COLOR_9.."TASK: EQUIP ["..tostring(presetItemName).."]") end
             ,   QSB.Settings.SlotItemTable[bNum].itemType
             ,   QSB.Settings.SlotItemTable[bNum].itemLevel
             ,   QSB.Settings.SlotItemTable[bNum].itemLink
+            ,   QSB.Settings.SlotItemTable[bNum].texture
             ,   log_this }
 
         end
@@ -852,7 +873,7 @@ if(log_this) then d(COLOR_9.."TASK: EQUIP ["..tostring(presetItemName).."]") end
 end
 --}}}
 -- equip_bNum .. Trader08_mod {{{
-function equip_bNum(bNum, itemName, slotId, itemId, itemType, itemLevel, itemLink)
+function equip_bNum(bNum, itemName, slotId, itemId, itemType, itemLevel, itemLink, texture)
     local log_this  = DEBUG_EQUIP
 
 if(log_this) then D_EQUIP(ITEM_4_EQUIP, bNum, itemId, itemType, itemLevel, itemLink) end
@@ -897,7 +918,7 @@ if(log_this) then D_EQUIP(ITEM_5_PREFER_ITEMLINK, bNum, itemId, itemType, itemLe
         if(    itemType == "item"       ) then
 
             -- EQUIP ITEM SLOT
-            local bagIndex   = getItem_slot_from_itID(itemId, itemLevel)
+            local bagIndex   = getItem_slot_from_itID(itemId, itemLevel, itemLink, texture)
             local _,   count = GetItemInfo(BAG_BACKPACK, bagIndex)
             if(        count > 0 and IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
 
@@ -1036,7 +1057,7 @@ if(DEBUG_TASKS) then d(COLOR_8.."TASK .. NO PENDING TASK") end
     local  tasks_entry = table.remove(tasks_posted, 1)
     if not tasks_entry then return end
 
-    local  clear_or_equip, bNum, itemName_or_reason, slotId, itemId, itemType, itemLink, log_this = unpack(tasks_entry)
+    local  clear_or_equip, bNum, itemName_or_reason, slotId, itemId, itemType, itemLink, itemLevel, texture, log_this = unpack(tasks_entry)
     --}}}
 -- DEBUG_TASKS {{{
 if(DEBUG_TASKS) then
@@ -1077,6 +1098,8 @@ end
     ,               itemId
     ,               itemType
     ,               itemLink
+    ,               itemLevel
+    ,               texture
     ,               log_this )
 
     --}}}
@@ -1272,7 +1295,7 @@ local log_this = DEBUG_TOOLTIPS or DEBUG_ITEM
         local _, _, itemType, itemId = ZO_LinkHandler_ParseLink( itemLink         )
         local name_from_slotIndex    = GetSlotName             ( slotIndex        )
         local slot_from_name         = getItem_slot_from_name  ( itemName         )
-        local slot_from_ID           = getItem_slot_from_itID  ( itemId, itemLevel)
+        local slot_from_ID           = getItem_slot_from_itID  ( itemId, itemLevel, itemLink, QSB.Settings.SlotItemTable[bNum].texture)
 
         tt = tt
         ..    "\n"
@@ -1285,7 +1308,7 @@ local log_this = DEBUG_TOOLTIPS or DEBUG_ITEM
         ..    "\n- GetSlotName("..         COLOR_9.."slotIndex|r)"  ..COLOR_4..":\n"..tostring( name_from_slotIndex ).. "|r"
         ..    "\n"..COLOR_8.."------------------------------------------- SLOT"
         ..    "\n- getItem_slot_from_name"                          ..COLOR_5.. " ["..tostring( slot_from_name      ).."]|r"
-        ..    "\n- getItem_slot_from_itID("..COLOR_6.. "itemId|r)"  ..COLOR_5.. " ["..tostring( slot_from_ID        ).."]|r"
+        ..    "\n- getItem_slot_from_itID("..COLOR_2.. "itemId|r)"  ..COLOR_5.. " ["..tostring( slot_from_ID        ).."]|r"
 
         --}}}
         -- ITEM ......... f(bagIndex) {{{
@@ -1333,64 +1356,107 @@ local log_this = DEBUG_TOOLTIPS or DEBUG_ITEM
     return tt
 end
 --}}}
+-- split_csv {{{
+function split_csv(str)
+
+   local t = {}
+
+   local function push(value)
+       table.insert(t, value)
+       return ""
+   end
+
+   push(str:gsub(" *([^,]*) *,?", push))
+
+   return t
+end
+--}}}
 -- getItem_slot_from_itID {{{
-function getItem_slot_from_itID(itemId, itemLevel)
+function getItem_slot_from_itID(itemId, itemLevel, itemLink, texture)
 local log_this = DEBUG_ITEM
 
-    itemId     = tonumber( itemId    )
-    if(not itemId) then return -1 end
-if(log_this) then d("getItem_slot_from_itID("..itemId.." "..itemLevel..")") end
+    itemId                  = tonumber(            itemId         ) if(not itemId) then return -1 end
+    itemLevel               = tonumber(            itemLevel      ) or 0
+    itemLink                = tostring(            itemLink       )
+    texture                 = tostring(            texture        )
 
-    itemLevel  = tonumber( itemLevel )
+    -- HEADERS {{{
+    local TEXTURE_SIEGE_26  = "/esoui/art/icons/ava_siege"
+    local itemLink_header40 = string.sub( itemLink, 0, 40) or ""
+    local texture_header26  = string.sub( texture , 0, 26) or ""
+    local isSiegeEngine     = texture_header26 and (texture_header26 == TEXTURE_SIEGE_26)
+--{{{
+if(log_this) then
+    d("getItem_slot_from_itID:")
+    d("→ [itemId "       ..COLOR_1..tostring( itemId            ).."|r] type "..type( itemId    ).."]")
+    d("→ [itemLevel "    ..COLOR_2..tostring( itemLevel         ).."|r] type "..type( itemLevel ).."]")
+    d("→ [itemLink "     ..COLOR_3..tostring( itemLink          ).."|r]")
+    d("→ [texture "      ..COLOR_4..tostring( texture           ).."|r]")
+    d("→ [isSiegeEngine "         ..tostring( isSiegeEngine     )..  "]")
+    d("→ itemLink_header40 " .."["..tostring( itemLink_header40 )..  "]")
+    d("→ texture_header26 "  .."["..tostring( texture_header26  )..  "]")
+end
+--}}}
+    --}}}
 
     for _, data in pairs(SHARED_INVENTORY.bagCache[BAG_BACKPACK]) do
         if data ~= nil then
-            local bagItemId           = GetItemId  (BAG_BACKPACK, data.slotIndex)
-            if   (bagItemId          == itemId   )
-            and ((data.requiredLevel == itemLevel) or (itemLevel == 0))
-            then
+            -- [bagItemId] {{{
+            local bagItemId  = GetItemId(BAG_BACKPACK, data.slotIndex)
+--(log_this) then d(COLOR_8.."[bagItemId "..bagItemId.."]") end
 
-if(log_this) then  d(COLOR_3.."...return [data.slotIndex "..tostring(data.slotIndex).."] ["..data.name.."]") end
+            if(   bagItemId == itemId   ) then
+if(log_this) then d(COLOR_7.."FOUND [itemId "..itemId.."] .. [bagItemId ("..type(bagItemId)..")"..bagItemId.."]") end
+            --}}}
+                -- [Siege Engine] {{{
+                --Trader08_190905
+                --{{{
 
-            return data.slotIndex
+                -- SIEGES LEVELS AREN'T RETURNED CORRECTLY
+
+                -- Their links also differ by using one function or another...
+                --   It is caused by their HP, always returning full HP
+                --   while in quickslot but returning true HP while in inventory
+                --   and returning 0 HP when using GetItemLink in here.
+
+                -- So what we do is check to confirm we have the right siege
+                --   by only getting the substring of the links, cutting before the HP index
+
+                -- This way, same sieges of different levels share the same itemId
+                --   and as we know their levels aren't returned correctly,
+                --   but their item links will compare correctly
+                --   since their itemId:itemLevel are always correct
+                --   in that part of the links
+
+                -- P.S. Sadly, this breaks what I loved for the addon
+                --   to auto find next siege of different level,
+                --   but this is the right way to do it for things not to get messed up.
+
+                --}}}
+
+                if( isSiegeEngine ) then
+                    local bagLink_header40 = string.sub(GetItemLink(BAG_BACKPACK, data.slotIndex), 0 ,40)
+                    local    same_header40 = (bagLink_header40 == itemLink_header40)
+                    if(      same_header40 ) then
+if(log_this) then d(COLOR_3.."ITEM SIEGE....: return [slotIndex "..tostring(data.slotIndex).."] .. (name "..tostring(data.name)..")") end
+
+                        return data.slotIndex
+                    end
+                    --}}}
+                    -- [All others] {{{
+                elseif ((data.requiredLevel == itemLevel) or (itemLevel == 0)) then
+
+if(log_this) then d(COLOR_9.."ITEM NOT SIEGE: return [slotIndex "..tostring(data.slotIndex).."] .. (name "..tostring(data.name)..")") end
+
+                    return data.slotIndex
+                end
+                --}}}
+
+            end
         end
     end
-end
-
-if(log_this) then d(COLOR_8.."...return [-1]") end
+if(log_this) then d(COLOR_8.."ITEM NOT FOUND: return [-1]") end
     return -1
-end
---}}}
--- d_table {{{
-function d_table(tableName, table, indent)
-
-    if(not indent) then indent = "" end
-    d(tableName..":")
-
-    local count = 0
-    for k, v in pairs(table) do
-        local k_str    = tostring(k)
-        local v_str    = tostring(v)
-        local v_type   = type    (v)
-
-        local label    =                     indent
-        .." "..                              count+1
-        ..     COLOR_8               .." ".. v_type
-        .." "..COLOR_X[1 + count % 9].." ".. k_str
-
-        if(     (indent  == ""     ) -- one level indent .. (more could be endless!)
-            and (v_type  == "table") -- skip self reference
-            and (v       ~=  table )
-            ) then
-
-            d_table(label, v, "→")
-
-        else
-            d(label..COLOR_9.." "..v_str)
-        end
-
-        count = count + 1
-    end
 end
 --}}}
 -- getItem_slot_from_name {{{
@@ -1682,8 +1748,8 @@ if(log_this) then d("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
     end
 
     if( QSB.Settings.MainWindow.X == 0) and (QSB.Settings.MainWindow.Y == 0) then
-        QSB.Settings.MainWindow.X = math.floor(GuiRoot:GetWidth()  / 2)
-        QSB.Settings.MainWindow.Y = math.floor(GuiRoot:GetHeight() / 2)
+        QSB.Settings.MainWindow.X = math.floor(GuiRoot:GetWidth()    /   2)
+        QSB.Settings.MainWindow.Y = math.floor(GuiRoot:GetHeight()   - 160)
 
         if     QSB.Settings.PresetName  == "P1" then
             QSB   .Settings.MainWindow.X = QSB.Settings.MainWindow.X -  32
@@ -2163,6 +2229,29 @@ D("BuildUIHandles():")
 
 end
 --}}}
+-- SetChatMax {{{
+function SetChatMax(state)
+    if(not QSB or not QSB.Panel) then return end
+
+    QSB.Settings.ChatMax = state
+
+    if(state) then
+        CHAT_SYSTEM.maxContainerWidth, CHAT_SYSTEM.maxContainerHeight = GuiRoot:GetDimensions()
+
+        d("GQSB: "..COLOR_3.." ChatMax "..COLOR_5.." ON|r → "..CHAT_SYSTEM.maxContainerWidth.." x "..CHAT_SYSTEM.maxContainerHeight)
+    else
+        for i = 1, #CHAT_SYSTEM.containers do
+            CHAT_SYSTEM:ResetContainerPositionAndSize( CHAT_SYSTEM.containers[i] )
+        end
+        d("GQSB: "..COLOR_3.." ChatMax "..COLOR_8.." OFF → Resized to default")
+    end
+
+    CHAT_SYSTEM:Maximize()
+
+    if not QSB.Panel:IsHidden() then Rebuild_LibAddonMenu() end
+
+end
+--}}}
 
 -- UI SHOW
 -- ShowOrHide {{{
@@ -2177,8 +2266,8 @@ function ShowOrHide()
     local          show_msg = ""
     local          hide_msg = ""
 
-    if     not QSB.Settings.LockUI      then show_msg = "NOT LOCKED ON SCREEN"
-
+    if         qsb_panel_showing        then show_msg = "VIS-"..vis.." .. GQSB-MENU SHOWING"
+    elseif not QSB.Settings.LockUI      then show_msg = "NOT LOCKED ON SCREEN"
     elseif     BlockBarVisibility       then hide_msg = "BLOCKED IS ON"
     elseif     ForceBarVisibility       then show_msg = "FORCED IS ON"
 
@@ -2191,7 +2280,6 @@ function ShowOrHide()
     elseif     vis == VIS_BLINK_CHANGES then
         if     inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
         elseif quickslot_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
-        elseif qsb_panel_showing        then show_msg = "VIS-"..vis.." .. SETTINGS  SHOWING"
         else   Show_handler();          Hide_delayed(vis, ZO_CALLLATER_DELAY_BLINK_CHANGE)
         end
 
@@ -2199,7 +2287,6 @@ function ShowOrHide()
         if not Reticle_isHidden         then show_msg = "VIS-"..vis.." .. RETICLE ON SCREEN"
         elseif inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
         elseif quickslot_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
-        elseif qsb_panel_showing        then show_msg = "VIS-"..vis.." .. SETTINGS  SHOWING"
         else                                 hide_msg = "VIS-"..vis.." .. RETICLE HIDDEN"
         end
 
@@ -2207,14 +2294,12 @@ function ShowOrHide()
         if     IsUnitInCombat('player') then show_msg = "VIS-"..vis.." .. IN COMBAT"
         elseif inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
         elseif quickslot_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
-        elseif qsb_panel_showing        then show_msg = "VIS-"..vis.." .. SETTINGS  SHOWING"
         else                                 hide_msg = "VIS-"..vis.." .. NOT IN COMBAT"
         end
 
     else
         if     inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
         elseif quickslot_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
-        elseif qsb_panel_showing        then show_msg = "VIS-"..vis.." .. SETTINGS  SHOWING"
         else                                 hide_msg = "VIS-"..vis.." .. RETICLE ON SCREEN"
         end
     end
@@ -2226,7 +2311,6 @@ end
 --}}}
 -- Show_delayed {{{
 function Show_delayed(msg)
-
     local log_this = DEBUG_STATUS
 
 if(log_this) then d("SHOWING: "..COLOR_4..msg) end
@@ -2240,7 +2324,6 @@ end
 --}}}
 -- Hide_delayed {{{
 function Hide_delayed(msg, delay)
-
     local log_this = DEBUG_STATUS
 
     if(not delay) then delay = ZO_CALLLATER_DELAY_HIDE end
@@ -2940,6 +3023,7 @@ D("QSB_ClearChat()")
         _G["ZO_ChatWindowTemplate".. i .."Buffer"]:Clear()
     end
 
+    CHAT_SYSTEM:Maximize()
 end
 --}}}
 -- QSB_Settings {{{
@@ -3126,13 +3210,13 @@ function D_EQUIP(title, bNum, itemId, itemType, itemLevel, itemLink)
         ..               " ".. (itemId    and (COLOR_8..          tostring(itemId   )) or "→")
         ..      COLOR_3.." ".. (itemType  and (                   tostring(itemType )) or "→")
         ..               " ".. (itemLevel and (COLOR_5.."Level "..tostring(itemLevel)) or "→")
-        ..             "|r "..  itemLink)
+        ..             "|r "..                                    tostring(itemLink ))
     end
 
 end
 --}}}
 
--- EVENT
+-- INIT
 -- Initialize {{{
 function Initialize(eventCode, addOnName)
 D("Initialize()")
@@ -3147,6 +3231,9 @@ D("Initialize()")
     Load_ZO_SavedVars(nil)
 
     BuildSettingsMenu()
+
+  --CHAT_SYSTEM.maxContainerWidth, CHAT_SYSTEM.maxContainerHeight = GuiRoot:GetDimensions()
+    SetChatMax( QSB.Settings.ChatMax )
 
     -- EVENT HANDLERS
     zo_callLater(RegisterEventHandlers, 500)
@@ -3255,6 +3342,7 @@ function QSB_Setting_Preset_Changed(q,l,presetName)
     k = "ButtonColumns"                ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "NextPrevWrap"                 ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "LockUI"                       ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ChatMax"                      ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "LockThisPreset"               ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "DelayPresetSwapWhileInCombat" ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "SwapBackgroundColors"         ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
@@ -3283,8 +3371,7 @@ local LAM   = LibStub("LibAddonMenu-2.0")
 function BuildSettingsMenu()
 D("BuildSettingsMenu()")
 
-    -- PANEL
-    --{{{
+    -- [panelData] {{{
 --  local panel = LAM:CreateControlPanel("QSB_Settings", SETTINGSPANELNAME)
 --  LAM:AddHeader(panel, "QSB_UserInterface", "")
 
@@ -3298,45 +3385,17 @@ D("BuildSettingsMenu()")
         slashCommand        = nil,              --(optional) will register a keybind to open to this panel
         registerForRefresh  = true,             --boolean (optional) (will refresh all options controls when a setting is changed and when the panel is shown)
         registerForDefaults = true,             --boolean (optional) (will set all options controls back to default values)
-        resetFunc           = Load_Defaults,    --(optional) custom function to run after settings are reset to defaults
+        resetFunc           = ResetThisPreset,  --(optional) custom function to run after settings are reset to defaults
     }
 
     QSB.Panel = LAM:RegisterAddonPanel( QSB.Name, panelData)
     --}}}
 
-    -- CONTROLS
-    --{{{
-    QSB.SettingsControls = {}
     local controlName, control
+    QSB.SettingsControls = {}
 
-    -- header --{{{
---[[
-    control = {
-        type        = "header",
-        reference   = "QSB_header",
-        name        = nil,
-        width       = "full", --or "half" (optional)
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
---]]
-    --}}}
-    -- description --{{{
---[[
-    control = {
-        type        = "description",
-        reference   = "QSB_description",
-        title       = nil,
-        text        = "quick slot bar with key bindings",
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
---]]
-    --}}}
-
-    -- SaveAccountWide (Checkbox) --{{{
-
+    -- SESSION SCOPE
+    -- Account-wide Settings --{{{
     control = {
         type        = "checkbox",
         reference   = "QSB_SaveAccountWide",
@@ -3355,378 +3414,23 @@ D("BuildSettingsMenu()")
             end
         end,
         width       = "full",
-        warning     = "May involve "..COLOR_3.."Reload User Interface|r",
+        warning     = "May involve "..COLOR_3.."Reloading User Interface|r\n"
+        ..            "\n"
+        ..            "And you should check and possibly "
+        ..   COLOR_2.." Reslot|r or"
+        ..   COLOR_2.." Reset|r each Preset"
+        ..            " after a Game  or Addon release"
+        ..            " in order to synchronize all items references.|r\n"
+        ,
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
 
-    -- LockUI (Checkbox) --{{{
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_LockUI",
-        name        = "Lock|r on screen",
-        tooltip     = "Whether to allow moving and resizing Quick Slot Bar\n"
-        ..COLOR_6.."You can also Lock or Unlock with a mouse click on the UI's pin handle",
-        getFunc     = function()
-            return QSB.Settings.LockUI
-        end,
-        setFunc     = function(value)
-            QSB.Settings.LockUI = value
-            Refresh("LockUI")
-        end,
-        width       = "full",
-        warning     = "Disabling the lock will "..COLOR_3.."force UI visibility|r and the background to show so you can reposition it with guidance",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- Visibility_ChoiceList (Dropdown) --{{{
-    control = {
-        type        = "dropdown",
-        reference   = "QSB_Visibility",
-        name        = "Show|r Policy",
-        tooltip     = "Choose when you'd like Quick Slot Bar displayed or hidden",
-        choices     = QSB.Visibility_ChoiceList,
-        getFunc     = function()
-            return QSB.Settings.Visibility or QSB.SettingsDefaults.Visibility
-        end,
-        setFunc     = function(value)
-            if not Are_Settings_Locked(controlName, value) then
-                QSB.Settings.Visibility = value
-                Refresh("Visibility")
-            end
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-
-    --LAM:AddHeader(panel, "QSB_Sep1", "")
-    local KW_Button = COLOR_5.."Button:|r "
-    -- ButtonSize (Slider) --{{{
-
-    control = {
-        type        = "slider",
-        reference   = "QSB_SlotItem_ButtonSize",
-        name        = KW_Button.."Size",
-        tooltip     = "The size of each button",
-        min         = 24,
-        max         = 64,
-        step        = 1,
-        getFunc     = function()
-            return QSB.Settings.ButtonSize
-        end,
-        setFunc     = function(value)
-            value = tonumber(value); if not value then return end
-            value = math.max(value, 24)
-            value = math.min(value, 64)
-            QSB.Settings.ButtonSize = value
-            ButtonSizeChanged()
-            Refresh("SlotItem_ButtonSize")
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- ButtonFontSize (Slider) --{{{
-
-    control = {
-        type        = "slider",
-        reference   = "QSB_SlotItem_ButtonFontSize",
-        name        = KW_Button.."Font Size",
-        tooltip     = "For Keybind and Quantity labels",
-        min         = 12,
-        max         = 32,
-        step        = 1,
-        getFunc     = function()
-            return QSB.Settings.ButtonFontSize
-        end,
-        setFunc     = function(value)
-            value = tonumber(value); if not value then return end
-            value = math.max(value, 12)
-            value = math.min(value, 32)
-            QSB.Settings.ButtonFontSize = value
-            Refresh("SlotItem_ButtonFontSize")
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- NotSelectedButtonOpacity (Slider) --{{{
-
-    control = {
-        type        = "slider",
-        reference   = "QSB_SlotItem_NotSelectedButtonOpacity",
-        name        = KW_Button.."Not Selected Opacity",
-        tooltip     = "From plain invisible to full opacity",
-        min         = 0,
-        max         = 100,
-        step        = 5,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.NotSelectedButtonOpacity
-        end,
-        setFunc     = function(value)
-            value = tonumber(value); if not value then return end
-            value = math.max(value,   0)
-            value = math.min(value, 100)
-            QSB.Settings.SlotItem.NotSelectedButtonOpacity = value
-            Refresh("SlotItem_NotSelectedButtonOpacity")
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- OverlayButtonOpacity (Slider) --{{{
-
-    control = {
-        type        = "slider",
-        reference   = "QSB_SlotItem_OverlayButtonOpacity",
-        name        = KW_Button.."Gray-out opacity",
-        tooltip     = "From plain invisible to full opacity",
-        min         = 0,
-        max         = 100,
-        step        = 5,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.OverlayButtonOpacity
-        end,
-        setFunc     = function(value)
-            value = tonumber(value); if not value then return end
-            value = math.max(value,   0)
-            value = math.min(value, 100)
-            QSB.Settings.SlotItem.OverlayButtonOpacity = value
-            Refresh("SlotItem_OverlayButtonOpacity")
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-
-    --LAM:AddHeader(panel, "QSB_Sep2", "")
-    local KW_Visual_Cues = COLOR_3.."Visual Cue:|r "
-    -- VisualCue_ChoiceList (Dropdown) --{{{
-
-    control = {
-        type        = "dropdown",
-        reference   = "QSB_VisualCue",
-        name        = KW_Visual_Cues.."Display Policy",
-        tooltip     = "Choose how visual cues should be displayed",
-        choices     = QSB.VisualCue_ChoiceList,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.VisualCue or QSB.SettingsDefaults.SlotItem.VisualCue
-        end,
-        setFunc     = function(value)
-            if not Are_Settings_Locked(controlName, value) then
-                QSB.Settings.SlotItem.VisualCue = value
-                Refresh("VisualCue")
-            end
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- QuantityWarning (Slider) --{{{
-
-    control = {
-        type        = "slider",
-        reference   = "QSB_SlotItem_WarningQuantity",
-        name        = KW_Visual_Cues.."Warning Quantity",
-        tooltip     = "The value at (and below) which the Warning Visual Cue is shown",
-        min         = 0,
-        max         = 50,
-        step        = 1,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.QuantityWarning
-        end,
-        setFunc     = function(value)
-            value = tonumber(value); if not value then return end
-            local clamped = false
-            if(value   <= QSB.Settings.SlotItem.QuantityAlert) then
-                value   = QSB.Settings.SlotItem.QuantityAlert+1
-                clamped = not QSB.Panel:IsHidden()
-            end
-            QSB.Settings.SlotItem.QuantityWarning = value
-            Refresh("SlotItem_WarningQuantity")
-            if clamped then Rebuild_LibAddonMenu() end
-        end,
-        width       = "full",
-        warning     = "* must be higher than "..COLOR_3.."Alert Quantity|r"
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- QuantityAlert (Slider) --{{{
-
-    control = {
-        type        = "slider",
-        reference   = "QSB_SlotItem_AlertQuantity",
-        name        = KW_Visual_Cues.."Alert Quantity",
-        tooltip     = "The value at (and below) which the Alert Visual Cue is shown",
-        min         = 0,
-        max         = 50,
-        step        = 1,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.QuantityAlert
-        end,
-        setFunc     = function(value)
-            value = tonumber(value); if not value then return end
-            local clamped = false
-            if(value   >= QSB.Settings.SlotItem.QuantityWarning) then
-                value   = QSB.Settings.SlotItem.QuantityWarning-1
-                clamped = not QSB.Panel:IsHidden()
-            end
-            QSB.Settings.SlotItem.QuantityAlert = value
-            Refresh("SlotItem_AlertQuantity")
-            if clamped then Rebuild_LibAddonMenu() end
-        end,
-        width       = "full",
-        warning     = "* must be lower than "..COLOR_3.."Warning Quantity|r",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-
-    --LAM:AddHeader(panel, "QSB_Sep3", "")
-    local KW_Key_Bindings = COLOR_4.."Key Bindings:|r "
-    -- ShowKeyBindings (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_ShowKeyBindings",
-        name        = KW_Key_Bindings.."Show",
-        tooltip     = "Whether to show key bindings for the slots in Quick Slot Bar",
-        getFunc     = function()
-            return QSB.Settings.SlotItem.ShowKeyBindings
-        end,
-        setFunc     = function(value)
-            QSB.Settings.SlotItem.ShowKeyBindings = value
-            Refresh("ShowKeyBindings")
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- KeyBindAlignV (Dropdown) --{{{
-
-    control = {
-        type        = "dropdown",
-        reference   = "QSB_SlotItem_KeyBindPositionVertical",
-        name        = KW_Key_Bindings.."Position (Vertical)",
-        tooltip     = "Select where you'd like the key bind displayed in relation to the slot item vertically",
-        choices     = ALIGNV,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.KeyBindAlignV
-        end,
-        setFunc     = function(value)
-            if not Are_Settings_Locked(controlName, value) then
-                QSB.Settings.SlotItem.KeyBindAlignV = value
-                Refresh("SlotItem_KeyBindPositionVertical")
-            end
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- KeyBindAlignH (Dropdown) --{{{
-
-    control = {
-        type        = "dropdown",
-        reference   = "QSB_SlotItem_KeyBindPositionHorizontal",
-        name        = KW_Key_Bindings.."Position (Horizontal)",
-        tooltip     = "Select where you'd like the key bind displayed in relation to the slot item horizontally",
-        choices     = ALIGNH,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.KeyBindAlignH
-        end,
-        setFunc     = function(value)
-            if not Are_Settings_Locked(controlName, value) then
-                QSB.Settings.SlotItem.KeyBindAlignH = value
-                Refresh("SlotItem_KeyBindPositionHorizontal")
-            end
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-
-    --LAM:AddHeader(panel, "QSB_Sep4", "")
-    local KW_Label = COLOR_6.."Label:|r "
-    -- ShowQuantityLabels (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_ShowQuantityLabels",
-        name        = KW_Label.."Show Quantity",
-        tooltip     = "Whether to show quantity of items for the slots in Quick Slot Bar",
-        getFunc     = function()
-            return QSB.Settings.SlotItem.ShowQuantityLabels
-        end,
-        setFunc     = function(value)
-            QSB.Settings.SlotItem.ShowQuantityLabels = value
-            Refresh("ShowQuantityLabels")
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- ALIGNV (Dropdown) --{{{
-
-    control = {
-        type        = "dropdown",
-        reference   = "QSB_SlotItem_QuantityLabelPositionVertical",
-        name        = KW_Label.."Quantity Position (Vertical)",
-        tooltip     = "Select where you'd like the quantity label displayed in relation to the slot item vertically",
-        choices     = ALIGNV,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.QuantityLabelPositionVertical
-        end,
-        setFunc     = function(value)
-            if not Are_Settings_Locked(controlName, value) then
-                QSB.Settings.SlotItem.QuantityLabelPositionVertical = value
-                Refresh("SlotItem_QuantityLabelPositionVertical")
-            end
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- QuantityLabelPositionHorizontal (Dropdown) --{{{
-
-    control = {
-        type        = "dropdown",
-        reference   = "QSB_SlotItem_QuantityLabelPositionHorizontal",
-        name        = KW_Label.."Quantity Position (horizontal)",
-        tooltip     = "Select where you'd like the quantity label displayed in relation to the slot item horizontally",
-        choices     = ALIGNH,
-        getFunc     = function()
-            return QSB.Settings.SlotItem.QuantityLabelPositionHorizontal
-        end,
-        setFunc     = function(value)
-            if not Are_Settings_Locked(controlName, value) then
-                QSB.Settings.SlotItem.QuantityLabelPositionHorizontal = value
-                Refresh("SlotItem_QuantityLabelPositionHorizontal")
-            end
-        end,
-        width       = "full",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-
-    --LAM:AddHeader(panel, "QSB_Sep5", "")
-    -- Preset Selection (Slider) --{{{
-
+    -- PRESET SCOPE
+    control = { type  = "header", name  = COLOR_1.."1 PRESET",      width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --{{{
+    -- Preset Selection {{{
     control = {
         type        = "slider",
         reference   = "QSB_Presets",
@@ -3764,7 +3468,704 @@ D("BuildSettingsMenu()")
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
-    -- Auto-Clone previous-to-empty preset (Checkbox) --{{{
+    -- LockUI --{{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_LockUI",
+        name        = "Lock|r on screen",
+        tooltip     = "Whether to allow moving and resizing Quick Slot Bar\n"
+        ..COLOR_6.."You can also Lock or Unlock with a mouse click on the UI's pin handle",
+        getFunc     = function()
+            return QSB.Settings.LockUI
+        end,
+        setFunc     = function(value)
+            QSB.Settings.LockUI = value
+            Refresh("LockUI")
+        end,
+        width       = "full",
+        warning     = "Disabling the lock will "..COLOR_3.."force UI visibility|r and the background to show so you can reposition it with guidance",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- LockThisPreset {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_LockThisPreset",
+        name        = COLOR_2..SYMBOL_GEAR.."|r Lock This Preset ",
+        tooltip     = "Whether to keep this Preset's quickslots static\n"
+        ..            COLOR_M.."Trader08_mod\n"
+        ..            "\n"
+        ..            COLOR_8.."A click on the Settings menu Gear-Handle while"
+        ..                     " this menu is already showing will toggle"
+        ..            COLOR_2.." LockThisPreset state"
+        ..            COLOR_8.." → Saving a Locked Preset in the process",
+        warning     = COLOR_3.."You can turn this option\n"
+        ..            "\n"
+        ..            COLOR_M.."ON |r to lock this Preset\n"
+        ..            "\n"
+        ..            COLOR_8.."OFF|r to save it before loading another\n"
+        ..            "\n"
+        ..            COLOR_3.."About the locking mecanism:|r\n"
+        ..                     "The saving happens when you "..COLOR_4.."change Preset|r"
+        ..                     " and when you "..COLOR_4.."leave the game.|r\n"
+        ..            "\n"
+        ..            COLOR_3.."WHEN THIS SETTINGS MENU IS OPENED:|r\n"
+        ..                     "You can update and force the saving of the current Preset"
+        ..                      " by "..COLOR_4.."swiching this option from|r "..COLOR_8.."OFF|r "..COLOR_4.."to|r "..COLOR_M.."ON|r.\n"
+        ..                     "Also, "..COLOR_4.."Selecting another Preset|r during a configuration will save"
+        ..                      " the one you just left, both its options and its slotted items.\n"
+        ..            "\n"
+        ..            COLOR_3.."But when this option is "..COLOR_M.."ON"..COLOR_3..":|r\n"
+        ..                     "All you equip from your bags on the "..COLOR_4.."QSB wheel|r"
+        ..                     " wont be automatically saved in the current Preset anymore.\n"
+        ..                     "And this is by design, letting you mess-up your "..COLOR_M.."Locked bars|r"
+        ..                     " knowing you can restore them with a click on "..COLOR_4.."P1..P5|r or a "..COLOR_4.."shortcut|r key stroke.\n"
+        ..            "\n"
+        ..            COLOR_3.."Conclusion:|r\n"
+        ..                     "Better do your homework in the "..COLOR_8.."OFF|r state"
+        ..                     " and only then, you can "..COLOR_M.."LOCK ON everything|r.\n"
+        ..            "\n"
+        ..            COLOR_2.."You still can save a messed-up bar from here"
+        ..                     " if you forgot to reload it before opening this menu!"
+        ,
+        getFunc     = function()
+            return QSB.Settings.LockThisPreset
+        end,
+        setFunc     = function(value)
+            set_LockThisPreset_state(value)
+
+            Refresh("LockThisPreset")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- DelayPresetSwapWhileInCombat {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_DelayCombatPresetSwap",
+        name        = COLOR_5..SYMBOL_GEAR.." Delay|r In Combat Preset Swap",
+        tooltip     = "Wheter "..COLOR_5.."In-Combat Preset swap|r"
+        ..            " should be remembered to be executed at the end of the fight"
+        ..            " instead of being ignored "..COLOR_8.."(as it not allowed)|r.\n"
+        ..            COLOR_M.."Trader08_mod",
+        warning     = COLOR_3.."You can turn this option to handle UNAUTHORIZED PRESET-CHANGES while "..COLOR_R.."IN-COMBAT|r\n"
+        ..            "\n"
+        ..            COLOR_5.."ON |r to DELAY the change until after the end of the fight.\n"
+        ..            "\n"
+        ..            COLOR_8.."OFF|r to silently IGNORE all requested changes while in combat"
+        ..            COLOR_8.." (the default in-game behavior.)\n"
+        ..            "\n"
+        ..            COLOR_9.."For each preset, you can spot when this option is checked"
+        ..            " from the "..COLOR_5.."color of the P1..P5|r tags above the icons"
+        ..            "\n"
+        ..            COLOR_5.."You will get a sound and a visual proc feedback."
+        ,
+        getFunc     = function()
+            if( QSB.Settings   .DelayPresetSwapWhileInCombat == nil) then
+                QSB.Settings   .DelayPresetSwapWhileInCombat = false
+            end
+            return QSB.Settings.DelayPresetSwapWhileInCombat
+        end,
+        setFunc     = function(value)
+            QSB.Settings       .DelayPresetSwapWhileInCombat = value
+
+            Refresh(           "DelayPresetSwapWhileInCombat")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    --}}}
+    control = { type  = "header", name  = COLOR_2.."2 BEHAVIOR",    width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --{{{
+    -- Auto-select next not empty slot --{{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_NextAuto",
+        name        = "Auto-select next not empty slot",
+        tooltip     = "Whether the "..COLOR_5.."next not empty slot|r should be automatically"
+        ..            " selected when current gets empty.\n"
+        ..            "1. When you select an empty slot.\n"
+        ..            "2. When last of the current slot items has just been consumed.\n",
+        getFunc     = function()
+            return QSB.Settings.NextAuto
+        end,
+        setFunc     = function(value)
+            QSB.Settings.NextAuto = value
+            Refresh("NextAuto")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    --- Next <-o-> Previous Wrap --{{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_NextPrevWrap",
+        name        = "Next <-o-> Previous Wrap",
+        tooltip     = "Wheter Next & Previous selection should jump from one end to the other?"
+        .." - As an elevator that takes you right to the basenent when you keep going past the roof.",
+        getFunc     = function()
+            return QSB.Settings.NextPrevWrap
+        end,
+        setFunc     = function(value)
+            QSB.Settings.NextPrevWrap = value
+            Refresh("NextPrevWrap")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- Disable Default Quick Slot {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_DisableQuickSlotActionButton",
+        name        = "Disable Default Quick Slot Button",
+        tooltip     = "Whether to disable the game's default quick slot action button.\n"
+        ..COLOR_6.."When OFF, no hiding or showing this button will interfere.",
+        getFunc     = function()
+            return QSB.Settings.GameActionButtonHide
+        end,
+        setFunc     = function(value)
+            QSB.Settings.GameActionButtonHide = value
+
+            GameActionButtonHideHandler("Settings.control")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- Link to Chat .. (default true) --{{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_PrintDescription",
+        name        = "Link to Chat on click",
+        tooltip     = "Whether to print an Item Link\n"
+        ..COLOR_4   .."in the main Chat Window\n"
+        ..COLOR_5   .."when clicked",
+        getFunc     = function()
+            return QSB.Settings.SlotItem.LinkToChatOnClick
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SlotItem.LinkToChatOnClick = value
+
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    --}}}
+    control = { type  = "header", name  = COLOR_3.."3 VISUAL CUE",  width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --{{{
+    -- VisualCue_ChoiceList {{{
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_VisualCue",
+        name        = "Visual Cue Display Policy",
+        tooltip     = "Choose how visual cues should be displayed",
+        choices     = QSB.VisualCue_ChoiceList,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.VisualCue or QSB.SettingsDefaults.SlotItem.VisualCue
+        end,
+        setFunc     = function(value)
+            if not Are_Settings_Locked(controlName, value) then
+                QSB.Settings.SlotItem.VisualCue = value
+                Refresh("VisualCue")
+            end
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- QuantityWarning {{{
+    control = {
+        type        = "slider",
+        reference   = "QSB_SlotItem_WarningQuantity",
+        name        = "Visual Cue Warning Quantity",
+        tooltip     = "The value at (and below) which the Warning Visual Cue is shown",
+        min         = 0,
+        max         = 50,
+        step        = 1,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.QuantityWarning
+        end,
+        setFunc     = function(value)
+            value = tonumber(value); if not value then return end
+            local clamped = false
+            if(value   <= QSB.Settings.SlotItem.QuantityAlert) then
+                value   = QSB.Settings.SlotItem.QuantityAlert+1
+                clamped = not QSB.Panel:IsHidden()
+            end
+            QSB.Settings.SlotItem.QuantityWarning = value
+            Refresh("SlotItem_WarningQuantity")
+            if clamped then Rebuild_LibAddonMenu() end
+        end,
+        width       = "full",
+        warning     = "* must be higher than "..COLOR_3.."Alert Quantity|r"
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- QuantityAlert {{{
+    control = {
+        type        = "slider",
+        reference   = "QSB_SlotItem_AlertQuantity",
+        name        = "Visual Cue Alert Quantity",
+        tooltip     = "The value at (and below) which the Alert Visual Cue is shown",
+        min         = 0,
+        max         = 50,
+        step        = 1,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.QuantityAlert
+        end,
+        setFunc     = function(value)
+            value = tonumber(value); if not value then return end
+            local clamped = false
+            if(value   >= QSB.Settings.SlotItem.QuantityWarning) then
+                value   = QSB.Settings.SlotItem.QuantityWarning-1
+                clamped = not QSB.Panel:IsHidden()
+            end
+            QSB.Settings.SlotItem.QuantityAlert = value
+            Refresh("SlotItem_AlertQuantity")
+            if clamped then Rebuild_LibAddonMenu() end
+        end,
+        width       = "full",
+        warning     = "* must be lower than "..COLOR_3.."Warning Quantity|r",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    --}}}
+    control = { type  = "header", name  = COLOR_4.."4 LAYOUT",      width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --{{{
+    -- ButtonSize {{{
+    control = {
+        type        = "slider",
+        reference   = "QSB_SlotItem_ButtonSize",
+        name        = "Button Size",
+        tooltip     = "The size of each button",
+        min         = 24,
+        max         = 64,
+        step        = 1,
+        getFunc     = function()
+            return QSB.Settings.ButtonSize
+        end,
+        setFunc     = function(value)
+            value = tonumber(value); if not value then return end
+            value = math.max(value, 24)
+            value = math.min(value, 64)
+            QSB.Settings.ButtonSize = value
+            ButtonSizeChanged()
+            Refresh("SlotItem_ButtonSize")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- ButtonFontSize {{{
+    control = {
+        type        = "slider",
+        reference   = "QSB_SlotItem_ButtonFontSize",
+        name        = "Button Font Size",
+        tooltip     = "For Keybind and Quantity labels",
+        min         = 12,
+        max         = 32,
+        step        = 1,
+        getFunc     = function()
+            return QSB.Settings.ButtonFontSize
+        end,
+        setFunc     = function(value)
+            value = tonumber(value); if not value then return end
+            value = math.max(value, 12)
+            value = math.min(value, 32)
+            QSB.Settings.ButtonFontSize = value
+            Refresh("SlotItem_ButtonFontSize")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- Show Policy {{{
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_Visibility",
+        name        = "Show|r Policy",
+        tooltip     = "Choose when you'd like Quick Slot Bar displayed or hidden",
+        choices     = QSB.Visibility_ChoiceList,
+        getFunc     = function()
+            return QSB.Settings.Visibility or QSB.SettingsDefaults.Visibility
+        end,
+        setFunc     = function(value)
+            if not Are_Settings_Locked(controlName, value) then
+                QSB.Settings.Visibility = value
+                Refresh("Visibility")
+            end
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- Show frame background {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_ShowBackground",
+        name        = "Show frame background",
+        tooltip     = "Whether to show frame background",
+        getFunc     = function()
+            return QSB.Settings.ShowBackground
+        end,
+        setFunc     = function(value)
+            QSB.Settings.ShowBackground = value
+            Refresh("ShowBackground")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- Hide buttons background {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_SlotItem_ShowBackground",
+        name        = "Hide "..COLOR_5.."buttons|r background",
+        tooltip     = "Controls buttons background texture",
+        getFunc     = function()
+            return QSB.Settings.SlotItem.HideSlotBackground
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SlotItem.HideSlotBackground = value
+            Refresh("SlotItem_ShowBackground")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- Weapon swap background colors {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_SwapBackgroundColors",
+        name        = "Weapon swap "..COLOR_6.." background "..COLOR_5.." color",
+        tooltip     = "Whether to change frame background colors on Weapon Swap\n"
+        ..COLOR_2.."When not hiding buttons background",
+        getFunc     = function()
+            return QSB.Settings.SwapBackgroundColors
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SwapBackgroundColors = value
+            Refresh("SwapBackgroundColors")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+     --}}}
+    -- NotSelectedButtonOpacity {{{
+    control = {
+        type        = "slider",
+        reference   = "QSB_SlotItem_NotSelectedButtonOpacity",
+        name        = "Not Selected Opacity",
+        tooltip     = "From plain invisible to full opacity",
+        min         = 0,
+        max         = 100,
+        step        = 5,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.NotSelectedButtonOpacity
+        end,
+        setFunc     = function(value)
+            value = tonumber(value); if not value then return end
+            value = math.max(value,   0)
+            value = math.min(value, 100)
+            QSB.Settings.SlotItem.NotSelectedButtonOpacity = value
+            Refresh("SlotItem_NotSelectedButtonOpacity")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- OverlayButtonOpacity {{{
+    control = {
+        type        = "slider",
+        reference   = "QSB_SlotItem_OverlayButtonOpacity",
+        name        = "Gray-out opacity",
+        tooltip     = "From plain invisible to full opacity",
+        min         = 0,
+        max         = 100,
+        step        = 5,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.OverlayButtonOpacity
+        end,
+        setFunc     = function(value)
+            value = tonumber(value); if not value then return end
+            value = math.max(value,   0)
+            value = math.min(value, 100)
+            QSB.Settings.SlotItem.OverlayButtonOpacity = value
+            Refresh("SlotItem_OverlayButtonOpacity")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    --}}}
+    control = { type  = "header", name  = COLOR_5.."5 LABELS",      width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --{{{
+    -- SlotNumber SHOW {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_ShowNumbers",
+        name        = "Show slot number",
+        tooltip     = "Whether to show slot number over the icons\n"
+        ..COLOR_6.."#1 at ring-top .. clockwise .. to last #8",
+        getFunc     = function()
+            return QSB.Settings.SlotItem.ShowNumbers
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SlotItem.ShowNumbers = value
+
+            Refresh("ShowNumbers")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- KeyBindings SHOW {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_ShowKeyBindings",
+        name        = "Show Key Bindings",
+        tooltip     = "Whether to show key bindings for the slots in Quick Slot Bar",
+        getFunc     = function()
+            return QSB.Settings.SlotItem.ShowKeyBindings
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SlotItem.ShowKeyBindings = value
+            Refresh("ShowKeyBindings")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- KeyBindings ALIGNV {{{
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_SlotItem_KeyBindPositionVertical",
+        name        = "Key Bindings Position (Vertical)",
+        tooltip     = "Select where you'd like the key bind displayed in relation to the slot item vertically",
+        choices     = ALIGNV,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.KeyBindAlignV
+        end,
+        setFunc     = function(value)
+            if not Are_Settings_Locked(controlName, value) then
+                QSB.Settings.SlotItem.KeyBindAlignV = value
+                Refresh("SlotItem_KeyBindPositionVertical")
+            end
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- KeyBindings ALIGNH {{{
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_SlotItem_KeyBindPositionHorizontal",
+        name        = "Key Bindings Position (Horizontal)",
+        tooltip     = "Select where you'd like the key bind displayed in relation to the slot item horizontally",
+        choices     = ALIGNH,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.KeyBindAlignH
+        end,
+        setFunc     = function(value)
+            if not Are_Settings_Locked(controlName, value) then
+                QSB.Settings.SlotItem.KeyBindAlignH = value
+                Refresh("SlotItem_KeyBindPositionHorizontal")
+            end
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- QuantityLabels SHOW {{{
+    control = {
+        type        = "checkbox",
+        reference   = "QSB_ShowQuantityLabels",
+        name        = "Show Quantity",
+        tooltip     = "Whether to show quantity of items for the slots in Quick Slot Bar",
+        getFunc     = function()
+            return QSB.Settings.SlotItem.ShowQuantityLabels
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SlotItem.ShowQuantityLabels = value
+            Refresh("ShowQuantityLabels")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- QuantityLabels ALIGNV {{{
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_SlotItem_QuantityLabelPositionVertical",
+        name        = "Quantity Position (Vertical)",
+        tooltip     = "Select where you'd like the quantity label displayed in relation to the slot item vertically",
+        choices     = ALIGNV,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.QuantityLabelPositionVertical
+        end,
+        setFunc     = function(value)
+            if not Are_Settings_Locked(controlName, value) then
+                QSB.Settings.SlotItem.QuantityLabelPositionVertical = value
+                Refresh("SlotItem_QuantityLabelPositionVertical")
+            end
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- QuantityLabels ALIGNH {{{
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_SlotItem_QuantityLabelPositionHorizontal",
+        name        = "Quantity Position (horizontal)",
+        tooltip     = "Select where you'd like the quantity label displayed in relation to the slot item horizontally",
+        choices     = ALIGNH,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.QuantityLabelPositionHorizontal
+        end,
+        setFunc     = function(value)
+            if not Are_Settings_Locked(controlName, value) then
+                QSB.Settings.SlotItem.QuantityLabelPositionHorizontal = value
+                Refresh("SlotItem_QuantityLabelPositionHorizontal")
+            end
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    --}}}
+    control = { type  = "header", name  = COLOR_6.."6 SOUND",       width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --{{{
+    -- SoundAlert {{{
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_SoundAlert",
+        name        = "Alert",
+        choices     = SOUNDNAMES,
+        getFunc     = function()
+            return QSB.Settings.SoundAlert
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SoundAlert = value
+            PlaySoundAlert_delayed()
+        end,
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SoundSlotted {{{
+    control = {
+        type        = "dropdown",
+        reference   = "QSB_SoundSlotted",
+        name        = "Slotted",
+        choices     = SOUNDNAMES,
+        getFunc     = function()
+            return QSB.Settings.SoundSlotted
+        end,
+        setFunc     = function(value)
+            QSB.Settings.SoundSlotted = value
+            PlaySoundSlotted_delayed()
+        end,
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SoundAlert prev button {{{
+    control = {
+        type        = "button",
+        reference   = "QSB_SoundAlert_prev",
+        name        = "<",
+        tooltip     = "previous sound",
+        func        = function()
+            QSB.Settings.SoundAlert = GetSoundBefore( QSB.Settings.SoundAlert )
+            PlaySoundAlert_delayed()
+        end,
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SoundSlotted prev button {{{
+    control = {
+        type        = "button",
+        reference   = "QSB_SoundSlotted_prev",
+        name        = "<",
+        tooltip     = "previous sound",
+        func        = function()
+            QSB.Settings.SoundSlotted = GetSoundBefore( QSB.Settings.SoundSlotted )
+            PlaySoundSlotted_delayed()
+        end,
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SoundAlert next button {{{
+    control = {
+        type        = "button",
+        reference   = "QSB_SoundAlert_next",
+        name        = ">",
+        tooltip     = "next sound",
+        func        = function()
+            QSB.Settings.SoundAlert = GetSoundAfter( QSB.Settings.SoundAlert )
+            PlaySoundAlert_delayed()
+        end,
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- SoundSlotted next button {{{
+    control = {
+        type        = "button",
+        reference   = "QSB_SoundSlotted_next",
+        name        = ">",
+        tooltip     = "next sound",
+        func        = function()
+            QSB.Settings.SoundSlotted = GetSoundAfter( QSB.Settings.SoundSlotted )
+            PlaySoundSlotted_delayed()
+        end,
+        width       = "half",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    --}}}
+    control = { type  = "header", name  = COLOR_7.."7 wilderness",  width = "full", } QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --{{{
+    -- Auto-Clone previous-to-empty preset {{{
 
     control = {
         type        = "checkbox",
@@ -3784,132 +4185,30 @@ D("BuildSettingsMenu()")
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
-
-    local KW_Sound = COLOR_7.."Sound:|r "
-    --{{{
-    -- SoundAlert (Dropdown) --{{{
-
-    control = {
-        type        = "dropdown",
-        reference   = "QSB_SoundAlert",
-        name        = KW_Sound.."Alert",
-        choices     = SOUNDNAMES,
-        getFunc     = function()
-            return QSB.Settings.SoundAlert
-        end,
-        setFunc     = function(value)
-            QSB.Settings.SoundAlert = value
-            PlaySoundAlert_delayed()
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- SoundSlotted (Dropdown) --{{{
-
-    control = {
-        type        = "dropdown",
-        reference   = "QSB_SoundSlotted",
-        name        = KW_Sound.."Slotted",
-        choices     = SOUNDNAMES,
-        getFunc     = function()
-            return QSB.Settings.SoundSlotted
-        end,
-        setFunc     = function(value)
-            QSB.Settings.SoundSlotted = value
-            PlaySoundSlotted_delayed()
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- SoundAlert prev button --{{{
-    control = {
-        type        = "button",
-        reference   = "QSB_SoundAlert_prev",
-        name        = "<",
-        tooltip     = "previous sound",
-        func        = function()
-            QSB.Settings.SoundAlert = GetSoundBefore( QSB.Settings.SoundAlert )
-            PlaySoundAlert_delayed()
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- SoundSlotted prev button --{{{
-    control = {
-        type        = "button",
-        reference   = "QSB_SoundSlotted_prev",
-        name        = "<",
-        tooltip     = "previous sound",
-        func        = function()
-            QSB.Settings.SoundSlotted = GetSoundBefore( QSB.Settings.SoundSlotted )
-            PlaySoundSlotted_delayed()
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- SoundAlert next button --{{{
-    control = {
-        type        = "button",
-        reference   = "QSB_SoundAlert_next",
-        name        = ">",
-        tooltip     = "next sound",
-        func        = function()
-            QSB.Settings.SoundAlert = GetSoundAfter( QSB.Settings.SoundAlert )
-            PlaySoundAlert_delayed()
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- SoundSlotted next button --{{{
-    control = {
-        type        = "button",
-        reference   = "QSB_SoundSlotted_next",
-        name        = ">",
-        tooltip     = "next sound",
-        func        = function()
-            QSB.Settings.SoundSlotted = GetSoundAfter( QSB.Settings.SoundSlotted )
-            PlaySoundSlotted_delayed()
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    --}}}
-
-    -- Disable Default Quick Slot (Checkbox) --{{{
-
+    -- ChatMax --{{{
     control = {
         type        = "checkbox",
-        reference   = "QSB_DisableQuickSlotActionButton",
-        name        = "Disable Default Quick Slot Button",
-        tooltip     = "Whether to disable the game's default quick slot action button.\n"
-        ..COLOR_6.."When OFF, no hiding or showing this button will interfere.",
+        reference   = "SetChatMax",
+        name        = "Chat Window Unlock Max",
+        tooltip     = "Whether to allow resizing Chat Window up to whole screen size",
         getFunc     = function()
-            return QSB.Settings.GameActionButtonHide
+            return QSB.Settings.ChatMax
         end,
         setFunc     = function(value)
-            QSB.Settings.GameActionButtonHide = value
-
-            GameActionButtonHideHandler("Settings.control")
+            SetChatMax(value)
         end,
-        width       = "half",
+        width       = "full",
+        warning     = "This is an "..COLOR_3.."all Presets|r option\n\n"
+        ..            "Switching from "..COLOR_5.."ON|r to "..COLOR_8.."OFF|r"
+        ..            " will restore the default size,"
+        ..            " but the maximun width and height"
+        ..            " will remain unlocked until logout."
+        ,
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
-    -- Prepare Key modifiers --{{{
-
+    -- Prepare Key modifiers {{{
     control = {
         type        = "button",
         reference   = "QSB_ModBingingsButton",
@@ -3929,264 +4228,24 @@ D("BuildSettingsMenu()")
             ApplyKeyBindingsModifier()
             ApplyKeyBindingsModifier_SWAPS()
         end,
-        width       = "half",
+        width       = "full",
         warning     = COLOR_5.."Brace yourself!|r This is not a friendly procedure, but it works!\n"
         .."\n"
         .."First you will have to click on "..COLOR_3.."Not Bound|r keys"
         .." in the "..COLOR_4.."CONTROLS-Keybinds|r window"
         .." which eventually show up as "..COLOR_6.."SHIFT-F12 - F24|r you must redefine.\n"
         .."\n"
-        .." Just another quest that could cost you a few calls to /reloadUI ... "
-        .."Good luck!\n",
+        .." Just another quest that could cost you a few calls to /reloadUI ..."
+        .." Good luck!\n",
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
-
-    -- Auto-select next not empty slot (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_NextAuto",
-        name        = "Auto-select next not empty slot",
-        tooltip     = "Whether the "..COLOR_5.."next not empty slot|r should be automatically selected when current gets empty.\n"
-        .."1. When you select an empty slot.\n"
-        .."2. When last of the current slot items has just been consumed.\n",
-        getFunc     = function()
-            return QSB.Settings.NextAuto
-        end,
-        setFunc     = function(value)
-            QSB.Settings.NextAuto = value
-            Refresh("NextAuto")
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- Next <-o-> Previous Wrap (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_NextPrevWrap",
-        name        = "Next <-o-> Previous Wrap",
-        tooltip     = "Wheter Next & Previous selection should jump from one end to the other?"
-        .." - As an elevator that takes you right to the basenent when you keep going past the roof.",
-        getFunc     = function()
-            return QSB.Settings.NextPrevWrap
-        end,
-        setFunc     = function(value)
-            QSB.Settings.NextPrevWrap = value
-            Refresh("NextPrevWrap")
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-
-    -- SHOW HIDE
-    --{{{
-    -- Hide buttons background (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_SlotItem_ShowBackground",
-        name        = "Hide "..COLOR_5.."buttons|r background",
-        tooltip     = "Controls buttons background texture",
-        getFunc     = function()
-            return QSB.Settings.SlotItem.HideSlotBackground
-        end,
-        setFunc     = function(value)
-            QSB.Settings.SlotItem.HideSlotBackground = value
-            Refresh("SlotItem_ShowBackground")
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- Weapon swap background colors (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_SwapBackgroundColors",
-        name        = "Weapon swap "..COLOR_6.." background "..COLOR_5.." color",
-        tooltip     = "Whether to change frame background colors on Weapon Swap\n"
-        ..COLOR_2.."When not hiding buttons background",
-        getFunc     = function()
-            return QSB.Settings.SwapBackgroundColors
-        end,
-        setFunc     = function(value)
-            QSB.Settings.SwapBackgroundColors = value
-            Refresh("SwapBackgroundColors")
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-     --}}}
-    -- Show frame background (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_ShowBackground",
-        name        = "Show frame background",
-        tooltip     = "Whether to show frame background",
-        getFunc     = function()
-            return QSB.Settings.ShowBackground
-        end,
-        setFunc     = function(value)
-            QSB.Settings.ShowBackground = value
-            Refresh("ShowBackground")
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- Show slot number (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_ShowNumbers",
-        name        = "Show slot number",
-        tooltip     = "Whether to show slot number over the icons\n"
-        ..COLOR_6.."#1 at ring-top .. clockwise .. to last #8",
-        getFunc     = function()
-            return QSB.Settings.SlotItem.ShowNumbers
-        end,
-        setFunc     = function(value)
-            QSB.Settings.SlotItem.ShowNumbers = value
-
-            Refresh("ShowNumbers")
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- Print Description (Checkbox) --{{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_PrintDescription",
-        name        = "Link to Chat on click",
-        tooltip     = "Whether to print an Item Link\n"
-        ..COLOR_4   .."in the main Chat Window\n"
-        ..COLOR_5   .."when clicked",
-        getFunc     = function()
-            return QSB.Settings.SlotItem.LinkToChatOnClick
-        end,
-        setFunc     = function(value)
-            QSB.Settings.SlotItem.LinkToChatOnClick = value
-
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    --}}}
-
-    -- [Trader08_mod]
-    --{{{
-    -- LockThisPreset {{{
-
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_LockThisPreset",
-        name        = "Lock This Preset "..COLOR_2.." "..SYMBOL_GEAR,
-        tooltip     = "Whether to keep this Preset's quickslots static\n"
-        ..            COLOR_M.."Trader08_mod\n"
-        ..            "\n"
-        ..            COLOR_8.."A click on the Settings menu Gear-Handle while"
-        ..                     " this menu is already showing will toggle "
-        ..            COLOR_2.." LockThisPreset state"
-        ..            COLOR_8.." → Saving a Locked Preset in the process",
-        warning     = COLOR_3.."You can turn this option\n"
-        ..            "\n"
-        ..            COLOR_M.."ON |r to lock this Preset\n"
-        ..            "\n"
-        ..            COLOR_8.."OFF|r to save it before loading another\n"
-        ..            "\n"
-        ..            COLOR_3.."About the locking mecanism:|r\n"
-        ..                     "The saving happens when you "..COLOR_4.."change Preset|r "
-        ..                     "and when you "..COLOR_4.."leave the game.|r\n"
-        ..            "\n"
-        ..            COLOR_3.."WHEN THIS SETTINGS MENU IS OPENED:|r\n"
-        ..                     "You can update and force the saving of the current Preset "
-        ..                      "by "..COLOR_4.."swiching this option from|r "..COLOR_8.."OFF|r "..COLOR_4.."to|r "..COLOR_M.."ON|r.\n"
-        ..                     "Also, "..COLOR_4.."Selecting another Preset|r during a configuration will save "
-        ..                      "the one you just left, both its options and its slotted items.\n"
-        ..            "\n"
-        ..            COLOR_3.."But when this option is "..COLOR_M.."ON"..COLOR_3..":|r\n"
-        ..                     "All you equip from your bags on the "..COLOR_4.."QSB wheel|r "
-        ..                     "wont be automatically saved in the current Preset anymore.\n"
-        ..                     "And this is by design, letting you mess-up your "..COLOR_M.."Locked bars|r "
-        ..                     "knowing you can restore them with a click on "..COLOR_4.."P1..P5|r or a "..COLOR_4.."shortcut|r key stroke.\n"
-        ..            "\n"
-        ..            COLOR_3.."Conclusion:|r\n"
-        ..                     "Better do your homework in the "..COLOR_8.."OFF|r state "
-        ..                     "and only then, you can "..COLOR_M.."LOCK ON everything|r.\n"
-        ..            "\n"
-        ..            COLOR_2.."You still can save a messed-up bar from here "
-        ..                     "if you forgot to reload it before opening this menu!"
-        ,
-        getFunc     = function()
-            return QSB.Settings.LockThisPreset
-        end,
-        setFunc     = function(value)
-            set_LockThisPreset_state(value)
-
-            Refresh("LockThisPreset")
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- DelayPresetSwapWhileInCombat {{{
-    control = {
-        type        = "checkbox",
-        reference   = "QSB_DelayCombatPresetSwap",
-        name        = "DELAY In Combat Preset Swap"..COLOR_5.." "..SYMBOL_GEAR,
-        tooltip     = "Wheter a Preset swap while "..COLOR_5.."In-Combat|r "..COLOR_8.."(not allowed)|r "
-        ..            "should be remembered to be executed later.\n"
-        ..            COLOR_M.."Trader08_mod",
-        warning     = COLOR_3.."You can turn this option to handle UNAUTHORIZED PRESET-CHANGES while "..COLOR_R.."IN-COMBAT|r\n"
-        ..            "\n"
-        ..            COLOR_5.."ON |r to DELAY the change until after the end of the fight.\n"
-        ..            "\n"
-        ..            COLOR_8.."OFF|r to silently ignore all requested changes while in combat "
-        ..            COLOR_8.."(the default in-game behavior.)\n"
-        ..            "\n"
-        ..            COLOR_9.."For each preset, you can spot when this option is checked "
-        ..            "from the "..COLOR_5.."color of the P1..P5|r tags above the icons"
-        ..            "\n"
-        ..            COLOR_5.."You will get a sound and a visual proc feedback."
-        ,
-        getFunc     = function()
-            if( QSB.Settings   .DelayPresetSwapWhileInCombat == nil) then
-                QSB.Settings   .DelayPresetSwapWhileInCombat = false
-            end
-            return QSB.Settings.DelayPresetSwapWhileInCombat
-        end,
-        setFunc     = function(value)
-            QSB.Settings       .DelayPresetSwapWhileInCombat = value
-
-            Refresh(           "DelayPresetSwapWhileInCombat")
-        end,
-        width       = "half",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
-    --}}}
-    -- DEBUG_TOOLTIPS {{{
+    -- Verbose Tooltips {{{
     control = {
         type        = "checkbox",
         reference   = "QSB_DEBUG_TOOLTIPS",
-        name        =  "DEBUG "..COLOR_M.."TOOLTIPS",
+        name        = "Verbose "..COLOR_M.."Tooltips",
         tooltip     = COLOR_M.."to insert technical details into buttons tooltips",
         warning     = COLOR_8.."...a dev-tool",
         getFunc     = function()
@@ -4203,33 +4262,11 @@ D("BuildSettingsMenu()")
 
             Refresh("DEBUG_TOOLTIPS")
         end,
-        width       = "half",
+        width       = "full",
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
     --}}}
-    --}}}
-
-    -- RESET BUTTON
-    --{{{
-
---[[
-    control = {
-        type        = "button",
-        reference   = "QSB_ResetButton",
-        name        = COLOR_2.."Reset|r",
-        tooltip     = "Load default settings into"..COLOR_2.." all Presets|r.",
-        func        = function()
-            Load_Defaults()
-        end,
-        width       = "half",
-        warning     = COLOR_2.." NO CONFIRMATION ASKED!|r\nThis will also reload the UI",
-    }
-
-    QSB.SettingsControls[#QSB.SettingsControls+1] = control
---]]
-    --}}}
-
     --}}}
 
     LAM:RegisterOptionControls(QSB.Name, QSB.SettingsControls)
@@ -4252,7 +4289,6 @@ function Release_Settings_Locked()
 end
 
 --}}}
-
 -- Rebuild_LibAddonMenu {{{
 function Rebuild_LibAddonMenu()
 D("Rebuild_LibAddonMenu()")
@@ -4273,7 +4309,7 @@ end
 
 --}}}
 
--- EVENT HANDLER [ACTION ITEM RETICLE COMBAT]
+-- EVENTS
 -- RegisterEventHandlers {{{
 function RegisterEventHandlers()
 D("RegisterEventHandlers()")
@@ -4359,18 +4395,17 @@ if(DEBUG_EQUIP) then d(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     , EVENT_RETICLE_HIDDEN_UPDATE
     , function(...) -- (*bool* _hidden_)
         Reticle_isHidden = select(2,...)
-D_EVENT("RETICLE_HIDDEN_UPDATE: Reticle_isHidden="..tostring(Reticle_isHidden))
 
-        if QSB.Settings.Visibility == VIS_RETICLE then
-            Refresh("RETICLE_HIDDEN_UPDATE", ZO_MENU_SHOW_HIDE_DELAY)
+        local refresh_reason
+        =  ((not ZO_QuickSlot:IsHidden()                        ) and "quickslot_showing")
+        or ((QSB.Settings.Visibility                            ) and "following_reticle")
+        or (((vis == VIS_BLINK_CHANGES) and not Reticle_isHidden) and "have_to_blink"    )
+        or ""
+        D_EVENT("RETICLE_HIDDEN_UPDATE ["..(Reticle_isHidden and "HIDDEN" or "SHOWING").."] "..refresh_reason)
 
-        elseif QSB.Settings.Visibility == VIS_BLINK_CHANGES -- shown while slotting
-            and not Reticle_isHidden                        -- menu just hidden
-            then
-                Refresh("RETICLE_HIDDEN_UPDATE", ZO_MENU_SHOW_HIDE_DELAY)
-
+        if(refresh_reason ~= "") then
+            Refresh("RETICLE_HIDDEN_UPDATE: "..refresh_reason, ZO_MENU_SHOW_HIDE_DELAY)
         end
-
     end)
     --}}}
     -- _______ .. RETICLE_TARGET_CHANGED .. GameActionButtonHideHandler --{{{
@@ -4537,6 +4572,7 @@ D("OnMouseClicked: MouseDown=["..tostring(MouseDown).."]")
 
     if not QSB.Settings.LockUI then
         QSB.Settings.LockUI = true
+        Rebuild_LibAddonMenu()
         Refresh("OnMouseClicked")
     end
 
@@ -4551,7 +4587,7 @@ D("OnClicked_handle("..tostring(handleName)..")")
     -- LOCK PIN ------- [UI-LOCK .. TOGGLE]
     if handleName == "L" then
         QSB.Settings.LockUI = not QSB.Settings.LockUI
-      --Rebuild_LibAddonMenu()
+        Rebuild_LibAddonMenu()
         Refresh("OnClicked_handle L")
 
     -- SETTINGS GEAR -- [MENU .. SHOW]
@@ -4562,17 +4598,30 @@ D("OnClicked_handle("..tostring(handleName)..")")
             Refresh("OnClicked_handle SHOWING GQSB Settings Menu"..handleName, ZO_MENU_SHOW_HIDE_DELAY)
         else
             set_LockThisPreset_state(not QSB.Settings.LockThisPreset)
+
             Rebuild_LibAddonMenu()
             Refresh("OnClicked_handle "..handleName.." .. WITH GQSB MENU ON SCREEN .. Toggle LockThisPreset")
         end
 
     -- PRESET P1..P5 -- [PRESET .. SELECT]
     elseif    string.match(handleName, "P([1-5])") then
-        local arg = string.match(handleName, "P([1-5])")
 
-        SelectPreset( PRESETNAMES[ tonumber(arg) ] )
-        loadPresetSlots()
-        Refresh("OnClicked_handle "..handleName)
+        local arg = string.match(handleName, "P([1-5])")
+        local presetName = PRESETNAMES[ tonumber(arg) ]
+
+        if QSB.Panel:IsHidden()
+            or presetName ~= QSB.Settings.PresetName
+            then
+                SelectPreset( presetName )
+                loadPresetSlots()
+
+                Refresh("OnClicked_handle "..handleName)
+            else
+                QSB.Settings.DelayPresetSwapWhileInCombat =  not QSB.Settings.DelayPresetSwapWhileInCombat
+
+                Rebuild_LibAddonMenu()
+                Refresh("OnClicked_handle "..handleName.." .. WITH GQSB MENU ON SCREEN .. Toggle DelayPresetSwapWhileInCombat")
+            end
 
     end
 
@@ -4635,17 +4684,20 @@ function OnClicked_bNum(bNum)
         local _, _, itemType, itemId = ZO_LinkHandler_ParseLink(          itemLink )
 
         D_EQUIP(QSB.Settings.PresetName, bNum, itemId, itemType, itemLevel, itemLink)
+        CHAT_SYSTEM:Maximize()
 
         if(DEBUG_EQUIP) then
-            local bagIndex = getItem_slot_from_itID(itemId, itemLevel)
+            local bagIndex = getItem_slot_from_itID(itemId, itemLevel, itemLink, QSB.Settings.SlotItemTable[bNum].texture)
             local data     = SHARED_INVENTORY.bagCache[BAG_BACKPACK][bagIndex]
             d_table("data", data)
+
         end
     end
 
 end
 --}}}
 
+-- DEV
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
     -- arg {{{
@@ -4675,7 +4727,8 @@ function OnSlashCommand(arg)
         d(QSB_SLASH_COMMAND..   " refresh .. rebuild and redisplay UI")
         d(QSB_SLASH_COMMAND..     " clone .. auto-clone previous-to-empty preset (toggle)")
         d(QSB_SLASH_COMMAND..     " clear .. to clear Current-Preset-Items")
-        d(QSB_SLASH_COMMAND..     " reset .. RESETS ALL PRESETS SETTINGS TO DEFAULT")
+        d(QSB_SLASH_COMMAND..     " reset .. reset this preset settings to default")
+        d(QSB_SLASH_COMMAND..  " resetall .. RESET ALL PRESETS SETTINGS TO DEFAULT")
         d(QSB_SLASH_COMMAND..     " force .. to toggle FORCE Bar Visiblity")
         d(QSB_SLASH_COMMAND..     " block .. to toggle BLOCK Bar Visiblity (overrides force)")
         d(QSB_SLASH_COMMAND..   " account .. to toggle between "..GetUnitName("player").." and Account-wide Settings")
@@ -4693,22 +4746,31 @@ function OnSlashCommand(arg)
       --d(QSB_SLASH_COMMAND.. " kbmod ... Apply KeyBindings Modifier")
 
     --}}}
+    -- chatmax chatreset {{{
+    elseif(arg == "chatmax"  ) then
+        SetChatMax( true)
+
+    elseif(arg == "chatreset") then
+        SetChatMax(false)
+
+    --}}}
     -- hide show refresh reset p1-5 kbclr kbmod {{{
-    elseif(arg == "hide"   ) then Hide_delayed("OnSlashCommand /"..arg)
-    elseif(arg == "show"   ) then Show_delayed("OnSlashCommand /"..arg)
-    elseif(arg == "refresh") then Refresh("OnSlashCommand")
-    elseif(arg == "reset"  ) then Load_Defaults()
-    elseif(arg == "account") then Load_ZO_SavedVars(not QSB.AccountWideSettings.SaveAccountWide)
-    elseif(arg == "compare") then QSB_Settings_Changed()
+    elseif(arg == "hide"     ) then Hide_delayed("OnSlashCommand /"..arg)
+    elseif(arg == "show"     ) then Show_delayed("OnSlashCommand /"..arg)
+    elseif(arg == "refresh"  ) then Refresh("OnSlashCommand")
+    elseif(arg == "reset"    ) then ResetThisPreset()
+    elseif(arg == "resetall" ) then ResetAllPresets()
+    elseif(arg == "account"  ) then Load_ZO_SavedVars(not QSB.AccountWideSettings.SaveAccountWide)
+    elseif(arg == "compare"  ) then QSB_Settings_Changed()
 
-    elseif(arg == "p1"     ) then presetName = PRESETNAMES[1]
-    elseif(arg == "p2"     ) then presetName = PRESETNAMES[2]
-    elseif(arg == "p3"     ) then presetName = PRESETNAMES[3]
-    elseif(arg == "p4"     ) then presetName = PRESETNAMES[4]
-    elseif(arg == "p5"     ) then presetName = PRESETNAMES[5]
+    elseif(arg == "p1"       ) then presetName = PRESETNAMES[1]
+    elseif(arg == "p2"       ) then presetName = PRESETNAMES[2]
+    elseif(arg == "p3"       ) then presetName = PRESETNAMES[3]
+    elseif(arg == "p4"       ) then presetName = PRESETNAMES[4]
+    elseif(arg == "p5"       ) then presetName = PRESETNAMES[5]
 
-    elseif(arg == "kbclr"  ) then ClearKeyBindings()
-    elseif(arg == "kbmod"  ) then ApplyKeyBindingsModifier(); ApplyKeyBindingsModifier_SWAPS()
+    elseif(arg == "kbclr"    ) then ClearKeyBindings()
+    elseif(arg == "kbmod"    ) then ApplyKeyBindingsModifier(); ApplyKeyBindingsModifier_SWAPS()
     --}}}
     -- clone {{{
     elseif(arg == "clone") then
@@ -4741,7 +4803,7 @@ function OnSlashCommand(arg)
     -- lock {{{
     elseif(arg == "lock"   ) then
         QSB.Settings.LockUI = not QSB.Settings.LockUI
-      --Rebuild_LibAddonMenu()
+        Rebuild_LibAddonMenu()
 
         ui_may_have_changed = true
     --}}}
@@ -4778,7 +4840,7 @@ function OnSlashCommand(arg)
         QSB_BlockBarVisibility()
 
     --}}}
-    -- DEBUG DEBUG_EVENT DEBUG_ITEM clear -- {{{
+    -- DEBUG -- {{{
     elseif(arg == "debug"         ) then DEBUG          = not DEBUG         ; d("...DEBUG..........=[" ..tostring( DEBUG          ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_event"   ) then DEBUG_EVENT    = not DEBUG_EVENT   ; d("...DEBUG_EVENT....=[" ..tostring( DEBUG_EVENT    ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_equip"   ) then DEBUG_EQUIP    = not DEBUG_EQUIP   ; d("...DEBUG_EQUIP....=[" ..tostring( DEBUG_EQUIP    ).. "]"); ui_may_have_changed = true
@@ -4788,31 +4850,50 @@ function OnSlashCommand(arg)
     elseif(arg == "debug_status"  ) then DEBUG_STATUS   = not DEBUG_STATUS  ; d("...DEBUG_STATUS...=[" ..tostring( DEBUG_STATUS   ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_trader"  ) then DEBUG_TOOLTIPS = not DEBUG_TOOLTIPS; d("...DEBUG_TOOLTIPS.=[" ..tostring( DEBUG_TOOLTIPS ).. "]"); ui_may_have_changed = true
     --}}}
-    else
+    else -- LUA
         -- _G --{{{
-        local lua_expr = string.match(arg, "^%s*_G% *(%a*)") -- as a global var name
+        local lua_expr = string.match(arg, "^%s*_G% *(.*)") -- as a global var name
         if lua_expr then
         --QSB_ClearChat()
             local   o  =  _G[lua_expr]
             if(type(o) == 'table') then
+
+                d("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" )
+                d("| o=_G["..COLOR_5..lua_expr.."|r]")
+                d("| " ..COLOR_C..tostring(o)        )
+                d("|vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" )
+
                 for k,v in pairs( o ) do
-                    d("..."..COLOR_9..k..'|r="..COLOR_2.."'..tostring(v)..'|r ("..COLOR_6.."'..type(v)..'|r)\n')
+                    d("|→ "..COLOR_9..k.."|r=["..COLOR_2..tostring(v).."|r] ("..COLOR_6..type(v).."|r)\n")
                 end
             end
-            d("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-            d("@ o=_G["..COLOR_5..lua_expr.."|r]")
-            d("@ " ..COLOR_C..tostring(o)    )
-            d("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+            d(    "|^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" )
+            d(    "| o=_G["..COLOR_5..lua_expr.."|r]")
+            d(    "| " ..COLOR_C..tostring(o)        )
+            d(    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" )
         end
         --}}}
         -- lua {{{
-        -- /gqsb lua d("txt")                           -- TEXT LOGS IN THE CHAT
-        -- /gqsb lua d("\r\n\r\n")                      -- EMPTY LINES IN THE CHAT
-        -- /gqsb lua d("\226\154\153")                  -- FONT HAS NO GLYPH FOR THIS ONE
-        -- /gqsb lua PlaySound("GENERAL_ALERT_ERROR")   -- CHECK SOUNDS
-        -- /gqsb lua tonumber(nil) == nil               -- CHECK EXPRESSION
-        -- /gqsb lua            "what...?",        42   -- RETURNS MULTIPLE VALUES
-        -- /gqsb lua { question="what...?", answer=42 } -- RETURNS A TABLE
+        ------------ EXPRESSION ----------------------------------------------------------------------
+        -- /gqsb lua d("txt")                                        -- TEXT LOGS IN THE CHAT
+        -- /gqsb lua d("\r\n\r\n")                                   -- EMPTY LINES IN THE CHAT
+        -- /gqsb lua d("\226\154\153")                               -- FONT HAS NO GLYPH FOR THIS ONE
+        -- /gqsb lua PlaySound("GENERAL_ALERT_ERROR")                -- CHECK SOUNDS
+        -- /gqsb lua tonumber(nil) == nil                            -- CHECK EXPRESSION
+        -- /gqsb lua { question="what...?", answer=42 }              -- RETURNS A TABLE
+        -- /gqsb lua ("str" and string.find(string.lower("LUA STR"),"str"))
+        -- /gqsb lua            "what...?",        42                -- RETURNS MULTIPLE VALUES
+
+        ------------------------------------- TABLE, MAX, KEY, VAL
+        -- /gqsb lua BAG_BACKPACK
+        -- /gqsb lua SHARED_FURNITURE
+        -- /gqsb lua CHAT_SYSTEM.containers[1]
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,  20, "rawName"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,   5, "rawName"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[2]  ,   5, "rawName"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,   5,       nil, "Potion"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,   0,       nil, "true"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1][1].inventory.sortHeaders.highlightColor
 
         lua_expr = string.match(arg, "^%s*lua%s*(.*)")
         if lua_expr then
@@ -4822,31 +4903,28 @@ function OnSlashCommand(arg)
             function()
                 d(                    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
                 d(                    "zo_loadstring("..COLOR_5.."return "..lua_expr.."|r)\n")
-                local f = assert(      zo_loadstring(            "return "..lua_expr     )   )
+                local f = assert(      zo_loadstring(            "return "..lua_expr        ))
                 if f then
                     local r1, r2, r3, r4, r5 = f()
                     d(                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-                    if(not r1) then d("@ "..COLOR_2.."*** "..tostring(r1).." ***\n")
-                    elseif(r1) then d("@ "..COLOR_5.."r1: "..tostring(r1)..    "\n") end
-                    if(    r2) then d("@ "..COLOR_5.."r2: "..tostring(r2)..    "\n") end
-                    if(    r3) then d("@ "..COLOR_5.."r3: "..tostring(r3)..    "\n") end
-                    if(    r4) then d("@ "..COLOR_5.."r4: "..tostring(r4)..    "\n") end
-                    if(    r5) then d("@ "..COLOR_5.."r5: "..tostring(r5)..    "\n") end
-                    if(type(r1) == "table") then
-                      --for k,v in pairs( r1 ) do
-                      --    d(        "@→ "..COLOR_3..       tostring(k)
-                      --    ..               COLOR_8.." ("..     type(v) ..")"
-                      --    ..               COLOR_4.." [".. tostring(v) .."]")
-                      --end
-                        d_table("r1", r1)
-                    end
+
+                    if(not   r1 ) then d("@ "..COLOR_2.."*** "..tostring(r1).." ***\n")
+                    elseif(  r1 ) then d("@ "..COLOR_5.."r1: "..tostring(r1)..    "\n") end
+
+                    if(      r2 ) then d("@ "..COLOR_5.."r2: "..tostring(r2)..    "\n") end
+                    if(      r3 ) then d("@ "..COLOR_5.."r3: "..tostring(r3)..    "\n") end
+                    if(      r4 ) then d("@ "..COLOR_5.."r4: "..tostring(r4)..    "\n") end
+                    if(      r5 ) then d("@ "..COLOR_5.."r5: "..tostring(r5)..    "\n") end
+
+                    -- partial -- keyFilter -- valFilter ----- NAME TABLE MAX KEY VAL
+                    if(type( r1 ) == "table") then d_table(lua_expr,   r1, r2, r3, r4 ) end
 
                 end
             end
             )
 
             -- [ERROR]
-            if(err) then d(           "@ "..COLOR_2.."*** "..        err .." ***\n") end
+            if(err) then d(              "@ "..COLOR_2.."*** "..         err.." ***\n") end
 
             d(                        "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
             d()
@@ -4870,22 +4948,126 @@ function OnSlashCommand(arg)
     --}}}
 end
 --}}}
+-- d_table {{{
+--{{{
+local PAIRS_MAX = 5000
+local MATCH_MAX =  100
+
+local pairs_count
+local match_count
+local match_max
+--}}}
+function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter)
+    -- ROOT-TABLE {{{
+    if(not table) then d(tableName..": "..tostring(table)) return end
+
+    local          indent = ""
+    if("number" == type(indent_or_match_count_max)) then match_max = indent_or_match_count_max
+    elseif(             indent_or_match_count_max)  then    indent = indent_or_match_count_max
+    else                                                 match_max = MATCH_MAX
+    end
+
+    if(indent == "") then
+        d(tableName..":")
+
+        pairs_count   = 0
+        match_count   = 0
+        if(match_max <= 0) then match_max = MATCH_MAX end
+    end
+    --}}}
+    -- FILTER {{{
+    k_filter           =  k_filter and (k_filter ~= "") and string.lower(k_filter) or nil
+    v_filter           =  v_filter and (v_filter ~= "") and string.lower(v_filter) or nil
+    local  filtering   = (k_filter ~= nil) or (v_filter ~= nil)
+
+    local  truncating  = (match_max >  0)
+
+    if(not filtering and (match_max == 0)) then match_max = MATCH_MAX end
+
+    --}}}
+    for k, v in pairs(table) do
+        -- NEXT HOP {{{
+        if     (pairs_count >= PAIRS_MAX)
+            or (match_count >= match_max) then
+
+            if(indent == "") then
+                d("TABLE size=["..#table.."] .. match=["..match_count.."/"..match_max.."] .. checked pairs=["..pairs_count.."/"..PAIRS_MAX.."]")
+            end
+            return
+        end
+        pairs_count = pairs_count + 1
+        --}}}
+        -- LABEL {{{
+        local k_str    = tostring(k)
+        local v_str    = tostring(v)
+        local v_type   = type    (v)
+        local label    = string.format('%32s %-12s [%s]'
+        ,                               indent
+        , COLOR_8                     ..   v_type.."|r"
+        , COLOR_X[1 + match_count % 9]..          k_str.."|r"
+        )
+
+        --}}}
+        -- SUB-TABLE {{{
+        if(    (indent    == ""        ) and -- from root table only
+               (v_type    == "table"   ) and -- sub-table
+               (v         ~=  table    ) and -- skip self reference
+               (filtering or truncating)     -- will not dump whole world
+            ) then
+
+            d_table(label, v, indent.."."..k_str, k_filter, v_filter)
+
+        --}}}
+        -- ENTRY {{{
+        else
+            -- [FILTER]
+            local k_lower =               string.lower( k_str )
+            local v_lower =               string.lower( v_str )
+            local k_match = k_filter and (string.find ( k_lower, k_filter) ~= nil)
+            local v_match = v_filter and (string.find ( v_lower, v_filter) ~= nil)
+--{{{
+--d("k_filter=["..tostring(k_filter).."]  k_lower=["..tostring(k_lower).."] .. k_match=["..tostring(k_match).."]")
+--d("v_filter=["..tostring(v_filter).."]  v_lower=["..tostring(v_lower).."] .. v_match=["..tostring(v_match).."]")
+--d("((not filtering) or k_match or v_match)=["..tostring((not filtering) or k_match or k_match).."]")
+--}}}
+
+            if((not filtering) or k_match or v_match) then
+
+                match_count = match_count + 1
+
+                if(match_max < MATCH_MAX) then
+                    label = string.format("%3d %s", match_count, label)
+                end
+
+                d(string.format('%s .. %s[%s]'
+                ,                label
+                ,                      COLOR_9
+                ,                         v_str))
+
+            end
+        end
+        --}}}
+    end
+end
+--}}}
+
+-- PUB
 -- d_signature {{{
 function d_signature()
 
     d("\r\n"
-    .."→ GQSB"..COLOR_C.." "..QSB.Version.." (190904)\n"
+    .."→ GQSB"..COLOR_C.." "..QSB.Version.." (190907)\n"
     .."→ "..COLOR_8.."Checked with Update 23 (5.1.5): Scalebreaker (API 100028)\n"
     .."→ "..COLOR_7.." Trader08_mod:\n"
     .."→ "..COLOR_2.." LockThisPreset\n"
     .."→ "..COLOR_5.." DelayPresetSwapWhileInCombat\n"
-    .."→ "..COLOR_3.." behaves with item Types and Levels\n"
+    .."→ "..COLOR_6.." behaves with Item Types and Levels\n"
+    .."→ "..COLOR_6.." ...and trying to with Siege Weapons\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
 end
 --}}}
-
 GreymindQuickSlotBar = QSB
 EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, Initialize)
 
@@ -4928,3 +5110,4 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
  :!start explorer "https://www.tutorialspoint.com/execute_lua_online.php"
 
 --]]--}}}
+
