@@ -1,11 +1,11 @@
 -- Greymind Quick Slot Bar --{{{
 --  Feature Author: ivanwfr
 --}}}
--- CHANGELOG 190907
+-- CHANGELOG 190918
 --{{{
 --[[
 v2.4.8 {{{
-- [color="aaffaa"]190907[/color]
+- [color="aaffaa"]190918[/color]
 - [color="magenta"]Trader08_mod:[/color]
 - [color="magenta"][b]LockThisPreset[/b][/color]
 - [color="magenta"][b]DelayPresetSwapWhileInCombat[/b][/color]
@@ -31,6 +31,7 @@ local DEBUG_TASKS     = false
 local DEBUG_STATION   = false
 local DEBUG_STATUS    = false
 local DEBUG_TOOLTIPS  = false
+local DEBUG_COUNT     = false
 
 local PREFER_ITEMLINK = true --Trader08_190830
 
@@ -51,7 +52,7 @@ local COLOR_M                    = "|cFF44FF"
 local COLOR_Y                    = "|cFFFF44"
 
 -- ECC
-local COLOR_0                    = "|c000000"
+local COLOR_0                    = "|r"
 local COLOR_1                    = "|c964B00"
 local COLOR_2                    = "|cFF0000"
 local COLOR_3                    = "|cFFA500"
@@ -270,7 +271,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8", -- 190907 previous: 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.8", -- 190918 previous: 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -383,10 +384,11 @@ QSB.SettingsDefaults = {
 -- FORWARD DECLARATION OF LOCAL FUNCTIONS --{{{
 -- ...so we can call them before their definition in this file
 
-local d_table
 local d_signature
-local SetChatMax
+local d_table
+local table_includes
 
+local SetChatMax
 local Set_preset_pending_IN_COMBAT
 local Get_preset_pending_IN_COMBAT
 local Process_preset_pending_IN_COMBAT
@@ -538,7 +540,7 @@ function Set_preset_pending_IN_COMBAT( selectedPreset )
 
     -- NEW PRESET REQUESTED
     if( presetName_pending_IN_COMBAT ~= selectedPreset) then
-if(DEBUG_TOOLTIPS) then d(COLOR_5.."Set_preset_pending_IN_COMBAT: ["..tostring(selectedPreset).. " REQUEST PENDING]") end
+if(DEBUG_EQUIP) then d(COLOR_5.."Set_preset_pending_IN_COMBAT: ["..tostring(selectedPreset).. " REQUEST PENDING]") end
 
         PlaySound( SOUNDS.ACTIVE_SKILL_MORPH_CHOSEN )
 
@@ -546,7 +548,7 @@ if(DEBUG_TOOLTIPS) then d(COLOR_5.."Set_preset_pending_IN_COMBAT: ["..tostring(s
 
     -- SAME PRESET REQUESTED .. CANCEL REQUEST
     else
-if(DEBUG_TOOLTIPS) then d(COLOR_3.."Set_preset_pending_IN_COMBAT: ["..tostring(selectedPreset).. " REQUEST CANCELED]") end
+if(DEBUG_EQUIP) then d(COLOR_3.."Set_preset_pending_IN_COMBAT: ["..tostring(selectedPreset).. " REQUEST CANCELED]") end
 
         PlaySound( SOUNDS.GROUP_PROMOTE )
 
@@ -559,7 +561,7 @@ end
 function Process_preset_pending_IN_COMBAT(inCombat_state)
     if(presetName_pending_IN_COMBAT == "") then return end
 
-if(DEBUG_TOOLTIPS) then d(COLOR_4.."Process_preset_pending_IN_COMBAT: [preset "..tostring(presetName_pending_IN_COMBAT).."] .. [inCombat "..tostring(inCombat_state).."]") end
+if(DEBUG_EQUIP) then d(COLOR_4.."Process_preset_pending_IN_COMBAT: [preset "..tostring(presetName_pending_IN_COMBAT).."] .. [inCombat "..tostring(inCombat_state).."]") end
     --zo_callLater(SelectPresetPending, 5000)
 
     SelectPreset( presetName_pending_IN_COMBAT )
@@ -581,13 +583,13 @@ end
 function SelectPreset(selectedPreset)
 -- Delay In Combat Preset swap {{{
     if IsUnitInCombat('player') then
-if(DEBUG_TOOLTIPS) then QSB_ClearChat(); d(COLOR_M.."=== CHAT CLEARED BY DEBUG_TOOLTIPS ===") end
+if(DEBUG_EQUIP) then QSB_ClearChat(); d(COLOR_M.."=== CHAT CLEARED BY DEBUG_EQUIP ===") end
 
         if QSB.Settings.DelayPresetSwapWhileInCombat then
             Set_preset_pending_IN_COMBAT( selectedPreset )
 
         else
-if(DEBUG_TOOLTIPS) then d(COLOR_5.."IN COMBAT: PRESET NOT CHANGED: "..QSB.Settings.PresetName) end
+if(DEBUG_EQUIP) then d(COLOR_5.."IN COMBAT: PRESET NOT CHANGED: "..QSB.Settings.PresetName) end
 
             PlaySound( SOUNDS.ITEM_ON_COOLDOWN )
         end
@@ -664,7 +666,7 @@ end
 --}}}
 -- SaveCurrentPreset {{{
 function SaveCurrentPreset(_caller)
-    local log_this = DEBUG_TOOLTIPS
+    local log_this = DEBUG_EQUIP
 
     local currentPreset = QSB.Settings.PresetName
 if(log_this) then d("...PRESET __SAVING:".. currentPreset) end
@@ -779,7 +781,7 @@ end
 --}}}
 -- loadPresetSlots {{{
 function loadPresetSlots()
-local log_this = DEBUG_TOOLTIPS or DEBUG_TASKS or DEBUG_STATUS or DEBUG_ITEM
+local log_this = DEBUG_EQUIP or DEBUG_TASKS or DEBUG_STATUS or DEBUG_ITEM
     -- SETTINGS CHECK .. (nothing to load when just installed) {{{
     if not loadPresetSlots_checkSlotItemTable(log_this) then return end
 
@@ -920,6 +922,10 @@ if(log_this) then D_EQUIP(ITEM_5_PREFER_ITEMLINK, bNum, itemId, itemType, itemLe
             -- EQUIP ITEM SLOT
             local bagIndex   = getItem_slot_from_itID(itemId, itemLevel, itemLink, texture)
             local _,   count = GetItemInfo(BAG_BACKPACK, bagIndex)
+if(DEBUG_COUNT) then
+    d(itemName.." count="..tostring(count))
+    count=1
+end
             if(        count > 0 and IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
 
                 CallSecureProtected("SelectSlotItem"        , BAG_BACKPACK    , bagIndex, slotIndex)
@@ -1160,7 +1166,7 @@ end
 --}}}
 -- save_QSB_to_SlotItemTable {{{
 function save_QSB_to_SlotItemTable(bNum)
-local log_this = DEBUG_ITEM or DEBUG_TOOLTIPS
+local log_this = DEBUG_ITEM or DEBUG_EQUIP
 if(log_this) then d("save_QSB_to_SlotItemTable("..bNum.."):") end
 
     local slotIndex = bNum_to_slotIndex( bNum      )
@@ -1208,7 +1214,6 @@ end
 -- ITEM GET
 -- getItem_tooltip {{{
 function getItem_tooltip(bNum)
-local log_this = DEBUG_TOOLTIPS or DEBUG_ITEM
     -- itemName {{{
     local itemName  = QSB.Settings.SlotItemTable[bNum].itemName
     if(   itemName == "") then itemName = nil end
@@ -1272,7 +1277,7 @@ local log_this = DEBUG_TOOLTIPS or DEBUG_ITEM
 
     --}}}
     -- QSB .. f(DEBUG_TOOLTIPS) {{{
-    if(log_this) then
+    if(DEBUG_TOOLTIPS) then
 
         tt = tt
         .."\n"
@@ -1288,7 +1293,7 @@ local log_this = DEBUG_TOOLTIPS or DEBUG_ITEM
     end
     --}}}
     -- ITEM COLLECTIBLE QUEST_ITEM .. f(DEBUG_TOOLTIPS) {{{
-    if(log_this and itemName) then
+    if(DEBUG_TOOLTIPS and itemName) then
         -- LINK NAME SLOT .. f(slotIndex itemLink itemType itemId) {{{
 -- :!start explorer "https://esoapi.uesp.net/100028/data/z/o/_/ZO_LinkHandler_ParseLink.html"
 
@@ -1354,21 +1359,6 @@ local log_this = DEBUG_TOOLTIPS or DEBUG_ITEM
     end
     --}}}
     return tt
-end
---}}}
--- split_csv {{{
-function split_csv(str)
-
-   local t = {}
-
-   local function push(value)
-       table.insert(t, value)
-       return ""
-   end
-
-   push(str:gsub(" *([^,]*) *,?", push))
-
-   return t
 end
 --}}}
 -- getItem_slot_from_itID {{{
@@ -2156,7 +2146,7 @@ end
     ShowOrHide()
 end
 --}}}
--- GameActionButtonHideHandler {{{DEBUG_TOOLTIPS
+-- GameActionButtonHideHandler {{{
 function GameActionButtonHideHandler(_caller)
 
     if QSB.Settings.GameActionButtonHide then
@@ -4353,7 +4343,7 @@ D_ITEM("ITEM_SLOT_CHANGED: slotIndex=["..slotIndex.."]")
     EVENT_MANAGER:RegisterForEvent("GQSB.ACTIVE_QUICKSLOT_CHANGED"
     , EVENT_ACTIVE_QUICKSLOT_CHANGED
     , function(event, slotIndex) -- (*integer* _slotId_)
-if(DEBUG_TOOLTIPS) then d("ACTIVE_QUICKSLOT_CHANGED: slotIndex=["..slotIndex.."]") end
+if(DEBUG_EQUIP) then d("ACTIVE_QUICKSLOT_CHANGED: slotIndex=["..slotIndex.."]") end
 
         Refresh("ACTIVE_QUICKSLOT_CHANGED")
 
@@ -4785,9 +4775,8 @@ function OnSlashCommand(arg)
     --}}}
     -- clear {{{
     elseif(arg == "clear"       ) then
-        local log_this = true
         for bNum = 1, QSB.ButtonCountMax do
-            clear_bNum(bNum, log_this)
+            clear_bNum(bNum, "/clear", true)
             QSB.Settings.SlotItemTable[bNum].itemName  = nil
             QSB.Settings.SlotItemTable[bNum].itemLevel = nil
             QSB.Settings.SlotItemTable[bNum].slotId    = nil
@@ -4849,6 +4838,7 @@ function OnSlashCommand(arg)
     elseif(arg == "debug_station" ) then DEBUG_STATION  = not DEBUG_STATION ; d("...DEBUG_STATION..=[" ..tostring( DEBUG_STATION  ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_status"  ) then DEBUG_STATUS   = not DEBUG_STATUS  ; d("...DEBUG_STATUS...=[" ..tostring( DEBUG_STATUS   ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_trader"  ) then DEBUG_TOOLTIPS = not DEBUG_TOOLTIPS; d("...DEBUG_TOOLTIPS.=[" ..tostring( DEBUG_TOOLTIPS ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_count"   ) then DEBUG_COUNT    = not DEBUG_COUNT   ; d("...DEBUG_COUNT....=[" ..tostring( DEBUG_COUNT    ).. "]"); ui_may_have_changed = true
     --}}}
     else -- LUA
         -- _G --{{{
@@ -4884,16 +4874,27 @@ function OnSlashCommand(arg)
         -- /gqsb lua ("str" and string.find(string.lower("LUA STR"),"str"))
         -- /gqsb lua            "what...?",        42                -- RETURNS MULTIPLE VALUES
 
-        ------------------------------------- TABLE, MAX, KEY, VAL
+        ------------ VAR
         -- /gqsb lua BAG_BACKPACK
-        -- /gqsb lua SHARED_FURNITURE
-        -- /gqsb lua CHAT_SYSTEM.containers[1]
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,  20, "rawName"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,   5, "rawName"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[2]  ,   5, "rawName"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,   5,       nil, "Potion"
+
+        ------------------------------------- TABLE, MAX, KEY, VAL
+        -- /gqsb lua CHAT_SYSTEM.containers[1]     ,   0, "name"
         -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,   0,       nil, "true"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,   5,       nil, "Potion"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,   5, "rawName"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,  20, "rawName"
         -- /gqsb lua SHARED_INVENTORY.bagCache[1][1].inventory.sortHeaders.highlightColor
+        -- /gqsb lua SHARED_INVENTORY.bagCache[2]  ,   5, "rawName"
+        -- /gqsb lua SHARED_INVENTORY.questCache
+        -- /gqsb lua SHARED_FURNITURE
+        -- /gqsb lua SHARED_FURNITURE.placeableFurniture
+        -- /gqsb lua SHARED_FURNITURE.placeableFurniture[1][1][8].slotData
+        -- /gqsb lua SHARED_FURNITURE.retrievableFurniture
+
+        ------------ TABLE
+        -- /gqsb lua ACTION_BAR_ASSIGNMENT_MANAGER
+        -- /gqsb lua ACTIVITY_TRACKER
+        -- /gqsb lua BUFF_DEBUFF_FRAGMENT
 
         lua_expr = string.match(arg, "^%s*lua%s*(.*)")
         if lua_expr then
@@ -4948,6 +4949,16 @@ function OnSlashCommand(arg)
     --}}}
 end
 --}}}
+-- table_includes {{{
+function table_includes(table, value)
+
+    for i, v in  ipairs(table) do
+        if v == value then return true end
+    end
+
+    return false
+end
+--}}}
 -- d_table {{{
 --{{{
 local PAIRS_MAX = 5000
@@ -4956,6 +4967,7 @@ local MATCH_MAX =  100
 local pairs_count
 local match_count
 local match_max
+local tables_visited
 --}}}
 function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter)
     -- ROOT-TABLE {{{
@@ -4970,10 +4982,12 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
     if(indent == "") then
         d(tableName..":")
 
-        pairs_count   = 0
-        match_count   = 0
-        if(match_max <= 0) then match_max = MATCH_MAX end
+        if(match_max  <= 0) then match_max = MATCH_MAX end
+        pairs_count    = 0
+        match_count    = 0
+        tables_visited = {}
     end
+    tables_visited[#tables_visited+1] = table
     --}}}
     -- FILTER {{{
     k_filter           =  k_filter and (k_filter ~= "") and string.lower(k_filter) or nil
@@ -5001,18 +5015,18 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
         local k_str    = tostring(k)
         local v_str    = tostring(v)
         local v_type   = type    (v)
-        local label    = string.format('%32s %-12s [%s]'
+        local label    = string.format('%32s %-12s %-12s'
         ,                               indent
-        , COLOR_8                     ..   v_type.."|r"
-        , COLOR_X[1 + match_count % 9]..          k_str.."|r"
+        , COLOR_8                     .."("..v_type..")"..COLOR_0
+        , COLOR_X[1 + match_count % 9]..      "["..k_str.."]"..COLOR_0
         )
 
         --}}}
         -- SUB-TABLE {{{
-        if(    (indent    == ""        ) and -- from root table only
-               (v_type    == "table"   ) and -- sub-table
-               (v         ~=  table    ) and -- skip self reference
-               (filtering or truncating)     -- will not dump whole world
+        if(       (v_type    == "table"                ) -- sub-table
+             --and (indent   == ""                     ) -- from root table only
+               and (filtering or truncating            ) -- just in case .. (try not to dump the whole world)
+               and not table_includes(tables_visited, v) -- been there, done that
             ) then
 
             d_table(label, v, indent.."."..k_str, k_filter, v_filter)
@@ -5025,19 +5039,12 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
             local v_lower =               string.lower( v_str )
             local k_match = k_filter and (string.find ( k_lower, k_filter) ~= nil)
             local v_match = v_filter and (string.find ( v_lower, v_filter) ~= nil)
---{{{
---d("k_filter=["..tostring(k_filter).."]  k_lower=["..tostring(k_lower).."] .. k_match=["..tostring(k_match).."]")
---d("v_filter=["..tostring(v_filter).."]  v_lower=["..tostring(v_lower).."] .. v_match=["..tostring(v_match).."]")
---d("((not filtering) or k_match or v_match)=["..tostring((not filtering) or k_match or k_match).."]")
---}}}
 
             if((not filtering) or k_match or v_match) then
 
                 match_count = match_count + 1
 
-                if(match_max < MATCH_MAX) then
-                    label = string.format("%3d %s", match_count, label)
-                end
+                label = string.format("%3d %s", match_count, label)
 
                 d(string.format('%s .. %s[%s]'
                 ,                label
@@ -5048,6 +5055,9 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
         end
         --}}}
     end
+    if(indent == "") then
+        d("(in "..#tables_visited.." tables)")
+    end
 end
 --}}}
 
@@ -5056,7 +5066,7 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (190907)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (190918)\n"
     .."!!"..COLOR_8.." Update 23 (5.1.5): Scalebreaker (API 100028)\n"
     .."→ "..COLOR_7.."Trader08_mod:\n"
     .."→ "..COLOR_2.."- LockThisPreset\n"
@@ -5072,6 +5082,40 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
 
 -- LINKS
 --[[--{{{
+
+[LUA]
+-- :!start explorer "https://www.tutorialspoint.com/execute_lua_online.php"
+-- STUB .. (for d_table) {{{
+function d(args) print(args) end
+COLOR_X = { "", "", "", "", "", "", "", "", "" }
+COLOR_8 =   ""
+COLOR_9 =   ""
+COLOR_0 =   ""
+
+local Table_1 = { name = "Table_1" , ID = "ID_1" , "TAG_1" }
+local Table_2 = { name = "Table_2" , ID = "ID_2" , "TAG_2" , Table_1 }
+local Table_3 = { name = "Table_3" , ID = "ID_3" , "TAG_3" , Table_1 , Table_2 }
+local  SAMPLE = {
+    name = "SAMPLE"
+    ,          1
+    ,         12
+    , key1 = 123
+    , Table_1
+    , Table_2
+    , Table_3
+    , Table_3
+}
+
+d_table('\n\n- UNFILTERED'      , SAMPLE                  )
+d_table('\n\n- FIRST 4 ENTRIES' , SAMPLE, 4               )
+d_table('\n\n- KEY   "name"'    , SAMPLE, 0, 'name'       )
+d_table('\n\n- VALUE "name"'    , SAMPLE, 0, nil  , 'name')
+d_table('\n\n- KEY     "id"'    , SAMPLE, 0, 'id'         )
+d_table('\n\n- VALUE   "id"'    , SAMPLE, 0, nil  , 'id'  )
+d_table('\n\n- KEY    "tag"'    , SAMPLE, 0, 'tag'        )
+d_table('\n\n- VALUE  "tag"'    , SAMPLE, 0, nil  , 'tag' )
+
+--}}}
 
 [FILES]
 :new $TEMP/functioncalls.txt
@@ -5104,9 +5148,6 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
  :!start explorer "https://www.esoui.com/downloads/fileinfo.php?id=258#comments"
  :!start explorer "https://www.esoui.com/forums/showthread.php?p=31752"
  :!start explorer "https://www.esoui.com/forums/showthread.php?p=31942"
-
-[LUA LINT]
- :!start explorer "https://www.tutorialspoint.com/execute_lua_online.php"
 
 --]]--}}}
 
