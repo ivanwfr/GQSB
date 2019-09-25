@@ -1552,8 +1552,8 @@ function getItem_normalized_link( itemLink )
 
     itemLink = tostring( itemLink );
 
-    if(not itemLink         ) then return "" end
-    if(    itemLink.len < 10) then return "" end
+    if(not itemLink             ) then return "" end
+    if(string.len(itemLink) < 10) then return "" end
 
     local t = string_split(itemLink)
 
