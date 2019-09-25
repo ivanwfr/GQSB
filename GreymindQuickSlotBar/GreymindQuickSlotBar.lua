@@ -1,11 +1,11 @@
 -- Greymind Quick Slot Bar --{{{
 --  Feature Author: ivanwfr
 --}}}
--- CHANGELOG 190918
+-- CHANGELOG 190925
 --{{{
 --[[
 v2.4.8 {{{
-- [color="aaffaa"]190918[/color]
+- [color="aaffaa"]190925[/color]
 - [color="magenta"]Trader08_mod:[/color]
 - [color="magenta"][b]LockThisPreset[/b][/color]
 - [color="magenta"][b]DelayPresetSwapWhileInCombat[/b][/color]
@@ -23,17 +23,14 @@ v2.4.8 {{{
 --]]
 --}}}
 
-local DEBUG           = false
-local DEBUG_ITEM      = false
-local DEBUG_EQUIP     = false
-local DEBUG_EVENT     = false
-local DEBUG_TASKS     = false
-local DEBUG_STATION   = false
-local DEBUG_STATUS    = false
-local DEBUG_TOOLTIPS  = false
-local DEBUG_COUNT     = false
-
-local PREFER_ITEMLINK = true --Trader08_190830
+local DEBUG          = false
+local DEBUG_ITEM     = false
+local DEBUG_EQUIP    = false
+local DEBUG_EVENT    = false
+local DEBUG_TASKS    = false
+local DEBUG_STATION  = false
+local DEBUG_STATUS   = false
+local DEBUG_TOOLTIPS = false
 
 -- LOCAL
 -- SYMBOLS {{{
@@ -250,13 +247,13 @@ local KEYBINDINGS_SWAPS = {
 
 --}}}
 -- ITEM_MSG {{{
-local ITEM_3_SAVED                    = COLOR_3.."SAVED ITEM"
-local ITEM_4_EQUIP                    = COLOR_4.."EQUIP ITEM"
-local ITEM_5_PREFER_ITEMLINK          = COLOR_5.."PREFER_ITEMLINK"
-local ITEM_2_EQUIP_ERROR_SLOT         = COLOR_2.."EQUIP ITEM SLOT ERROR"
-local ITEM_2_EQUIP_ERROR_TYPE         = COLOR_2.."EQUIP ITEM TYPE ERROR"
-local ITEM_2_EQUIP_ERROR_ID           = COLOR_2.."EQUIP ITEM ID ERROR"
-local ITEM_6_CHECK                    = COLOR_6.."CHECK"
+local ITEM_3_SAVE                    = COLOR_3.."ITEM SAVE"
+local ITEM_4_EQUIP                   = COLOR_4.."ITEM EQUIP"
+local ITEM_5_EQUIP_CHANGED           = COLOR_5.."ITEM EQUIP CHANGED"
+local ITEM_2_EQUIP_ERROR_ITEMLINK    = COLOR_2.."ITEM EQUIP ERROR LINK"
+local ITEM_2_EQUIP_ERROR_SLOT        = COLOR_2.."ITEM EQUIP ERROR SLOT"
+local ITEM_2_EQUIP_ERROR_TYPE        = COLOR_2.."ITEM EQUIP ERROR TYPE"
+local ITEM_6_UPDATE                  = COLOR_6.."ITEM UPDATE"
 
 --}}}
 -- ATTRIBUTES {{{
@@ -381,19 +378,9 @@ QSB.SettingsDefaults = {
 
 
 } --}}}
--- FORWARD DECLARATION OF LOCAL FUNCTIONS --{{{
+-- FORWARD DECLARATIONS --{{{
 -- ...so we can call them before their definition in this file
 
-local d_signature
-local d_table
-local table_includes
-
-local SetChatMax
-local Set_preset_pending_IN_COMBAT
-local Get_preset_pending_IN_COMBAT
-local Process_preset_pending_IN_COMBAT
-
-local D_STATUS
 local Adjust_ButtonColumns
 local Adjust_MainWindow
 local ApplyKeyBindingsModifier
@@ -406,96 +393,207 @@ local ButtonSizeChanged
 local ClearKeyBindings
 local CopyFromTo
 local CopyNotNilSettingsFromTo
-local D
-local D_EVENT
-local D_ITEM
 local DeepCopy
 local GameActionButtonHideHandler
 local GetAlignmentXY
 local GetKeyBindInfo
 local GetSlotItemKeyName
-local slotIndex_to_bNum
-local bNum_to_slotIndex
-
+local Get_preset_pending_IN_COMBAT
+local HideUIHandles
+local Hide_delayed
+local Hide_handler
 local Initialize
-local Load_ZO_SavedVars
-local QSB_Settings_Changed
-local QSB_Setting_Preset_Changed
-
 local IsEmptySlot
-local ResetAllPresets
-local ResetThisPreset
-
+local Load_ZO_SavedVars
 local OnClicked_bNum
 local OnClicked_handle
+local OnMouseClicked
+local OnMouseDown
 local OnMouseEnter
 local OnMouseExit
+local OnMouseNotClicked
 local OnMoveStart
 local OnMoveStop
 local OnResizeStart
 local OnResizeStop
-
-local OnMouseNotClicked
-local OnMouseDown
-local OnMouseClicked
-
 local OnSlashCommand
 local PlaySoundAlert
-local PlaySoundAlert_pending = false
 local PlaySoundSlotted
-local PlaySoundSlotted_pending = false
+local Process_preset_pending_IN_COMBAT
+local QSB_SetCurrentQuickslot
+local QSB_Setting_Preset_Changed
+local QSB_Settings_Changed
 local Refresh
 local Refresh_handler
 local RegisterEventHandlers
 local Release_Settings_Locked
+local ResetAllPresets
+local ResetThisPreset
+local SaveCurrentPreset
 local SelectButton
-local QSB_SetCurrentQuickslot
 local SelectNextAuto
 local SelectNextAuto_delayed
-local SelectNextAuto_pending = false
-local Rebuild_LibAddonMenu_pending = false
 local SelectPreset
-local SaveCurrentPreset
-local  loadPresetSlots
-local  is_SlotItemTable_empty
-local  populate_an_empty_SlotItemTable
-local  clear_bNum
-local  equip_bNum
-local  handle_ACTION_SLOT_UPDATED
-local  save_QSB_to_SlotItemTable
-
-local  check_QSB_BAG_BACKPACK_UPDATE_bagIndex_to_check
-local  getItem_name_from_slot
-local  getItem_itID_from_slot
-local  getItem_slot_from_itID
-local  getItem_slot_from_name
-
-local  getItem_tooltip
-
-local  tasks_cooldown_begin
-local  tasks_cooldown_end
-local  tasks_handler
-
+local SetChatMax
 local SetUIHandlesVisibility
+local Set_preset_pending_IN_COMBAT
 local Settings_Locked
-
 local ShowOrHide
-local Show_delayed
-local ShowUIHandles
 local ShowOrHideUIHandles
 local ShowOrHideUIHandles_handler
-
-local Hide_delayed
-local Hide_handler
-local Hide_pending = false
-local HideUIHandles
-
+local ShowUIHandles
+local Show_delayed
 local UIWindowChanged
+local bNum_to_slotIndex
+local check_QSB_BAG_BACKPACK_UPDATE_bagIndex_to_check
+local clear_bNum
+local d_signature
+local d_table
+local equip_bNum
+local getItem_itID_from_slot
+local getItem_name_from_slot
+local getItem_normalized_link
+local getItem_slot_from_link
+local getItem_slot_from_name
+local getItem_tooltip
+local handle_ACTION_SLOT_UPDATED
+local is_SlotItemTable_empty
+local is_same_item_link
+local loadPresetSlots
+local populate_an_empty_SlotItemTable
+local save_QSB_to_SlotItemTable
+local slotIndex_to_bNum
+local string_split
+local table_includes
+local tasks_cooldown_begin
+local tasks_cooldown_end
+local tasks_handler
 
-local BlockBarVisibility = false
-local ForceBarVisibility = false
-local Reticle_isHidden   = false
+local BlockBarVisibility            = false
+local ForceBarVisibility            = false
+local Hide_pending                  = false
+local PlaySoundAlert_pending        = false
+local PlaySoundSlotted_pending      = false
+local Rebuild_LibAddonMenu_pending  = false
+local Reticle_isHidden              = false
+local SelectNextAuto_pending        = false
+--}}}
+-- LOGGING --{{{
+-- D {{{
+local function D(msg)
+    if DEBUG then
+        d(COLOR_7..".QSB.DEBUG:|r "..msg)
+    end
+end
+--}}}
+-- D_EQUIP {{{
+local function D_EQUIP(title, bNum, itemId, itemType, itemLevel, itemLink)
 
+    if    itemLink == "" then
+
+        d("→ "..title
+        .." " ..COLOR_4.." #"..  bNum
+        ..                " ".. (itemId   and (COLOR_8..          tostring(itemId   )) or "→")
+        .." " ..COLOR_3.."→ → →"
+        ..      COLOR_8.." empty slot")
+
+    else
+
+        d("→ "..title
+        .." " ..COLOR_4.." #"..  bNum
+        ..               " ".. (itemId    and (COLOR_8..          tostring(itemId   )) or "→")
+        ..      COLOR_3.." ".. (itemType  and (                   tostring(itemType )) or "→")
+        ..               " ".. (itemLevel and (COLOR_5.."Level "..tostring(itemLevel)) or "→")
+        ..             "|r "..                                    tostring(itemLink ))
+    end
+
+end
+--}}}
+-- D_EVENT {{{
+local function D_EVENT(eventName)
+    if DEBUG_EVENT or DEBUG then
+        d(COLOR_7..".QSB.DEBUG: "..COLOR_C..eventName)
+    end
+end
+
+--}}}
+-- D_ITEM {{{
+local function D_ITEM(msg)
+    if DEBUG_ITEM or DEBUG then
+        d(msg)
+    end
+end
+
+--}}}
+-- D_QSB {{{
+local function D_QSB(title, bNum)
+
+    if(QSB.Settings.SlotItemTable[bNum].slotId) then
+
+        d( COLOR_X[bNum]      .. title.."["..bNum.."]"
+        .. COLOR_9 .." Link_" .. tostring( QSB.Settings.SlotItemTable[bNum].itemLink  )
+        .. COLOR_2 .." ID_"   .. tostring( QSB.Settings.SlotItemTable[bNum].itemId    )
+        .. COLOR_3 .." Type_" .. tostring( QSB.Settings.SlotItemTable[bNum].itemType  )
+        .. COLOR_4 .." Name_" .. tostring( QSB.Settings.SlotItemTable[bNum].itemName  )
+        .. COLOR_5 .." Slot_" .. tostring( QSB.Settings.SlotItemTable[bNum].slotId    )
+        .. COLOR_6 .." Level_".. tostring( QSB.Settings.SlotItemTable[bNum].itemLevel )
+        )
+    else
+        d(           title    .. "["..bNum.."] "..COLOR_8.." EMPTY SLOT")
+    end
+
+end
+--}}}
+-- D_STATUS {{{
+local function D_STATUS(_caller)
+d("\r\n".._caller..":")
+
+    -- ACTIVE OPTIONS
+    if          QSB.Settings.LockThisPreset
+        or      QSB.Settings.DelayPresetSwapWhileInCombat
+        then
+            d(COLOR_8..COLOR_4.."[".. QSB.Settings.PresetName.."]"
+            .. (QSB.Settings.LockThisPreset               and (COLOR_2.." .. IS LOCKED"               ) or "")
+            .. (QSB.Settings.DelayPresetSwapWhileInCombat and (COLOR_5.." .. EQUIP AFTER COMBAT IS ON") or "")
+            )
+        end
+
+    -- TASKS
+    local preset_pending_name =  Get_preset_pending_IN_COMBAT()
+    local preset_pending      = (preset_pending_name ~= "")
+    local tasks_pending       = (#tasks_loaded > 0) or (#tasks_posted > 0)
+
+    if(    tasks_pending
+        or preset_pending
+        ) then
+
+        d(COLOR_8.."TASKS"
+        ..(tasks_pending     and (COLOR_4.." COOLDOWN ["..#tasks_loaded.." loaded] ["..#tasks_posted.." posted]") or "")
+        ..(preset_pending    and (COLOR_4.."  DELAYED ["..preset_pending_name.."]"                              ) or "")
+        )
+    end
+
+    -- INTERFACE
+    local interface_showing =     Reticle_isHidden
+    local inventory_showing = not ZO_PlayerInventory:IsHidden()
+    local qsb_panel_showing = not QSB.Panel:IsHidden()
+    local quickslot_showing = not ZO_QuickSlot:IsHidden()
+
+    if(    qsb_panel_showing
+        or interface_showing
+        or inventory_showing
+        or quickslot_showing
+        ) then
+
+        d((interface_showing and COLOR_3.." INTERFACE" or "")
+        ..(quickslot_showing and COLOR_4.." QSB-WHEEL" or "")
+        ..(inventory_showing and COLOR_5.." INVENTORY" or "")
+        ..(qsb_panel_showing and COLOR_7.." SETTINGS"  or "")
+        )
+    end
+
+end
+--}}}
 --}}}
 
 -- PRESET
@@ -562,7 +660,6 @@ function Process_preset_pending_IN_COMBAT(inCombat_state)
     if(presetName_pending_IN_COMBAT == "") then return end
 
 if(DEBUG_EQUIP) then d(COLOR_4.."Process_preset_pending_IN_COMBAT: [preset "..tostring(presetName_pending_IN_COMBAT).."] .. [inCombat "..tostring(inCombat_state).."]") end
-    --zo_callLater(SelectPresetPending, 5000)
 
     SelectPreset( presetName_pending_IN_COMBAT )
     presetName_pending_IN_COMBAT     = ""
@@ -682,7 +779,7 @@ if(log_this) then d(COLOR_4.."SAVING PRESET "..COLOR_M.."["..tostring(currentPre
     -- SAVE CURRENT PRESET
     if(DEBUG_EQUIP) then
         for bNum = 1, QSB.ButtonCountMax do
-            D_EQUIP(QSB.Settings.PresetName.." "..ITEM_3_SAVED
+            D_EQUIP(QSB.Settings.PresetName.." "..ITEM_3_SAVE
             ,       bNum
             ,       QSB.Settings.SlotItemTable[bNum].itemId
             ,       QSB.Settings.SlotItemTable[bNum].itemType
@@ -725,7 +822,7 @@ function check_QSB_BAG_BACKPACK_UPDATE_bagIndex_to_check()
     local       itemLink = getItem_link_from_slot  ( bagIndex )
     local _, _, itemType = ZO_LinkHandler_ParseLink( itemLink )
 
-if(log_this) then D_EQUIP(ITEM_6_CHECK, bNum, itemId, itemType, itemLevel, itemLink) end
+if(log_this) then D_EQUIP(ITEM_6_UPDATE, bNum, itemId, itemType, itemLevel, itemLink) end
     --}}}
 
     -- IGNORE EQUIP SIDE-EFFECT EVENTS
@@ -733,12 +830,10 @@ if(log_this) then D_EQUIP(ITEM_6_CHECK, bNum, itemId, itemType, itemLevel, itemL
 
     -- BUTTON FOR THIS ITEM
     for bNum = 1, QSB.ButtonCountMax do
-        local  same_itemLink = (QSB.Settings.SlotItemTable[bNum].itemLink == itemLink)
-        local  same_itemId   = (QSB.Settings.SlotItemTable[bNum].itemId   == itemId  )
+        local  same_itemLink = is_same_item_link(QSB.Settings.SlotItemTable[bNum].itemLink, itemLink)
 
         -- BUTTON FOUND
-        if     same_itemLink
-            or same_itemId then
+        if     same_itemLink then
 
             -- SAVE ITEM DETAILS
             if(itemLevel ~= -1) then QSB.Settings.SlotItemTable[bNum].itemLevel =  itemLevel end
@@ -876,109 +971,103 @@ end
 --}}}
 -- equip_bNum .. Trader08_mod {{{
 function equip_bNum(bNum, itemName, slotId, itemId, itemType, itemLevel, itemLink, texture)
-    local log_this  = DEBUG_EQUIP
+local log_this  = DEBUG_EQUIP
 
 if(log_this) then D_EQUIP(ITEM_4_EQUIP, bNum, itemId, itemType, itemLevel, itemLink) end
 
-    local slotIndex = bNum_to_slotIndex( bNum )
+local slotIndex = bNum_to_slotIndex( bNum )
 
-    -- [PREFER_ITEMLINK] {{{
-    -- Trader08_190903 {{{
-
-    -- Actualize our variables from itemLink
-
-    -- If engine returns something for that itemLink, we can be sure this item exists so actualize from it
-    -- If it doesn't, we'll automatically try using our saved itemType and itemId
-
-    -- So, if ZOS change their itemID's, we're safe
-    -- If they change their itemLinks, also we're safe considering we'll be using our saved itemId
-    -- Only exeption is a scenario where this (old) link points to a different item (why would they do that?!)
-
-    -- If they change both well, nothing more we can do other than trying slotId, but meh
-
-    -- Setting PREFER_ITEMLINK to false means if they change their itemId's we're screwed.
-    -- But we have the option to strictly use our saved itemId's quickly if we'd like to understand
-    -- what's going on in case of problems.
-
-    --}}}
-    if(prefer_itemlink and itemLink) then
+    -- SYNC ON [itemLink] {{{
+    -- (collectibles and quest_items may use itemType and itemId args)
+    if(itemLink) then
         local _, _, actualItemType, actualItemId = ZO_LinkHandler_ParseLink( itemLink )
 
-        local      same_type = actualItemType and (actualItemType == itemType)
-        local      same_id   = actualItemId   and (actualItemId   == itemId  )
-        if(    not same_type
-            or not same_id   ) then
-            itemType = actualItemType
-            itemId   = actualItemId
+        local          same_type = actualItemType and (actualItemType == itemType)
+        local          same_id   = actualItemId   and (actualItemId   == itemId  )
+        if(    not     same_type
+            or not     same_id   ) then
+            itemType = actualItemType   -- switch to currently
+            itemId   = actualItemId     -- available item
 
-if(log_this) then D_EQUIP(ITEM_5_PREFER_ITEMLINK, bNum, itemId, itemType, itemLevel, itemLink) end
+if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLevel, itemLink) end
         end
     end
     --}}}
-    if(itemType and itemId) then
-        -- [item] {{{
-        if(    itemType == "item"       ) then
+    -- [item] {{{
+    if( itemType == "item" and itemLink) then
 
-            -- EQUIP ITEM SLOT
-            local bagIndex   = getItem_slot_from_itID(itemId, itemLevel, itemLink, texture)
-            local _,   count = GetItemInfo(BAG_BACKPACK, bagIndex)
-if(DEBUG_COUNT) then
-    d(itemName.." count="..tostring(count))
-    count=1
-end
-            if(        count > 0 and IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
+        -- ITEM COUNT AND SLOT {{{
+        local bagIndex   = getItem_slot_from_link(itemLink)
+        local _,   count = GetItemInfo(BAG_BACKPACK, bagIndex)
+        if(        count > 0 and IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
+            CallSecureProtected("SelectSlotItem"   ,BAG_BACKPACK, bagIndex, slotIndex)
 
-                CallSecureProtected("SelectSlotItem"        , BAG_BACKPACK    , bagIndex, slotIndex)
+            --}}}
+        -- ITEM COUNT=0 WARNING {{{
+        elseif(count == 0 or bagIndex == -1) then
+            -- Trader08 (190925) {{{
+            -- count will always be 0 if we have a bug finding the item
+            -- ... or if they actually ran out of this item
+            -- I encountered a situation where the slot/save data didn't get cleared
+            --}}}
 
-            -- EQUIP ITEM COUNT WARNING
-            elseif(count == 0) then
-
-                -- ZO_ALERT
-                local warnMsg
-                =      QSB.Settings.LockThisPreset
-                and     "can't quickslot"
-                or      "it won't be in this quickslot preset anymore"
-
-                ZO_Alert(UI_ALERT_CATEGORY_ERROR
-                , QSB.Settings.SoundAlert
-                , "You're out of '"..itemName.."', "..warnMsg
-                )
-
-                d(COLOR_2.."["..QSB.Name.."] "
-                ..     COLOR_3.."You're out of|r " ..tostring(itemLink)
-                ..     COLOR_4..", "..warnMsg)
-
-            -- EQUIP ITEM SLOT ERROR
-            else
-
-                D_EQUIP(ITEM_2_EQUIP_ERROR_SLOT, bNum, itemId, itemType, itemLevel, itemLink)
-
-                d("→. [slotId   ".. tostring( slotId   ) .."]\r\n"
-                .."→. [bagIndex ".. tostring( bagIndex ) .."]\r\n"
-                .."→. [itemName ".. tostring( itemName ) .."]\r\n")
-
+            if(not QSB.Settings.LockThisPreset) then
+                    clear_bNum(bNum, "Inventory count 0", log_this)
+                    QSB.Settings.SlotItemTable[bNum].itemName  = nil
+                    QSB.Settings.SlotItemTable[bNum].itemLevel = nil
+                    QSB.Settings.SlotItemTable[bNum].slotId    = nil
+                    QSB.Settings.SlotItemTable[bNum].texture   = nil
+                    QSB.Settings.SlotItemTable[bNum].itemLink  = nil
             end
-        --}}}
-        -- [collectible] {{{
-        elseif(itemType == "collectible" and IsValidCollectibleForSlot(itemId, slotIndex)) then
-            CallSecureProtected("SelectSlotSimpleAction", ACTION_TYPE_COLLECTIBLE, itemId, slotIndex)
+
+            -- ZO ALERT
+            local warnMsg
+            =      QSB.Settings.LockThisPreset
+            and     "can't quickslot"
+            or      "it won't be in this quickslot preset ["..QSB.Settings.PresetName.."] anymore"
+
+            ZO_Alert(UI_ALERT_CATEGORY_ERROR
+            , QSB.Settings.SoundAlert
+            , "You're out of '"..itemName.."' in your inventory, "..warnMsg
+            )
+
+            -- CHAT ALERT
+            d(                      COLOR_2..QSB.Name..":\r\n"
+            ..COLOR_3.."You're out of|r "..tostring(itemLink)
+            ..COLOR_3.." in your inventory,|r "
+            ..COLOR_4.. warnMsg
+            )
 
         --}}}
-        -- [quest_item] {{{
-        elseif(itemType == "quest_item" and IsValidQuestItemForSlot(itemId, slotIndex)) then
-            CallSecureProtected("SelectSlotSimpleAction", ACTION_TYPE_QUEST_ITEM , itemId, slotIndex)
-
-        --}}}
-        -- [itemType Unknown] {{{
+        -- ITEM_2_EQUIP_ERROR_SLOT {{{
         else
-            D_EQUIP(ITEM_2_EQUIP_ERROR_TYPE, bNum, itemId, itemType, itemLevel, itemLink)
+D_EQUIP(ITEM_2_EQUIP_ERROR_SLOT, bNum, itemId, itemType, itemLevel, itemLink)
+
+            -- CHAT ALERT
+            d(                      COLOR_2..QSB.Name..":\r\n"
+            .."→. [slotId   ".. tostring( slotId   ) .."]\r\n"
+            .."→. [bagIndex ".. tostring( bagIndex ) .."]\r\n"
+            .."→. [itemName ".. tostring( itemName ) .."]\r\n")
         end
         --}}}
+    --}}}
+    -- [collectible] {{{
+    elseif(itemType == "collectible" and IsValidCollectibleForSlot(itemId, slotIndex)) then
+        CallSecureProtected("SelectSlotSimpleAction", ACTION_TYPE_COLLECTIBLE, itemId, slotIndex)
+
+    --}}}
+    -- [quest_item] {{{
+    elseif(itemType == "quest_item" and IsValidQuestItemForSlot(itemId, slotIndex)) then
+        CallSecureProtected("SelectSlotSimpleAction", ACTION_TYPE_QUEST_ITEM , itemId, slotIndex)
+
+    --}}}
+    -- [itemType Unknown] .. (saved item is not available anymore) {{{
+    elseif(not itemLink) then
+D_EQUIP(ITEM_2_EQUIP_ERROR_ITEMLINK, bNum, itemId, itemType, itemLevel, itemLink)
     else
-        D_EQUIP(ITEM_2_EQUIP_ERROR_ID, bNum, itemId, itemType, itemLevel, itemLink)
-
+D_EQUIP(ITEM_2_EQUIP_ERROR_TYPE, bNum, itemId, itemType, itemLevel, itemLink)
     end
-
+    --}}}
 end
 --}}}
 -- clear_bNum {{{
@@ -998,17 +1087,12 @@ end
 --}}}
 -- is_same_slotted_item {{{
 function is_same_slotted_item( bNum )
-        local slotIndex       =                             bNum_to_slotIndex( bNum            )
 
-        local slottedItemLink =                               GetSlotItemLink( slotIndex       )
+        local  save_itemlLink = QSB.Settings.SlotItemTable       [ bNum ].itemLink
 
-        local _, _, slottedItemType, slottedItemId = ZO_LinkHandler_ParseLink( slottedItemLink )
+        local  slot_itemLink  = GetSlotItemLink(bNum_to_slotIndex( bNum ))
 
-        local  same_itemLink  =     PREFER_ITEMLINK and QSB.Settings.SlotItemTable[bNum].itemLink == slottedItemLink
-
-        local  same_itemId    = not PREFER_ITEMLINK and QSB.Settings.SlotItemTable[bNum].itemId   == slottedItemId
-
-        return (same_itemLink or same_itemId)
+        return is_same_item_link(save_itemlLink, slot_itemLink)
 end
 --}}}
 -- ITEM TASK
@@ -1047,6 +1131,7 @@ end
 function tasks_post(delay)
 if(DEBUG_TASKS) then d(COLOR_C.."TASK #"..tostring(#tasks_loaded).." .. POST DELAY("..tostring(delay)..") .. "..#tasks_loaded.." LOADED TASKS") end
     tasks_cooldown_begin()
+
     tasks_posted = DeepCopy(tasks_loaded)
     tasks_loaded = {}
     zo_callLater(tasks_handler, delay)
@@ -1173,6 +1258,7 @@ if(log_this) then d("save_QSB_to_SlotItemTable("..bNum.."):") end
     local itemName  = GetSlotName      ( slotIndex )
     local texture   = GetSlotTexture   ( slotIndex )
     local itemLink  = GetSlotItemLink  ( slotIndex )
+    
     local itemSlot  = -1
     if   (itemName ~= nil) and (itemName ~= "") then itemSlot =   getItem_slot_from_name( itemName ) end
     if   (itemSlot == -1                      ) then itemSlot = GetCollectibleIdFromLink( itemLink ) end
@@ -1211,6 +1297,8 @@ if(log_this) then d("save_QSB_to_SlotItemTable("..bNum.."):") end
     -- SINGLE-POINT-INITIALIZATION
 end
 --}}}
+
+
 -- ITEM GET
 -- getItem_tooltip {{{
 function getItem_tooltip(bNum)
@@ -1297,10 +1385,13 @@ function getItem_tooltip(bNum)
         -- LINK NAME SLOT .. f(slotIndex itemLink itemType itemId) {{{
 -- :!start explorer "https://esoapi.uesp.net/100028/data/z/o/_/ZO_LinkHandler_ParseLink.html"
 
-        local _, _, itemType, itemId = ZO_LinkHandler_ParseLink( itemLink         )
-        local name_from_slotIndex    = GetSlotName             ( slotIndex        )
-        local slot_from_name         = getItem_slot_from_name  ( itemName         )
-        local slot_from_ID           = getItem_slot_from_itID  ( itemId, itemLevel, itemLink, QSB.Settings.SlotItemTable[bNum].texture)
+        local _, _, itemType, itemId = ZO_LinkHandler_ParseLink( itemLink  )
+        local name_from_slotIndex    = GetSlotName             ( slotIndex )
+        local slot_from_name         = getItem_slot_from_name  ( itemName  )
+        local slot_from_Link         = getItem_slot_from_link  ( itemLink  )
+
+        local lnk =                         itemLink ; lnk = lnk:gsub("[:|]",".")
+        local nnk = getItem_normalized_link(itemLink); nnk = nnk:gsub("[:|]",".")
 
         tt = tt
         ..    "\n"
@@ -1308,12 +1399,13 @@ function getItem_tooltip(bNum)
         ..    "\n"..COLOR_8.."----- [bNum "..bNum.."] == [slotIndex "  ..slotIndex.."] ----- LINK |r"
         ..    "\n- itemType"                                        ..COLOR_3..  " "..tostring( itemType            ).. "|r"
         ..    "\n- itemId"                                          ..COLOR_2..  " "..tostring( itemId              ).. "|r"
-        ..    "\n- itemLink"                                        ..COLOR_9..":\n"..tostring( itemLink            ).. "|r"
+        ..    "\n- itemLink"                                        ..COLOR_4..":\n"..          lnk                  .. "|r"
+        ..    "\n- itemLink (normalized)"                           ..COLOR_5..":\n"..          nnk                  .. "|r"
         ..    "\n"..COLOR_8.."----------------------------------------- NAME"
         ..    "\n- GetSlotName("..         COLOR_9.."slotIndex|r)"  ..COLOR_4..":\n"..tostring( name_from_slotIndex ).. "|r"
         ..    "\n"..COLOR_8.."------------------------------------------- SLOT"
         ..    "\n- getItem_slot_from_name"                          ..COLOR_5.. " ["..tostring( slot_from_name      ).."]|r"
-        ..    "\n- getItem_slot_from_itID("..COLOR_2.. "itemId|r)"  ..COLOR_5.. " ["..tostring( slot_from_ID        ).."]|r"
+        ..    "\n- getItem_slot_from_link("..COLOR_2.. "itemLink|r)"..COLOR_5.. " ["..tostring( slot_from_Link    ).."]|r"
 
         --}}}
         -- ITEM ......... f(bagIndex) {{{
@@ -1361,90 +1453,23 @@ function getItem_tooltip(bNum)
     return tt
 end
 --}}}
--- getItem_slot_from_itID {{{
-function getItem_slot_from_itID(itemId, itemLevel, itemLink, texture)
+-- getItem_slot_from_link {{{
+function getItem_slot_from_link(itemLink)
 local log_this = DEBUG_ITEM
 
-    itemId                  = tonumber(            itemId         ) if(not itemId) then return -1 end
-    itemLevel               = tonumber(            itemLevel      ) or 0
-    itemLink                = tostring(            itemLink       )
-    texture                 = tostring(            texture        )
+    if(not itemLink) then return -1 end
 
-    -- HEADERS {{{
-    local TEXTURE_SIEGE_26  = "/esoui/art/icons/ava_siege"
-    local itemLink_header40 = string.sub( itemLink, 0, 40) or ""
-    local texture_header26  = string.sub( texture , 0, 26) or ""
-    local isSiegeEngine     = texture_header26 and (texture_header26 == TEXTURE_SIEGE_26)
---{{{
-if(log_this) then
-    d("getItem_slot_from_itID:")
-    d("→ [itemId "       ..COLOR_1..tostring( itemId            ).."|r] type "..type( itemId    ).."]")
-    d("→ [itemLevel "    ..COLOR_2..tostring( itemLevel         ).."|r] type "..type( itemLevel ).."]")
-    d("→ [itemLink "     ..COLOR_3..tostring( itemLink          ).."|r]")
-    d("→ [texture "      ..COLOR_4..tostring( texture           ).."|r]")
-    d("→ [isSiegeEngine "         ..tostring( isSiegeEngine     )..  "]")
-    d("→ itemLink_header40 " .."["..tostring( itemLink_header40 )..  "]")
-    d("→ texture_header26 "  .."["..tostring( texture_header26  )..  "]")
-end
---}}}
-    --}}}
+    itemLink = getItem_normalized_link( itemLink )
+if(log_this) then d("getItem_slot_from_link("..COLOR_1..tostring(itemLink).."|r)") end
 
     for _, data in pairs(SHARED_INVENTORY.bagCache[BAG_BACKPACK]) do
         if data ~= nil then
-            -- [bagItemId] {{{
-            local bagItemId  = GetItemId(BAG_BACKPACK, data.slotIndex)
---(log_this) then d(COLOR_8.."[bagItemId "..bagItemId.."]") end
-
-            if(   bagItemId == itemId   ) then
-if(log_this) then d(COLOR_7.."FOUND [itemId "..itemId.."] .. [bagItemId ("..type(bagItemId)..")"..bagItemId.."]") end
-            --}}}
-                -- [Siege Engine] {{{
-                --Trader08_190905
-                --{{{
-
-                -- SIEGES LEVELS AREN'T RETURNED CORRECTLY
-
-                -- Their links also differ by using one function or another...
-                --   It is caused by their HP, always returning full HP
-                --   while in quickslot but returning true HP while in inventory
-                --   and returning 0 HP when using GetItemLink in here.
-
-                -- So what we do is check to confirm we have the right siege
-                --   by only getting the substring of the links, cutting before the HP index
-
-                -- This way, same sieges of different levels share the same itemId
-                --   and as we know their levels aren't returned correctly,
-                --   but their item links will compare correctly
-                --   since their itemId:itemLevel are always correct
-                --   in that part of the links
-
-                -- P.S. Sadly, this breaks what I loved for the addon
-                --   to auto find next siege of different level,
-                --   but this is the right way to do it for things not to get messed up.
-
-                --}}}
-
-                if( isSiegeEngine ) then
-                    local bagLink_header40 = string.sub(GetItemLink(BAG_BACKPACK, data.slotIndex), 0 ,40)
-                    local    same_header40 = (bagLink_header40 == itemLink_header40)
-                    if(      same_header40 ) then
-if(log_this) then d(COLOR_3.."ITEM SIEGE....: return [slotIndex "..tostring(data.slotIndex).."] .. (name "..tostring(data.name)..")") end
-
-                        return data.slotIndex
-                    end
-                    --}}}
-                    -- [All others] {{{
-                elseif ((data.requiredLevel == itemLevel) or (itemLevel == 0)) then
-
-if(log_this) then d(COLOR_9.."ITEM NOT SIEGE: return [slotIndex "..tostring(data.slotIndex).."] .. (name "..tostring(data.name)..")") end
-
+                if(is_same_item_link(itemLink, GetItemLink(BAG_BACKPACK, data.slotIndex))) then
                     return data.slotIndex
                 end
-                --}}}
-
-            end
         end
     end
+
 if(log_this) then d(COLOR_8.."ITEM NOT FOUND: return [-1]") end
     return -1
 end
@@ -1522,11 +1547,58 @@ function getItem_levl_from_slot(bagIndex)
 end
 
 --}}}
+-- getItem_normalized_link {{{
+function getItem_normalized_link( itemLink )
+
+    if(not itemLink) then return "" end
+
+
+    local t = string_split(itemLink)
+
+    -- COLL |H0:item:54339:308:50:8454917
+    -- _____1__:2___:3____:4__:5_ 6______
+
+    -- ITEM |H0:item:54339:308:50:0:0:0:0:0:0:0:0:0:0:0:0:36:0:0:0:0:8454917
+    -- _____|1__:2__:3____:4__:5_:.:.:.:.:.:.:.:.:.:.:.:.:..:.:.:.:.:23
+
+    if(  #t < 7) then 
+        return itemLink     -- normalized already
+
+    else
+        local  h0           = t[ 1]
+        local  type         = t[ 2]
+        local  id           = t[ 3]
+        local  level        = t[ 5]
+        local  potion_buffs = t[23]
+
+        return  h0
+        ..":".. type
+        ..":".. id
+        ..":".. t[4]
+        ..":".. level
+        ..":".. potion_buffs
+
+    end
+end
+--}}}
+-- is_same_item_link {{{
+function is_same_item_link(l1, l2)
+local log_this = DEBUG_ITEM
+
+    if(not l1 or not l2) then return false end
+
+    local result = getItem_normalized_link( l1 ) == getItem_normalized_link( l2 )
+
+if(log_this) then d("l1=["..l1.."] == l2=["..l2.."] .. return "..tostring(result)) end
+
+    return result
+end
+--}}}
 
 -- COPY
 -- DeepCopy {{{
 function DeepCopy(orig)
---D("DeepCopy()")
+D("DeepCopy()")
     local orig_type = type(orig)
     local copy
     if orig_type == 'table' then
@@ -3087,122 +3159,12 @@ D("IsEmptySlot("..tostring(slotIndex)..")")
 
 end
 --}}}
-
--- LOGGING
--- D {{{
-function D(msg)
-    if DEBUG then
-        d(COLOR_7..".QSB.DEBUG:|r "..msg)
-    end
-end
-
---}}}
--- D_EVENT {{{
-function D_EVENT(eventName)
-    if DEBUG_EVENT or DEBUG then
-        d(COLOR_7..".QSB.DEBUG: "..COLOR_C..eventName)
-    end
-end
-
---}}}
--- D_ITEM {{{
-function D_ITEM(msg)
-    if DEBUG_ITEM or DEBUG then
-        d(msg)
-    end
-end
-
---}}}
--- D_STATUS {{{
-function D_STATUS(_caller)
-d("\r\n".._caller..":")
-
-    -- ACTIVE OPTIONS
-    if          QSB.Settings.LockThisPreset
-        or      QSB.Settings.DelayPresetSwapWhileInCombat
-        then
-            d(COLOR_8..COLOR_4.."[".. QSB.Settings.PresetName.."]"
-            .. (QSB.Settings.LockThisPreset               and (COLOR_2.." .. IS LOCKED"               ) or "")
-            .. (QSB.Settings.DelayPresetSwapWhileInCombat and (COLOR_5.." .. EQUIP AFTER COMBAT IS ON") or "")
-            )
-        end
-
-    -- TASKS
-    local preset_pending_name =  Get_preset_pending_IN_COMBAT()
-    local preset_pending      = (preset_pending_name ~= "")
-    local tasks_pending       = (#tasks_loaded > 0) or (#tasks_posted > 0)
-
-    if(    tasks_pending
-        or preset_pending
-        ) then
-
-        d(COLOR_8.."TASKS"
-        ..(tasks_pending     and (COLOR_4.." COOLDOWN ["..#tasks_loaded.." loaded] ["..#tasks_posted.." posted]") or "")
-        ..(preset_pending    and (COLOR_4.."  DELAYED ["..preset_pending_name.."]"                              ) or "")
-        )
-    end
-
-    -- INTERFACE
-    local interface_showing =     Reticle_isHidden
-    local inventory_showing = not ZO_PlayerInventory:IsHidden()
-    local qsb_panel_showing = not QSB.Panel:IsHidden()
-    local quickslot_showing = not ZO_QuickSlot:IsHidden()
-
-    if(    qsb_panel_showing
-        or interface_showing
-        or inventory_showing
-        or quickslot_showing
-        ) then
-
-        d((interface_showing and COLOR_3.." INTERFACE" or "")
-        ..(quickslot_showing and COLOR_4.." QSB-WHEEL" or "")
-        ..(inventory_showing and COLOR_5.." INVENTORY" or "")
-        ..(qsb_panel_showing and COLOR_7.." SETTINGS"  or "")
-        )
-    end
-
-end
---}}}
--- D_QSB {{{
-function D_QSB(title, bNum)
-
-    if(QSB.Settings.SlotItemTable[bNum].slotId) then
-
-        d( COLOR_X[bNum]      .. title.."["..bNum.."]"
-        .. COLOR_9 .." Link_" .. tostring( QSB.Settings.SlotItemTable[bNum].itemLink  )
-        .. COLOR_2 .." ID_"   .. tostring( QSB.Settings.SlotItemTable[bNum].itemId    )
-        .. COLOR_3 .." Type_" .. tostring( QSB.Settings.SlotItemTable[bNum].itemType  )
-        .. COLOR_4 .." Name_" .. tostring( QSB.Settings.SlotItemTable[bNum].itemName  )
-        .. COLOR_5 .." Slot_" .. tostring( QSB.Settings.SlotItemTable[bNum].slotId    )
-        .. COLOR_6 .." Level_".. tostring( QSB.Settings.SlotItemTable[bNum].itemLevel )
-        )
-    else
-        d(           title    .. "["..bNum.."] "..COLOR_8.." EMPTY SLOT")
-    end
-
-end
---}}}
--- D_EQUIP {{{
-function D_EQUIP(title, bNum, itemId, itemType, itemLevel, itemLink)
-
-    if    itemLink == "" then
-
-        d("→ "..title
-        .." " ..COLOR_4.." #"..  bNum
-        ..                " ".. (itemId   and (COLOR_8..          tostring(itemId   )) or "→")
-        .." " ..COLOR_3.."→ → →"
-        ..      COLOR_8.." empty slot")
-
-    else
-
-        d("→ "..title
-        .." " ..COLOR_4.." #"..  bNum
-        ..               " ".. (itemId    and (COLOR_8..          tostring(itemId   )) or "→")
-        ..      COLOR_3.." ".. (itemType  and (                   tostring(itemType )) or "→")
-        ..               " ".. (itemLevel and (COLOR_5.."Level "..tostring(itemLevel)) or "→")
-        ..             "|r "..                                    tostring(itemLink ))
-    end
-
+-- string_split {{{
+function string_split(s, sep)
+   local sep, fields = sep or ":", {}
+   local     pattern = string.format("([^%s]+)", sep)
+   s:gsub(   pattern , function(c) fields[#fields+1] = c end)
+   return fields
 end
 --}}}
 
@@ -4677,7 +4639,7 @@ function OnClicked_bNum(bNum)
         CHAT_SYSTEM:Maximize()
 
         if(DEBUG_EQUIP) then
-            local bagIndex = getItem_slot_from_itID(itemId, itemLevel, itemLink, QSB.Settings.SlotItemTable[bNum].texture)
+            local bagIndex = getItem_slot_from_link(itemLink) --itemId, itemLevel, itemLink, QSB.Settings.SlotItemTable[bNum].texture)
             local data     = SHARED_INVENTORY.bagCache[BAG_BACKPACK][bagIndex]
             d_table("data", data)
 
@@ -4728,13 +4690,6 @@ function OnSlashCommand(arg)
             d(QSB_SLASH_COMMAND.. ' lua _G["SLASH_COMMANDS"]')
         end
 
-      --d(QSB_SLASH_COMMAND.. " debug")
-      --d(QSB_SLASH_COMMAND.. " debug_item")
-      --d(QSB_SLASH_COMMAND.. " debug_event")
-      --d(QSB_SLASH_COMMAND.. " _G[...] ... dumps global variable")
-      --d(QSB_SLASH_COMMAND.. " kbclr ... Clear all KeyBindings (protected, wont work)")
-      --d(QSB_SLASH_COMMAND.. " kbmod ... Apply KeyBindings Modifier")
-
     --}}}
     -- chatmax chatreset {{{
     elseif(arg == "chatmax"  ) then
@@ -4781,6 +4736,7 @@ function OnSlashCommand(arg)
             QSB.Settings.SlotItemTable[bNum].itemLevel = nil
             QSB.Settings.SlotItemTable[bNum].slotId    = nil
             QSB.Settings.SlotItemTable[bNum].texture   = nil
+            QSB.Settings.SlotItemTable[bNum].itemLink  = nil -- Trader08 added
        end
 
        loadPresetSlots()
@@ -4837,8 +4793,7 @@ function OnSlashCommand(arg)
     elseif(arg == "debug_tasks"   ) then DEBUG_TASKS    = not DEBUG_TASKS   ; d("...DEBUG_TASKS....=[" ..tostring( DEBUG_TASKS    ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_station" ) then DEBUG_STATION  = not DEBUG_STATION ; d("...DEBUG_STATION..=[" ..tostring( DEBUG_STATION  ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_status"  ) then DEBUG_STATUS   = not DEBUG_STATUS  ; d("...DEBUG_STATUS...=[" ..tostring( DEBUG_STATUS   ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_trader"  ) then DEBUG_TOOLTIPS = not DEBUG_TOOLTIPS; d("...DEBUG_TOOLTIPS.=[" ..tostring( DEBUG_TOOLTIPS ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_count"   ) then DEBUG_COUNT    = not DEBUG_COUNT   ; d("...DEBUG_COUNT....=[" ..tostring( DEBUG_COUNT    ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_tooltip" ) then DEBUG_TOOLTIPS = not DEBUG_TOOLTIPS; d("...DEBUG_TOOLTIPS.=[" ..tostring( DEBUG_TOOLTIPS ).. "]"); ui_may_have_changed = true
     --}}}
     else -- LUA
         -- _G --{{{
@@ -5066,12 +5021,12 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (190918)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (190925)\n"
     .."!!"..COLOR_8.." Update 23 (5.1.5): Scalebreaker (API 100028)\n"
     .."→ "..COLOR_7.."Trader08_mod:\n"
     .."→ "..COLOR_2.."- LockThisPreset\n"
     .."→ "..COLOR_5.."- DelayPresetSwapWhileInCombat\n"
-    .."→ "..COLOR_6.."- behaves with Item Types and Levels\n"
+    .."→ "..COLOR_6.."- Behaves! with Items name, type and level\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
