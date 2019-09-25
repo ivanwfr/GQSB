@@ -299,7 +299,7 @@ local QSB = {
     Presets                             = { P1={}, P2={}, P3={}, P4={}, P5={} },
 
     SomeSlotItemChanged                 = false,
-    CloneCurrentToEmtpyPreset           = true,
+    CloneCurrentToEmtpyPreset           = false,
 
     -- small helper tags
     UIHandles_label_tooltip             = {
@@ -1550,8 +1550,10 @@ end
 -- getItem_normalized_link {{{
 function getItem_normalized_link( itemLink )
 
-    if(not itemLink) then return "" end
+    itemLink = tostring( itemLink );
 
+    if(not itemLink         ) then return "" end
+    if(    itemLink.len < 10) then return "" end
 
     local t = string_split(itemLink)
 
