@@ -1,17 +1,18 @@
 -- Greymind Quick Slot Bar --{{{
 --  Feature Author: ivanwfr
 --}}}
--- CHANGELOG 190925
+-- CHANGELOG 190926
 --{{{
 --[[
-v2.4.8 {{{
-- [color="aaffaa"]190925[/color]
+v2.4.8.8 {{{
+- [color="aaffaa"]190926[/color]
 - [color="magenta"]Trader08_mod:[/color]
 - [color="magenta"][b]LockThisPreset[/b][/color]
 - [color="magenta"][b]DelayPresetSwapWhileInCombat[/b][/color]
-- [color="magenta"]a few hacks helping for items with [color="green"]same Id but different Level[/color].
+- [color="magenta"][b]Items with same Id but different flavors[/b][/color] improved support based on [b]Items Link[/b].
+- [color="orange"]ChatMax[/color] utility option to unlock Chat Window maximum size.
+- [color="orange"]ChatMute[/color] option to block all Chat warning messages.
 - [color="blue"][b]LinkToChatOnClick[/b][/color]
-- [color="blue"]ChatMax[/color] utility option to unlock Chat Window maximum size.
 - [color="blue"]Default Show Policy[/color] set to [Never] instead of [Always]
 - [color="blue"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
 - [color="blue"]UI layout[/color] may be reduced to a single [1x1 cell] .. down from [2R x 1C]
@@ -268,7 +269,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8", -- 190918 previous: 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.8.8", -- 190926 previous: 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -333,6 +334,7 @@ QSB.SettingsDefaults = {
     ButtonsDisplayed                    = QSB.ButtonCountMax,
     GameActionButtonHide                = false,
     ChatMax                             = false,
+    ChatMute                            = false,
     LockUI                              = false,
     LockThisPreset                      = false,
     DelayPresetSwapWhileInCombat        = false,
@@ -1561,19 +1563,18 @@ function getItem_normalized_link( itemLink )
     -- _____1__:2___:3____:4__:5_ 6______
 
     -- ITEM |H0:item:54339:308:50:0:0:0:0:0:0:0:0:0:0:0:0:36:0:0:0:0:8454917
-    -- _____|1__:2__:3____:4__:5_:.:.:.:.:.:.:.:.:.:.:.:.:..:.:.:.:.:23
+    -- _____|1__:2__:3____:4__:5_:.:.:.:.:.:.:.:.:.:.:.:.:..:.:.:.:.:23_____
 
     if(  #t < 7) then 
         return itemLink     -- normalized already
 
     else
-        local  h0           = t[ 1]
         local  type         = t[ 2]
         local  id           = t[ 3]
         local  level        = t[ 5]
         local  potion_buffs = t[23]
 
-        return  h0
+        return  t[1]
         ..":".. type
         ..":".. id
         ..":".. t[4]
@@ -3297,6 +3298,7 @@ function QSB_Setting_Preset_Changed(q,l,presetName)
     k = "NextPrevWrap"                 ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "LockUI"                       ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "ChatMax"                      ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ChatMute"                     ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "LockThisPreset"               ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "DelayPresetSwapWhileInCombat" ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "SwapBackgroundColors"         ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
@@ -4157,7 +4159,21 @@ D("BuildSettingsMenu()")
         ..            " will restore the default size,"
         ..            " but the maximun width and height"
         ..            " will remain unlocked until logout."
-        ,
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
+    -- ChatMute --{{{
+    control = {
+        type        = "checkbox",
+        reference   = "SetChatMute",
+        name        = "ChatMute",
+        tooltip     = "Whether to suppress all Chat Warning Messages",
+        getFunc     = function()      return QSB.Settings.ChatMute end,
+        setFunc     = function(value) QSB.Settings.ChatMute = value if(not value) then d(COLOR_5.." GQSB: ChatMute turned OFF") end end,
+        width       = "full",
+        warning     = "This is an "..COLOR_3.."all Presets|r option\n\n"
+        ..            "Default is to allow somehow important messages to be displayed in the Main Chat window"
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
@@ -5023,7 +5039,7 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (190925)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (190926)\n"
     .."!!"..COLOR_8.." Update 23 (5.1.5): Scalebreaker (API 100028)\n"
     .."→ "..COLOR_7.."Trader08_mod:\n"
     .."→ "..COLOR_2.."- LockThisPreset\n"
