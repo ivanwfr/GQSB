@@ -5058,7 +5058,7 @@ function d_signature()
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
-    if(QSB.Settings.ChatMute) then d(COLOR_5.." GQSB: ChatMute is ON") end
+    if(QSB.Settings.ChatMute) then d(COLOR_2.." GQSB: ChatMute is ON") end
 end
 --}}}
 GreymindQuickSlotBar = QSB
