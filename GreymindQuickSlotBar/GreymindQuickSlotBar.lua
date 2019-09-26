@@ -4,7 +4,7 @@
 -- CHANGELOG 190926
 --{{{
 --[[
-v2.4.8.8 {{{
+v2.4.8.9 {{{
 - [color="aaffaa"]190926[/color]
 - [color="magenta"]Trader08_mod:[/color]
 - [color="magenta"][b]LockThisPreset[/b][/color]
@@ -12,6 +12,7 @@ v2.4.8.8 {{{
 - [color="magenta"][b]Items with same Id but different flavors[/b][/color] improved support based on [b]Items Link[/b].
 - [color="orange"]ChatMax[/color] utility option to unlock Chat Window maximum size.
 - [color="orange"]ChatMute[/color] option to block all Chat warning messages.
+- per-session (i.e. not per-preset), one for Account-wide ON, one for Character-wide.
 - [color="blue"][b]LinkToChatOnClick[/b][/color]
 - [color="blue"]Default Show Policy[/color] set to [Never] instead of [Always]
 - [color="blue"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
@@ -19,6 +20,7 @@ v2.4.8.8 {{{
 - [color="blue"][X] Defaults Settings button[/color] will only reset the Current Preset.
 - You can use the [color="red"]/resetall[/color] slash-command to reset all 5 Preset at once.
 - [color="blue"]Re-shuffled Settings Menu.[/color]
+- [color="blue"]LibStub.txt Version 1.0 r6 .. API 100029[/color]
 
 }}}
 --]]
@@ -269,7 +271,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8.8", -- 190926 previous: 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.8.9", -- 190926 previous: 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
