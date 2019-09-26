@@ -4,7 +4,7 @@
 -- CHANGELOG 190926
 --{{{
 --[[
-v2.4.8.9 {{{
+v2.4.8.10 {{{
 - [color="aaffaa"]190926[/color]
 - [color="magenta"]Trader08_mod:[/color]
 - [color="magenta"][b]LockThisPreset[/b][/color]
@@ -271,7 +271,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8.9", -- 190926 previous: 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.8.10", -- 190926 previous: 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -483,10 +483,18 @@ local Reticle_isHidden              = false
 local SelectNextAuto_pending        = false
 --}}}
 -- LOGGING --{{{
+-- d {{{
+function c(args)
+    if not QSB                   then return end
+    if not QSB.Settings          then return end
+    if not QSB.Settings.ChatMute then return end
+    d(args)
+end
+--}}}
 -- D {{{
 local function D(msg)
     if DEBUG then
-        d(COLOR_7..".QSB.DEBUG:|r "..msg)
+        c(COLOR_7..".QSB.DEBUG:|r "..msg)
     end
 end
 --}}}
@@ -495,7 +503,7 @@ local function D_EQUIP(title, bNum, itemId, itemType, itemLevel, itemLink)
 
     if    itemLink == "" then
 
-        d("→ "..title
+        c("→ "..title
         .." " ..COLOR_4.." #"..  bNum
         ..                " ".. (itemId   and (COLOR_8..          tostring(itemId   )) or "→")
         .." " ..COLOR_3.."→ → →"
@@ -503,7 +511,7 @@ local function D_EQUIP(title, bNum, itemId, itemType, itemLevel, itemLink)
 
     else
 
-        d("→ "..title
+        c("→ "..title
         .." " ..COLOR_4.." #"..  bNum
         ..               " ".. (itemId    and (COLOR_8..          tostring(itemId   )) or "→")
         ..      COLOR_3.." ".. (itemType  and (                   tostring(itemType )) or "→")
@@ -516,7 +524,7 @@ end
 -- D_EVENT {{{
 local function D_EVENT(eventName)
     if DEBUG_EVENT or DEBUG then
-        d(COLOR_7..".QSB.DEBUG: "..COLOR_C..eventName)
+        c(COLOR_7..".QSB.DEBUG: "..COLOR_C..eventName)
     end
 end
 
@@ -524,7 +532,7 @@ end
 -- D_ITEM {{{
 local function D_ITEM(msg)
     if DEBUG_ITEM or DEBUG then
-        d(msg)
+        c(msg)
     end
 end
 
@@ -534,7 +542,7 @@ local function D_QSB(title, bNum)
 
     if(QSB.Settings.SlotItemTable[bNum].slotId) then
 
-        d( COLOR_X[bNum]      .. title.."["..bNum.."]"
+        c( COLOR_X[bNum]      .. title.."["..bNum.."]"
         .. COLOR_9 .." Link_" .. tostring( QSB.Settings.SlotItemTable[bNum].itemLink  )
         .. COLOR_2 .." ID_"   .. tostring( QSB.Settings.SlotItemTable[bNum].itemId    )
         .. COLOR_3 .." Type_" .. tostring( QSB.Settings.SlotItemTable[bNum].itemType  )
@@ -543,20 +551,20 @@ local function D_QSB(title, bNum)
         .. COLOR_6 .." Level_".. tostring( QSB.Settings.SlotItemTable[bNum].itemLevel )
         )
     else
-        d(           title    .. "["..bNum.."] "..COLOR_8.." EMPTY SLOT")
+        c(           title    .. "["..bNum.."] "..COLOR_8.." EMPTY SLOT")
     end
 
 end
 --}}}
 -- D_STATUS {{{
 local function D_STATUS(_caller)
-d("\r\n".._caller..":")
+c("\r\n".._caller..":")
 
     -- ACTIVE OPTIONS
     if          QSB.Settings.LockThisPreset
         or      QSB.Settings.DelayPresetSwapWhileInCombat
         then
-            d(COLOR_8..COLOR_4.."[".. QSB.Settings.PresetName.."]"
+            c(COLOR_8..COLOR_4.."[".. QSB.Settings.PresetName.."]"
             .. (QSB.Settings.LockThisPreset               and (COLOR_2.." .. IS LOCKED"               ) or "")
             .. (QSB.Settings.DelayPresetSwapWhileInCombat and (COLOR_5.." .. EQUIP AFTER COMBAT IS ON") or "")
             )
@@ -571,7 +579,7 @@ d("\r\n".._caller..":")
         or preset_pending
         ) then
 
-        d(COLOR_8.."TASKS"
+        c(COLOR_8.."TASKS"
         ..(tasks_pending     and (COLOR_4.." COOLDOWN ["..#tasks_loaded.." loaded] ["..#tasks_posted.." posted]") or "")
         ..(preset_pending    and (COLOR_4.."  DELAYED ["..preset_pending_name.."]"                              ) or "")
         )
@@ -589,7 +597,7 @@ d("\r\n".._caller..":")
         or quickslot_showing
         ) then
 
-        d((interface_showing and COLOR_3.." INTERFACE" or "")
+        c((interface_showing and COLOR_3.." INTERFACE" or "")
         ..(quickslot_showing and COLOR_4.." QSB-WHEEL" or "")
         ..(inventory_showing and COLOR_5.." INVENTORY" or "")
         ..(qsb_panel_showing and COLOR_7.." SETTINGS"  or "")
@@ -603,7 +611,7 @@ end
 -- PRESET
 -- ResetAllPresets {{{
 function ResetAllPresets()
-d("QSB: RESETING ALL PRESETS TO DEFAULT VALUES")
+c("QSB: RESETING ALL PRESETS TO DEFAULT VALUES")
 
     SelectPreset( PRESETNAMES[1] ); CopySettingsDefaultsTo(QSB.Settings)
     SelectPreset( PRESETNAMES[2] ); CopySettingsDefaultsTo(QSB.Settings)
@@ -620,7 +628,7 @@ end
 --}}}
 -- ResetThisPreset {{{
 function ResetThisPreset()
-d("QSB: reseting this preset to default values")
+c("QSB: reseting this preset to default values")
 
     -- KEEP CURRENTLY SELECTED PRESET
 
@@ -642,7 +650,7 @@ function Set_preset_pending_IN_COMBAT( selectedPreset )
 
     -- NEW PRESET REQUESTED
     if( presetName_pending_IN_COMBAT ~= selectedPreset) then
-if(DEBUG_EQUIP) then d(COLOR_5.."Set_preset_pending_IN_COMBAT: ["..tostring(selectedPreset).. " REQUEST PENDING]") end
+if(DEBUG_EQUIP) then c(COLOR_5.."Set_preset_pending_IN_COMBAT: ["..tostring(selectedPreset).. " REQUEST PENDING]") end
 
         PlaySound( SOUNDS.ACTIVE_SKILL_MORPH_CHOSEN )
 
@@ -650,7 +658,7 @@ if(DEBUG_EQUIP) then d(COLOR_5.."Set_preset_pending_IN_COMBAT: ["..tostring(sele
 
     -- SAME PRESET REQUESTED .. CANCEL REQUEST
     else
-if(DEBUG_EQUIP) then d(COLOR_3.."Set_preset_pending_IN_COMBAT: ["..tostring(selectedPreset).. " REQUEST CANCELED]") end
+if(DEBUG_EQUIP) then c(COLOR_3.."Set_preset_pending_IN_COMBAT: ["..tostring(selectedPreset).. " REQUEST CANCELED]") end
 
         PlaySound( SOUNDS.GROUP_PROMOTE )
 
@@ -663,7 +671,7 @@ end
 function Process_preset_pending_IN_COMBAT(inCombat_state)
     if(presetName_pending_IN_COMBAT == "") then return end
 
-if(DEBUG_EQUIP) then d(COLOR_4.."Process_preset_pending_IN_COMBAT: [preset "..tostring(presetName_pending_IN_COMBAT).."] .. [inCombat "..tostring(inCombat_state).."]") end
+if(DEBUG_EQUIP) then c(COLOR_4.."Process_preset_pending_IN_COMBAT: [preset "..tostring(presetName_pending_IN_COMBAT).."] .. [inCombat "..tostring(inCombat_state).."]") end
 
     SelectPreset( presetName_pending_IN_COMBAT )
     presetName_pending_IN_COMBAT     = ""
@@ -684,13 +692,13 @@ end
 function SelectPreset(selectedPreset)
 -- Delay In Combat Preset swap {{{
     if IsUnitInCombat('player') then
-if(DEBUG_EQUIP) then QSB_ClearChat(); d(COLOR_M.."=== CHAT CLEARED BY DEBUG_EQUIP ===") end
+if(DEBUG_EQUIP) then QSB_ClearChat(); c(COLOR_M.."=== CHAT CLEARED BY DEBUG_EQUIP ===") end
 
         if QSB.Settings.DelayPresetSwapWhileInCombat then
             Set_preset_pending_IN_COMBAT( selectedPreset )
 
         else
-if(DEBUG_EQUIP) then d(COLOR_5.."IN COMBAT: PRESET NOT CHANGED: "..QSB.Settings.PresetName) end
+if(DEBUG_EQUIP) then c(COLOR_5.."IN COMBAT: PRESET NOT CHANGED: "..QSB.Settings.PresetName) end
 
             PlaySound( SOUNDS.ITEM_ON_COOLDOWN )
         end
@@ -702,7 +710,7 @@ D("SelectPreset("..COLOR_C..selectedPreset.."|r):")
     -- SAVE CURRENT PRESET .. (unless LockThisPreset is ON and Settings menu is hidden) {{{
     if QSB.Settings.LockThisPreset and QSB.Panel:IsHidden() then
 
-if(log_this) then d(QSB.Settings.PresetName..COLOR_M.." → LOCKED → NOT SAVED") end
+if(log_this) then c(QSB.Settings.PresetName..COLOR_M.." → LOCKED → NOT SAVED") end
 
     else
         local we_can_save_because -- LUA equivalent to ternary operator ?:
@@ -722,7 +730,7 @@ if(log_this) then d(QSB.Settings.PresetName..COLOR_M.." → LOCKED → NOT SAVED
     end
     --}}}
     -- LOAD SELECTED PRESET {{{
-if(log_this) then d(selectedPreset         ..COLOR_M.." → LOADING:") end
+if(log_this) then c(selectedPreset         ..COLOR_M.." → LOADING:") end
 
     local from = QSB.Settings.Presets[selectedPreset]
     local to   = QSB.Settings
@@ -734,7 +742,7 @@ if(log_this) then d(selectedPreset         ..COLOR_M.." → LOADING:") end
 
         -- notify cloning process in chat window
         local currentPreset = QSB.Settings.PresetName
-d(COLOR_4.." Preset"  ..COLOR_3.." "..selectedPreset.." "..COLOR_4.."is EMPTY .. CLONING "..COLOR_3.." "..currentPreset..COLOR_4.." (layout and content)")
+c(COLOR_4.." Preset"  ..COLOR_3.." "..selectedPreset.." "..COLOR_4.."is EMPTY .. CLONING "..COLOR_3.." "..currentPreset..COLOR_4.." (layout and content)")
 
         from = QSB.Settings.Presets[currentPreset]
         to   = QSB.Settings
@@ -770,9 +778,9 @@ function SaveCurrentPreset(_caller)
     local log_this = DEBUG_EQUIP
 
     local currentPreset = QSB.Settings.PresetName
-if(log_this) then d("...PRESET __SAVING:".. currentPreset) end
+if(log_this) then c("...PRESET __SAVING:".. currentPreset) end
 
-if(log_this) then d(COLOR_4.."SAVING PRESET "..COLOR_M.."["..tostring(currentPreset).."]: ".._caller) end
+if(log_this) then c(COLOR_4.."SAVING PRESET "..COLOR_M.."["..tostring(currentPreset).."]: ".._caller) end
 
     -- DEFAULTS SETTINGS
     QSB.Settings.Presets[currentPreset] = DeepCopy(QSB.SettingsDefaults)
@@ -860,18 +868,18 @@ end
 --}}}
 -- loadPresetSlots_checkSlotItemTable {{{
 function loadPresetSlots_checkSlotItemTable(log_this)
-if(log_this) then d(COLOR_4.."LOADING "..QSB.Settings.PresetName.." SLOTS") end
+if(log_this) then c(COLOR_4.."LOADING "..QSB.Settings.PresetName.." SLOTS") end
 
     if(QSB.Settings.SlotItemTable == nil) then
 
-if(log_this) then d(COLOR_2.." nothing to load|r") end
+if(log_this) then c(COLOR_2.." nothing to load|r") end
 
         return false
     end
 
     if is_SlotItemTable_empty() then
 
-if(log_this) then d(COLOR_8.." preset is empty|r") end
+if(log_this) then c(COLOR_8.." preset is empty|r") end
 
     end
 
@@ -899,10 +907,10 @@ local log_this = DEBUG_EQUIP or DEBUG_TASKS or DEBUG_STATUS or DEBUG_ITEM
         local emptyPresetSlot = (presetItemName == nil) or (presetItemName == "")
         if(   emptyPresetSlot ) then
             if(slottedName == "") then
-if(log_this) then d(COLOR_8.."TASK: SKIP  EMPTY") end
+if(log_this) then c(COLOR_8.."TASK: SKIP  EMPTY") end
 
             else
-if(log_this) then d(COLOR_8.."TASK: CLEAR UNUSED ["..tostring(slottedName).."]") end
+if(log_this) then c(COLOR_8.."TASK: CLEAR UNUSED ["..tostring(slottedName).."]") end
 
                 tasks_loaded[#tasks_loaded + 1]
                 = { clear_bNum
@@ -915,7 +923,7 @@ if(log_this) then d(COLOR_8.."TASK: CLEAR UNUSED ["..tostring(slottedName).."]")
         -- TASK: [CLEAR CHANGED PRESET SLOT] {{{
         else
             if(not is_same_slotted_item(bNum)) then
-if(log_this) then d(COLOR_8.."TASK: CLEAR CHANGED ["..tostring(slottedName).."] ~= ["..tostring(presetItemName).."]") end
+if(log_this) then c(COLOR_8.."TASK: CLEAR CHANGED ["..tostring(slottedName).."] ~= ["..tostring(presetItemName).."]") end
 
                 tasks_loaded[#tasks_loaded + 1]
                 = { clear_bNum
@@ -937,7 +945,7 @@ if(log_this) then d(COLOR_8.."TASK: CLEAR CHANGED ["..tostring(slottedName).."] 
         if(     not emptyPresetSlot
             and not is_same_slotted_item( bNum )) then
 
-if(log_this) then d(COLOR_9.."TASK: EQUIP ["..tostring(presetItemName).."]") end
+if(log_this) then c(COLOR_9.."TASK: EQUIP ["..tostring(presetItemName).."]") end
 
             tasks_loaded[#tasks_loaded + 1]
             = { equip_bNum
@@ -961,10 +969,10 @@ if(log_this) then d(COLOR_9.."TASK: EQUIP ["..tostring(presetItemName).."]") end
     -- TASKS START OR COOLDOWN {{{
     if(#tasks_loaded > 0) then
         if not tasks_cooldown_inprogress then
-            if(log_this) then d(COLOR_C.."TASK #"..tostring(#tasks_loaded).." .. NOT ON COOLDOWN") end
+            if(log_this) then c(COLOR_C.."TASK #"..tostring(#tasks_loaded).." .. NOT ON COOLDOWN") end
             tasks_post(ZO_CALLLATER_DELAY_TASKS)
         else
-            if(log_this) then d(COLOR_M.."TASK #"..tostring(#tasks_loaded).." .. ON COOLDOWN .. POSTPONING") end
+            if(log_this) then c(COLOR_M.."TASK #"..tostring(#tasks_loaded).." .. ON COOLDOWN .. POSTPONING") end
             tasks_cooldown_begin()
             return
         end
@@ -1036,7 +1044,7 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
             )
 
             -- CHAT ALERT
-            d(                      COLOR_2..QSB.Name..":\r\n"
+            c(                      COLOR_2..QSB.Name..":\r\n"
             ..COLOR_3.."You're out of|r "..tostring(itemLink)
             ..COLOR_3.." in your inventory,|r "
             ..COLOR_4.. warnMsg
@@ -1048,7 +1056,7 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
 D_EQUIP(ITEM_2_EQUIP_ERROR_SLOT, bNum, itemId, itemType, itemLevel, itemLink)
 
             -- CHAT ALERT
-            d(                      COLOR_2..QSB.Name..":\r\n"
+            c(                      COLOR_2..QSB.Name..":\r\n"
             .."→. [slotId   ".. tostring( slotId   ) .."]\r\n"
             .."→. [bagIndex ".. tostring( bagIndex ) .."]\r\n"
             .."→. [itemName ".. tostring( itemName ) .."]\r\n")
@@ -1080,10 +1088,10 @@ function clear_bNum(bNum, reason, log_this)
     local slotIndex    = bNum_to_slotIndex( bNum      )
     local slottedName  = GetSlotName      ( slotIndex )
     if(   slottedName ~= "") then
-if(log_this) then d("_CLEARING ["..COLOR_6..bNum.."|r] ["..COLOR_8..reason.."|r] ["..COLOR_6..tostring( slottedName).."|r]") end
+if(log_this) then c("_CLEARING ["..COLOR_6..bNum.."|r] ["..COLOR_8..reason.."|r] ["..COLOR_6..tostring( slottedName).."|r]") end
 
     else
-if(log_this) then d("_CLEARING ["..COLOR_6..bNum.."|r] ["..COLOR_8..reason.."|r] ["..COLOR_8.."no slottedName]") end
+if(log_this) then c("_CLEARING ["..COLOR_6..bNum.."|r] ["..COLOR_8..reason.."|r] ["..COLOR_8.."no slottedName]") end
 
     end
     CallSecureProtected("ClearSlot", slotIndex)
@@ -1104,12 +1112,12 @@ end
 function tasks_cooldown_begin()
     -- NO STACKING COOLDOWN {{{
     if tasks_cooldown_inprogress then
-if(DEBUG_TASKS) then d(COLOR_8.."TASK .. COOLDOWN ALREADY IN PROGRESS") end
+if(DEBUG_TASKS) then c(COLOR_8.."TASK .. COOLDOWN ALREADY IN PROGRESS") end
 
         return
     end
     --}}}
-if(DEBUG_TASKS) then d(COLOR_7.."TASK .. COOLDOWN BEGIN") end
+if(DEBUG_TASKS) then c(COLOR_7.."TASK .. COOLDOWN BEGIN") end
     tasks_cooldown_inprogress = true
 
     zo_callLater(tasks_cooldown_end, ZO_COOL_DOWN_DELAY_TASKS)
@@ -1120,11 +1128,11 @@ function tasks_cooldown_end()
     tasks_cooldown_inprogress = false
 
     if(#tasks_loaded > 0) then
-if(DEBUG_TASKS) then d(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_4.."POSTING "..#tasks_loaded.." LOADED TASKS") end
+if(DEBUG_TASKS) then c(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_4.."POSTING "..#tasks_loaded.." LOADED TASKS") end
 
         tasks_post(ZO_CALLLATER_DELAY_TASKS)
     else
-if(DEBUG_TASKS) then d(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_8.."NO MORE LOADED TASKS") end
+if(DEBUG_TASKS) then c(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_8.."NO MORE LOADED TASKS") end
 
         Refresh("TASKS COOLDOWN END")
     end
@@ -1133,7 +1141,7 @@ end
 --}}}
 -- tasks_post {{{
 function tasks_post(delay)
-if(DEBUG_TASKS) then d(COLOR_C.."TASK #"..tostring(#tasks_loaded).." .. POST DELAY("..tostring(delay)..") .. "..#tasks_loaded.." LOADED TASKS") end
+if(DEBUG_TASKS) then c(COLOR_C.."TASK #"..tostring(#tasks_loaded).." .. POST DELAY("..tostring(delay)..") .. "..#tasks_loaded.." LOADED TASKS") end
     tasks_cooldown_begin()
 
     tasks_posted = DeepCopy(tasks_loaded)
@@ -1145,7 +1153,7 @@ end
 function tasks_handler()
     -- fetch next task {{{
     if(#tasks_posted == 0) then
-if(DEBUG_TASKS) then d(COLOR_8.."TASK .. NO PENDING TASK") end
+if(DEBUG_TASKS) then c(COLOR_8.."TASK .. NO PENDING TASK") end
         return
     end
 
@@ -1158,13 +1166,13 @@ if(DEBUG_TASKS) then d(COLOR_8.."TASK .. NO PENDING TASK") end
 if(DEBUG_TASKS) then
     if    (clear_or_equip == clear_bNum) then
 
-        d(     COLOR_6.."TASK .. CLEAR b"..COLOR_8..tostring( bNum               )
+        c(     COLOR_6.."TASK .. CLEAR b"..COLOR_8..tostring( bNum               )
         .." "..COLOR_6..                            tostring( itemName_or_reason )
         )
 
     elseif(clear_or_equip == equip_bNum) then
 
-        d(     COLOR_4.."TASK .. EQUIP b"..COLOR_7..tostring( bNum               )
+        c(     COLOR_4.."TASK .. EQUIP b"..COLOR_7..tostring( bNum               )
         .." "..COLOR_4..                            tostring( itemName_or_reason )
         .." "..COLOR_8.."slotId="..                 tostring( slotId             )
         .." "..COLOR_8.."itemId="..                 tostring( itemId             )
@@ -1175,14 +1183,14 @@ if(DEBUG_TASKS) then
 
     else
 
-        d(COLOR_2.."TASKS:")
-        d(".....clear_or_equip=["..tostring(clear_or_equip    ).."]")
-        d("...............bNum=["..tostring(bNum              ).."]")
-        d(".itemName_or_reason=["..tostring(itemName_or_reason).."]")
-        d(".............slotId=["..tostring(slotId            ).."]")
-        d(".............itemId=["..tostring(itemId            ).."]")
-        d("...........itemType=["..tostring(itemType          ).."]")
-        d("...........itemLink=["..tostring(itemLink          ).."]")
+        c(COLOR_2.."TASKS:")
+        c(".....clear_or_equip=["..tostring(clear_or_equip    ).."]")
+        c("...............bNum=["..tostring(bNum              ).."]")
+        c(".itemName_or_reason=["..tostring(itemName_or_reason).."]")
+        c(".............slotId=["..tostring(slotId            ).."]")
+        c(".............itemId=["..tostring(itemId            ).."]")
+        c("...........itemType=["..tostring(itemType          ).."]")
+        c("...........itemLink=["..tostring(itemLink          ).."]")
     end
 end
 --}}}
@@ -1207,7 +1215,7 @@ end
     --}}}
     -- 2/2 all done and up to date {{{
     elseif(#tasks_loaded == 0) then
-if(DEBUG_TASKS) then d(COLOR_3.."TASK .. REQUESTED ALL DONE") end
+if(DEBUG_TASKS) then c(COLOR_3.."TASK .. REQUESTED ALL DONE") end
 
         tasks_cooldown_begin()
 
@@ -1256,7 +1264,7 @@ end
 -- save_QSB_to_SlotItemTable {{{
 function save_QSB_to_SlotItemTable(bNum)
 local log_this = DEBUG_ITEM or DEBUG_EQUIP
-if(log_this) then d("save_QSB_to_SlotItemTable("..bNum.."):") end
+if(log_this) then c("save_QSB_to_SlotItemTable("..bNum.."):") end
 
     local slotIndex = bNum_to_slotIndex( bNum      )
     local itemName  = GetSlotName      ( slotIndex )
@@ -1464,7 +1472,7 @@ local log_this = DEBUG_ITEM
     if(not itemLink) then return -1 end
 
     itemLink = getItem_normalized_link( itemLink )
-if(log_this) then d("getItem_slot_from_link("..COLOR_1..tostring(itemLink).."|r)") end
+if(log_this) then c("getItem_slot_from_link("..COLOR_1..tostring(itemLink).."|r)") end
 
     for _, data in pairs(SHARED_INVENTORY.bagCache[BAG_BACKPACK]) do
         if data ~= nil then
@@ -1474,7 +1482,7 @@ if(log_this) then d("getItem_slot_from_link("..COLOR_1..tostring(itemLink).."|r)
         end
     end
 
-if(log_this) then d(COLOR_8.."ITEM NOT FOUND: return [-1]") end
+if(log_this) then c(COLOR_8.."ITEM NOT FOUND: return [-1]") end
     return -1
 end
 --}}}
@@ -1484,20 +1492,20 @@ local log_this = DEBUG_ITEM
 
     itemName = tostring( itemName )
 
-if(log_this) then d("getItem_slot_from_name("..BAG_BACKPACK..","..itemName..")") end
+if(log_this) then c("getItem_slot_from_name("..BAG_BACKPACK..","..itemName..")") end
 
     for _, data in pairs(SHARED_INVENTORY.bagCache[BAG_BACKPACK]) do
         if data ~= nil then
             local bagItemName  = GetItemName(BAG_BACKPACK, data.slotIndex)
             if(   bagItemName == itemName) then
 
-if(log_this) then d(COLOR_3.."...return [data.slotIndex "..tostring(data.slotIndex).."]") end
+if(log_this) then c(COLOR_3.."...return [data.slotIndex "..tostring(data.slotIndex).."]") end
                   return data.slotIndex
             end
         end
     end
 
-if(log_this) then d(COLOR_8.."...return [-1]") end
+if(log_this) then c(COLOR_8.."...return [-1]") end
     return -1
 end
 --}}}
@@ -1594,7 +1602,7 @@ local log_this = DEBUG_ITEM
 
     local result = getItem_normalized_link( l1 ) == getItem_normalized_link( l2 )
 
-if(log_this) then d("l1=["..l1.."] == l2=["..l2.."] .. return "..tostring(result)) end
+if(log_this) then c("l1=["..l1.."] == l2=["..l2.."] .. return "..tostring(result)) end
 
     return result
 end
@@ -1734,7 +1742,7 @@ local Refresh_count_down  = 0
 local Refresh_last_caller = ""
 
 function Refresh(_caller, delay)
-if(DEBUG_ITEM or DEBUG_EVENT) then d(COLOR_4.."Refresh "..tostring(_caller)) end
+if(DEBUG_ITEM or DEBUG_EVENT) then c(COLOR_4.."Refresh "..tostring(_caller)) end
 
     if(not delay) then delay = ZO_CALLLATER_DELAY_REFRESH end
 
@@ -1762,13 +1770,13 @@ function Refresh_handler()
 -- Refresh_count_down {{{
     local log_this = DEBUG_TASKS
 
-if(log_this) then d("...Refresh_handler() .. ".. tostring(Refresh_count_down)) end
+if(log_this) then c("...Refresh_handler() .. ".. tostring(Refresh_count_down)) end
 
     -- look for the last call .. ignore preceding ones
     Refresh_count_down = Refresh_count_down -1
     if( Refresh_count_down > 0) then return end
 
-if(log_this) then d("...Refresh_handler() .. "..tostring(Refresh_last_caller)) end
+if(log_this) then c("...Refresh_handler() .. "..tostring(Refresh_last_caller)) end
 
     GameActionButtonHideHandler("Refresh_handler") -- (190819) (160218)
 
@@ -1804,7 +1812,7 @@ if(log_this) then d("...Refresh_handler() .. "..tostring(Refresh_last_caller)) e
     if((r ~= 0) or (g ~= 0) or (b ~= 0)) then
         background_color = { R=r , G=g , B=b , A=1 }
     end
-if(log_this) then d("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
+if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
     --}}}
     -- GEOMETRY --{{{
     GreymindQuickSlotBarUI:SetClampedToScreen(true)
@@ -2305,12 +2313,12 @@ function SetChatMax(state)
     if(state) then
         CHAT_SYSTEM.maxContainerWidth, CHAT_SYSTEM.maxContainerHeight = GuiRoot:GetDimensions()
 
-        d("GQSB: "..COLOR_3.." ChatMax "..COLOR_5.." ON|r → "..CHAT_SYSTEM.maxContainerWidth.." x "..CHAT_SYSTEM.maxContainerHeight)
+        c("GQSB: "..COLOR_3.." ChatMax "..COLOR_5.." ON|r → "..CHAT_SYSTEM.maxContainerWidth.." x "..CHAT_SYSTEM.maxContainerHeight)
     else
         for i = 1, #CHAT_SYSTEM.containers do
             CHAT_SYSTEM:ResetContainerPositionAndSize( CHAT_SYSTEM.containers[i] )
         end
-        d("GQSB: "..COLOR_3.." ChatMax "..COLOR_8.." OFF → Resized to default")
+        c("GQSB: "..COLOR_3.." ChatMax "..COLOR_8.." OFF → Resized to default")
     end
 
     CHAT_SYSTEM:Maximize()
@@ -2380,7 +2388,7 @@ end
 function Show_delayed(msg)
     local log_this = DEBUG_STATUS
 
-if(log_this) then d("SHOWING: "..COLOR_4..msg) end
+if(log_this) then c("SHOWING: "..COLOR_4..msg) end
 
     if(not Show_pending) then
         Show_pending = true
@@ -2394,7 +2402,7 @@ function Hide_delayed(msg, delay)
     local log_this = DEBUG_STATUS
 
     if(not delay) then delay = ZO_CALLLATER_DELAY_HIDE end
-if(log_this) then d("_HIDING: "..COLOR_8..msg.." (in "..tostring(delay).."ms)") end
+if(log_this) then c("_HIDING: "..COLOR_8..msg.." (in "..tostring(delay).."ms)") end
 
     if(not Hide_pending) then
         Hide_pending = true
@@ -3048,7 +3056,7 @@ function QSB_ForceBarVisibility()
     and            COLOR_5.."FORCED ON"
     or             COLOR_8.."FORCED OFF"
 
-d(keyName..COLOR_5.." GQSB: Bar Visibility "..COLOR_9..QSB.Settings.Visibility..COLOR_4.." "..state)
+c(keyName..COLOR_5.." GQSB: Bar Visibility "..COLOR_9..QSB.Settings.Visibility..COLOR_4.." "..state)
 
     Refresh("Bar Visibility "..state)
 
@@ -3070,7 +3078,7 @@ function QSB_BlockBarVisibility()
     and            COLOR_2.."BLOCKED ON"
     or             COLOR_8.."BLOCKED OFF"
 
-d(keyName..COLOR_5.." GQSB: Bar Visibility "..COLOR_9..QSB.Settings.Visibility..COLOR_7.." "..state)
+c(keyName..COLOR_5.." GQSB: Bar Visibility "..COLOR_9..QSB.Settings.Visibility..COLOR_7.." "..state)
 
     Refresh("Bar Visibility "..state)
 
@@ -3199,7 +3207,7 @@ end
 --}}}
 -- Load_ZO_SavedVars {{{
 function Load_ZO_SavedVars(value)
---d(COLOR_9.." Load_ZO_SavedVars("..tostring(value)..")")
+--c(COLOR_9.." Load_ZO_SavedVars("..tostring(value)..")")
 
     local changed = (value ~= nil) and QSB_Settings_Changed()
 
@@ -3223,7 +3231,7 @@ function Load_ZO_SavedVars(value)
     --}}}
     -- [QSB.Settings] .. f(AccountWide.SaveAccountWide) {{{
     if(QSB.AccountWideSettings.SaveAccountWide ) then
-d("LOADING "..COLOR_5.."Account-wide|r Settings")
+c("LOADING "..COLOR_5.."Account-wide|r Settings")
 
         QSB.Settings = ZO_SavedVars:NewAccountWide(
         "GreymindQuickSlotBarSettings"
@@ -3234,7 +3242,7 @@ d("LOADING "..COLOR_5.."Account-wide|r Settings")
         )
 
     else
-d("LOADING "..COLOR_3..GetUnitName("player").."|r Character Settings")
+c("LOADING "..COLOR_3..GetUnitName("player").."|r Character Settings")
 
         QSB.Settings = ZO_SavedVars:New(
         "GreymindQuickSlotBarSettings"
@@ -3248,14 +3256,14 @@ d("LOADING "..COLOR_3..GetUnitName("player").."|r Character Settings")
     --}}}
     -- [Loaded_QSB_Settings] {{{
     if(value == nil) then
---d("ROOTING: "..COLOR_2.." Loaded_QSB_Settings")
+--c("ROOTING: "..COLOR_2.." Loaded_QSB_Settings")
 
         Loaded_QSB_Settings = DeepCopy(QSB.Settings)
     --}}}
     -- [QSB_ReloadUI] or [Refresh] .. f(changed) {{{
     else
         if( changed ) then
-d(COLOR_2.." GQSB RELOADING\n"..COLOR_2..tostring(changed))
+c(COLOR_2.." GQSB RELOADING\n"..COLOR_2..tostring(changed))
 
             zo_callLater(QSB_ReloadUI, 3000)
         else
@@ -4172,7 +4180,7 @@ D("BuildSettingsMenu()")
         name        = "ChatMute",
         tooltip     = "Whether to suppress all Chat Warning Messages",
         getFunc     = function()      return QSB.Settings.ChatMute end,
-        setFunc     = function(value) QSB.Settings.ChatMute = value if(not value) then d(COLOR_5.." GQSB: ChatMute turned OFF") end end,
+        setFunc     = function(value) QSB.Settings.ChatMute = value if(not value) then c(COLOR_5.." GQSB: ChatMute turned OFF") end end,
         width       = "full",
         warning     = "This is an "..COLOR_3.."all Presets|r option\n\n"
         ..            "Default is to allow somehow important messages to be displayed in the Main Chat window"
@@ -4228,8 +4236,8 @@ D("BuildSettingsMenu()")
         end,
         setFunc     = function(value)
             DEBUG_TOOLTIPS = value
-            if(DEBUG_TOOLTIPS) then d("DEBUG_TOOLTIPS "..COLOR_M.."ON" )
-                else                d("DEBUG_TOOLTIPS "..COLOR_8.."OFF")
+            if(DEBUG_TOOLTIPS) then c("DEBUG_TOOLTIPS "..COLOR_M.."ON" )
+                else                c("DEBUG_TOOLTIPS "..COLOR_8.."OFF")
                 end
 
             Refresh("DEBUG_TOOLTIPS")
@@ -4247,17 +4255,17 @@ end
 -- Are_Settings_Locked {{{
 function Are_Settings_Locked(option, value)
     if Settings_Locked then
-        --d(COLOR_2..".SET:|r "..tostring(QSB.Settings.PresetName)..": "..tostring(option).."=["..tostring(value).."] "..COLOR_2..".REJECTED")
+        --c(COLOR_2..".SET:|r "..tostring(QSB.Settings.PresetName)..": "..tostring(option).."=["..tostring(value).."] "..COLOR_2..".REJECTED")
         return true
     else
-        --d(COLOR_2..".SET:|r "..tostring(QSB.Settings.PresetName)..": "..tostring(option).."=["..tostring(value).."]")
+        --c(COLOR_2..".SET:|r "..tostring(QSB.Settings.PresetName)..": "..tostring(option).."=["..tostring(value).."]")
     end
 end
 --}}}
 -- Release_Settings_Locked {{{
 function Release_Settings_Locked()
     Settings_Locked = false
---d(COLOR_C..".^^^^ SETTINGS UNLOCKED|r")
+--c(COLOR_C..".^^^^ SETTINGS UNLOCKED|r")
 end
 
 --}}}
@@ -4325,7 +4333,7 @@ D_ITEM("ITEM_SLOT_CHANGED: slotIndex=["..slotIndex.."]")
     EVENT_MANAGER:RegisterForEvent("GQSB.ACTIVE_QUICKSLOT_CHANGED"
     , EVENT_ACTIVE_QUICKSLOT_CHANGED
     , function(event, slotIndex) -- (*integer* _slotId_)
-if(DEBUG_EQUIP) then d("ACTIVE_QUICKSLOT_CHANGED: slotIndex=["..slotIndex.."]") end
+if(DEBUG_EQUIP) then c("ACTIVE_QUICKSLOT_CHANGED: slotIndex=["..slotIndex.."]") end
 
         Refresh("ACTIVE_QUICKSLOT_CHANGED")
 
@@ -4338,18 +4346,18 @@ if(DEBUG_EQUIP) then d("ACTIVE_QUICKSLOT_CHANGED: slotIndex=["..slotIndex.."]") 
         -- FILTER ON  BAG_BACKPACK
         if(bagId ~= BAG_BACKPACK) then return end
 
-if(DEBUG_EQUIP) then d("INVENTORY_SINGLE_SLOT_UPDATE: [bagId "..bagId.."] [bagIndex "..bagIndex.."]") end
+if(DEBUG_EQUIP) then c("INVENTORY_SINGLE_SLOT_UPDATE: [bagId "..bagId.."] [bagIndex "..bagIndex.."]") end
 
         -- bagIndex itemLevel {{{
         local data  = SHARED_INVENTORY.bagCache[BAG_BACKPACK][bagIndex]
         if(   data == nil) then
-if(DEBUG_EQUIP) then d(COLOR_8.."ITEM REMOVED") end
+if(DEBUG_EQUIP) then c(COLOR_8.."ITEM REMOVED") end
 
         else
             local itemName  = GetItemName(BAG_BACKPACK, data.slotIndex )
             local itemLevel = getItem_levl_from_slot( bagIndex )
 
-if(DEBUG_EQUIP) then d(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tostring(itemLevel).."] ["..tostring(itemName).."]") end
+if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tostring(itemLevel).."] ["..tostring(itemName).."]") end
 
             QSB_BAG_BACKPACK_UPDATE_bagIndex  = bagIndex
             QSB_BAG_BACKPACK_UPDATE_itemLevel = itemLevel
@@ -4424,12 +4432,12 @@ if(DEBUG_EQUIP) then d(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     , EVENT_ACTIVE_WEAPON_PAIR_CHANGED
     , function(eventCode, activeWeaponPair, locked) -- (*integer* _activeWeaponPair_, *bool* _locked_)
         D_EVENT("ACTIVE_WEAPON_PAIR_CHANGED")
---d("ACTIVE_WEAPON_PAIR_CHANGED: activeWeaponPair "..tostring(activeWeaponPair).." - locked "..tostring(locked))
+--c("ACTIVE_WEAPON_PAIR_CHANGED: activeWeaponPair "..tostring(activeWeaponPair).." - locked "..tostring(locked))
         if(not locked) then
             D(COLOR_7.." Active Weapon Pair: "..COLOR_C..tostring(activeWeaponPair).."|r")
         end
         Refresh("ACTIVE_WEAPON_PAIR_CHANGED")
---d("GetActiveWeaponPairInfo() returns ["..tostring(GetActiveWeaponPairInfo()).."]")
+--c("GetActiveWeaponPairInfo() returns ["..tostring(GetActiveWeaponPairInfo()).."]")
     end)
 
     --}}}
@@ -4609,7 +4617,7 @@ function set_LockThisPreset_state( state )
         SaveCurrentPreset("LockThisPreset JUST CHECKED-ON")
 
         -- NOTIFY IN CHAT WINDOW
-        d("GQSB"..COLOR_M.." Preset "..COLOR_4.. QSB.Settings.PresetName ..COLOR_M.." saved and locked")
+        c("GQSB"..COLOR_M.." Preset "..COLOR_4.. QSB.Settings.PresetName ..COLOR_M.." saved and locked")
     end
 end
 --}}}
@@ -4674,40 +4682,40 @@ end
 function OnSlashCommand(arg)
     -- arg {{{
     if(arg == "")  then d_signature()
-    else                d(QSB_SLASH_COMMAND.." "..arg) end
+    else                c(QSB_SLASH_COMMAND.." "..arg) end
 
     --}}}
     local ui_may_have_changed = false
     local          presetName = ""
     -- help --{{{
     if (arg == "") then
-        d("→ GQSB Current Settings: "
+        c("→ GQSB Current Settings: "
         ..(QSB.AccountWideSettings.SaveAccountWide and COLOR_6.." Account-wide"
         or                                             COLOR_2..GetUnitName("player").."|r Character"))
-        d("\r\n")
+        c("\r\n")
 
     elseif (arg ==  "-h"   )
     or     (arg == "--h"   )
     or     (arg ==  "-help")
     or     (arg ==   "help")
     then
-        d(QSB_SLASH_COMMAND..     " p1-p5 .. select Presets "..PRESETNAMES[1].." to "..PRESETNAMES[5].." (current = "..QSB.Settings.PresetName..")")
-        d(QSB_SLASH_COMMAND..  " settings .. Settings Panel display (toggle)")
-        d(QSB_SLASH_COMMAND..      " lock .. UI lock (toggle)")
-        d(QSB_SLASH_COMMAND..   " qsbhide .. Hide Default Quick Slot Button (toggle)")
-        d(QSB_SLASH_COMMAND.. " clearchat .. clears all chat windows")
-        d(QSB_SLASH_COMMAND..   " refresh .. rebuild and redisplay UI")
-        d(QSB_SLASH_COMMAND..     " clone .. auto-clone previous-to-empty preset (toggle)")
-        d(QSB_SLASH_COMMAND..     " clear .. to clear Current-Preset-Items")
-        d(QSB_SLASH_COMMAND..     " reset .. reset this preset settings to default")
-        d(QSB_SLASH_COMMAND..  " resetall .. RESET ALL PRESETS SETTINGS TO DEFAULT")
-        d(QSB_SLASH_COMMAND..     " force .. to toggle FORCE Bar Visiblity")
-        d(QSB_SLASH_COMMAND..     " block .. to toggle BLOCK Bar Visiblity (overrides force)")
-        d(QSB_SLASH_COMMAND..   " account .. to toggle between "..GetUnitName("player").." and Account-wide Settings")
+        c(QSB_SLASH_COMMAND..     " p1-p5 .. select Presets "..PRESETNAMES[1].." to "..PRESETNAMES[5].." (current = "..QSB.Settings.PresetName..")")
+        c(QSB_SLASH_COMMAND..  " settings .. Settings Panel display (toggle)")
+        c(QSB_SLASH_COMMAND..      " lock .. UI lock (toggle)")
+        c(QSB_SLASH_COMMAND..   " qsbhide .. Hide Default Quick Slot Button (toggle)")
+        c(QSB_SLASH_COMMAND.. " clearchat .. clears all chat windows")
+        c(QSB_SLASH_COMMAND..   " refresh .. rebuild and redisplay UI")
+        c(QSB_SLASH_COMMAND..     " clone .. auto-clone previous-to-empty preset (toggle)")
+        c(QSB_SLASH_COMMAND..     " clear .. to clear Current-Preset-Items")
+        c(QSB_SLASH_COMMAND..     " reset .. reset this preset settings to default")
+        c(QSB_SLASH_COMMAND..  " resetall .. RESET ALL PRESETS SETTINGS TO DEFAULT")
+        c(QSB_SLASH_COMMAND..     " force .. to toggle FORCE Bar Visiblity")
+        c(QSB_SLASH_COMMAND..     " block .. to toggle BLOCK Bar Visiblity (overrides force)")
+        c(QSB_SLASH_COMMAND..   " account .. to toggle between "..GetUnitName("player").." and Account-wide Settings")
         if DEBUG_ITEM then
-            d(QSB_SLASH_COMMAND.. '     _G["ZO_ChatWindowTemplate1Buffer"]')
-            d(QSB_SLASH_COMMAND.. ' lua _G["ZO_ChatWindowTemplate1Buffer"]:Clear()')
-            d(QSB_SLASH_COMMAND.. ' lua _G["SLASH_COMMANDS"]')
+            c(QSB_SLASH_COMMAND.. '     _G["ZO_ChatWindowTemplate1Buffer"]')
+            c(QSB_SLASH_COMMAND.. ' lua _G["ZO_ChatWindowTemplate1Buffer"]:Clear()')
+            c(QSB_SLASH_COMMAND.. ' lua _G["SLASH_COMMANDS"]')
         end
 
     --}}}
@@ -4741,9 +4749,9 @@ function OnSlashCommand(arg)
     elseif(arg == "clone") then
         QSB.CloneCurrentToEmtpyPreset = not QSB.CloneCurrentToEmtpyPreset
         if (QSB.CloneCurrentToEmtpyPreset) then
-            d(COLOR_6.." @@@ AUTO-CLONING|r IS ON")
+            c(COLOR_6.." @@@ AUTO-CLONING|r IS ON")
         else
-            d(COLOR_6.." @@@ AUTO-CLONING|r IS OFF")
+            c(COLOR_6.." @@@ AUTO-CLONING|r IS OFF")
         end
       --Rebuild_LibAddonMenu()
 
@@ -4761,7 +4769,7 @@ function OnSlashCommand(arg)
 
        loadPresetSlots()
 
-        d("..."..COLOR_2.."QSB.Settings.SlotItemTable CLEARED|r\n")
+        c("..."..COLOR_2.."QSB.Settings.SlotItemTable CLEARED|r\n")
 
         ui_may_have_changed = true
     --}}}
@@ -4776,9 +4784,9 @@ function OnSlashCommand(arg)
     elseif(arg == "qsbhide") then
         QSB.Settings.GameActionButtonHide = not QSB.Settings.GameActionButtonHide
         if (QSB.Settings.GameActionButtonHide) then
-            d(COLOR_6.." @@@ HIDING|r Default Quick Slot Button")
+            c(COLOR_6.." @@@ HIDING|r Default Quick Slot Button")
         else
-            d(COLOR_4.." @@@ SHOWING|r Default Quick Slot Button")
+            c(COLOR_4.." @@@ SHOWING|r Default Quick Slot Button")
         end
         GameActionButtonHideHandler("OnSlashCommand")
 
@@ -4806,14 +4814,14 @@ function OnSlashCommand(arg)
 
     --}}}
     -- DEBUG -- {{{
-    elseif(arg == "debug"         ) then DEBUG          = not DEBUG         ; d("...DEBUG..........=[" ..tostring( DEBUG          ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_event"   ) then DEBUG_EVENT    = not DEBUG_EVENT   ; d("...DEBUG_EVENT....=[" ..tostring( DEBUG_EVENT    ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_equip"   ) then DEBUG_EQUIP    = not DEBUG_EQUIP   ; d("...DEBUG_EQUIP....=[" ..tostring( DEBUG_EQUIP    ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_item"    ) then DEBUG_ITEM     = not DEBUG_ITEM    ; d("...DEBUG_ITEM.....=[" ..tostring( DEBUG_ITEM     ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_tasks"   ) then DEBUG_TASKS    = not DEBUG_TASKS   ; d("...DEBUG_TASKS....=[" ..tostring( DEBUG_TASKS    ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_station" ) then DEBUG_STATION  = not DEBUG_STATION ; d("...DEBUG_STATION..=[" ..tostring( DEBUG_STATION  ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_status"  ) then DEBUG_STATUS   = not DEBUG_STATUS  ; d("...DEBUG_STATUS...=[" ..tostring( DEBUG_STATUS   ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_tooltip" ) then DEBUG_TOOLTIPS = not DEBUG_TOOLTIPS; d("...DEBUG_TOOLTIPS.=[" ..tostring( DEBUG_TOOLTIPS ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug"         ) then DEBUG          = not DEBUG         ; c("...DEBUG..........=[" ..tostring( DEBUG          ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_event"   ) then DEBUG_EVENT    = not DEBUG_EVENT   ; c("...DEBUG_EVENT....=[" ..tostring( DEBUG_EVENT    ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_equip"   ) then DEBUG_EQUIP    = not DEBUG_EQUIP   ; c("...DEBUG_EQUIP....=[" ..tostring( DEBUG_EQUIP    ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_item"    ) then DEBUG_ITEM     = not DEBUG_ITEM    ; c("...DEBUG_ITEM.....=[" ..tostring( DEBUG_ITEM     ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_tasks"   ) then DEBUG_TASKS    = not DEBUG_TASKS   ; c("...DEBUG_TASKS....=[" ..tostring( DEBUG_TASKS    ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_station" ) then DEBUG_STATION  = not DEBUG_STATION ; c("...DEBUG_STATION..=[" ..tostring( DEBUG_STATION  ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_status"  ) then DEBUG_STATUS   = not DEBUG_STATUS  ; c("...DEBUG_STATUS...=[" ..tostring( DEBUG_STATUS   ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_tooltip" ) then DEBUG_TOOLTIPS = not DEBUG_TOOLTIPS; c("...DEBUG_TOOLTIPS.=[" ..tostring( DEBUG_TOOLTIPS ).. "]"); ui_may_have_changed = true
     --}}}
     else -- LUA
         -- _G --{{{
@@ -4823,26 +4831,26 @@ function OnSlashCommand(arg)
             local   o  =  _G[lua_expr]
             if(type(o) == 'table') then
 
-                d("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" )
-                d("| o=_G["..COLOR_5..lua_expr.."|r]")
-                d("| " ..COLOR_C..tostring(o)        )
-                d("|vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" )
+                c("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" )
+                c("| o=_G["..COLOR_5..lua_expr.."|r]")
+                c("| " ..COLOR_C..tostring(o)        )
+                c("|vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" )
 
                 for k,v in pairs( o ) do
-                    d("|→ "..COLOR_9..k.."|r=["..COLOR_2..tostring(v).."|r] ("..COLOR_6..type(v).."|r)\n")
+                    c("|→ "..COLOR_9..k.."|r=["..COLOR_2..tostring(v).."|r] ("..COLOR_6..type(v).."|r)\n")
                 end
             end
-            d(    "|^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" )
-            d(    "| o=_G["..COLOR_5..lua_expr.."|r]")
-            d(    "| " ..COLOR_C..tostring(o)        )
-            d(    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" )
+            c(    "|^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" )
+            c(    "| o=_G["..COLOR_5..lua_expr.."|r]")
+            c(    "| " ..COLOR_C..tostring(o)        )
+            c(    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" )
         end
         --}}}
         -- lua {{{
         ------------ EXPRESSION ----------------------------------------------------------------------
-        -- /gqsb lua d("txt")                                        -- TEXT LOGS IN THE CHAT
-        -- /gqsb lua d("\r\n\r\n")                                   -- EMPTY LINES IN THE CHAT
-        -- /gqsb lua d("\226\154\153")                               -- FONT HAS NO GLYPH FOR THIS ONE
+        -- /gqsb lua c("txt")                                        -- TEXT LOGS IN THE CHAT
+        -- /gqsb lua c("\r\n\r\n")                                   -- EMPTY LINES IN THE CHAT
+        -- /gqsb lua c("\226\154\153")                               -- FONT HAS NO GLYPH FOR THIS ONE
         -- /gqsb lua PlaySound("GENERAL_ALERT_ERROR")                -- CHECK SOUNDS
         -- /gqsb lua tonumber(nil) == nil                            -- CHECK EXPRESSION
         -- /gqsb lua { question="what...?", answer=42 }              -- RETURNS A TABLE
@@ -4877,20 +4885,20 @@ function OnSlashCommand(arg)
             -- EXEC
             local status, err = pcall(
             function()
-                d(                    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-                d(                    "zo_loadstring("..COLOR_5.."return "..lua_expr.."|r)\n")
+                c(                    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+                c(                    "zo_loadstring("..COLOR_5.."return "..lua_expr.."|r)\n")
                 local f = assert(      zo_loadstring(            "return "..lua_expr        ))
                 if f then
                     local r1, r2, r3, r4, r5 = f()
-                    d(                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+                    c(                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 
-                    if(not   r1 ) then d("@ "..COLOR_2.."*** "..tostring(r1).." ***\n")
-                    elseif(  r1 ) then d("@ "..COLOR_5.."r1: "..tostring(r1)..    "\n") end
+                    if(not   r1 ) then c("@ "..COLOR_2.."*** "..tostring(r1).." ***\n")
+                    elseif(  r1 ) then c("@ "..COLOR_5.."r1: "..tostring(r1)..    "\n") end
 
-                    if(      r2 ) then d("@ "..COLOR_5.."r2: "..tostring(r2)..    "\n") end
-                    if(      r3 ) then d("@ "..COLOR_5.."r3: "..tostring(r3)..    "\n") end
-                    if(      r4 ) then d("@ "..COLOR_5.."r4: "..tostring(r4)..    "\n") end
-                    if(      r5 ) then d("@ "..COLOR_5.."r5: "..tostring(r5)..    "\n") end
+                    if(      r2 ) then c("@ "..COLOR_5.."r2: "..tostring(r2)..    "\n") end
+                    if(      r3 ) then c("@ "..COLOR_5.."r3: "..tostring(r3)..    "\n") end
+                    if(      r4 ) then c("@ "..COLOR_5.."r4: "..tostring(r4)..    "\n") end
+                    if(      r5 ) then c("@ "..COLOR_5.."r5: "..tostring(r5)..    "\n") end
 
                     -- partial -- keyFilter -- valFilter ----- NAME TABLE MAX KEY VAL
                     if(type( r1 ) == "table") then d_table(lua_expr,   r1, r2, r3, r4 ) end
@@ -4900,10 +4908,10 @@ function OnSlashCommand(arg)
             )
 
             -- [ERROR]
-            if(err) then d(              "@ "..COLOR_2.."*** "..         err.." ***\n") end
+            if(err) then c(              "@ "..COLOR_2.."*** "..         err.." ***\n") end
 
-            d(                        "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-            d()
+            c(                        "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+            c()
         end
         --}}}
     end
@@ -4946,7 +4954,7 @@ local tables_visited
 --}}}
 function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter)
     -- ROOT-TABLE {{{
-    if(not table) then d(tableName..": "..tostring(table)) return end
+    if(not table) then c(tableName..": "..tostring(table)) return end
 
     local          indent = ""
     if("number" == type(indent_or_match_count_max)) then match_max = indent_or_match_count_max
@@ -4955,7 +4963,7 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
     end
 
     if(indent == "") then
-        d(tableName..":")
+        c(tableName..":")
 
         if(match_max  <= 0) then match_max = MATCH_MAX end
         pairs_count    = 0
@@ -4980,7 +4988,7 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
             or (match_count >= match_max) then
 
             if(indent == "") then
-                d("TABLE size=["..#table.."] .. match=["..match_count.."/"..match_max.."] .. checked pairs=["..pairs_count.."/"..PAIRS_MAX.."]")
+                c("TABLE size=["..#table.."] .. match=["..match_count.."/"..match_max.."] .. checked pairs=["..pairs_count.."/"..PAIRS_MAX.."]")
             end
             return
         end
@@ -5021,7 +5029,7 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
 
                 label = string.format("%3d %s", match_count, label)
 
-                d(string.format('%s .. %s[%s]'
+                c(string.format('%s .. %s[%s]'
                 ,                label
                 ,                      COLOR_9
                 ,                         v_str))
@@ -5031,7 +5039,7 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
         --}}}
     end
     if(indent == "") then
-        d("(in "..#tables_visited.." tables)")
+        c("(in "..#tables_visited.." tables)")
     end
 end
 --}}}
@@ -5040,7 +5048,7 @@ end
 -- d_signature {{{
 function d_signature()
 
-    d("\r\n"
+    c("\r\n"
     .."!! GQSB"..COLOR_C.." "..QSB.Version.." (190926)\n"
     .."!!"..COLOR_8.." Update 23 (5.1.5): Scalebreaker (API 100028)\n"
     .."→ "..COLOR_7.."Trader08_mod:\n"
@@ -5061,7 +5069,7 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
 [LUA]
 -- :!start explorer "https://www.tutorialspoint.com/execute_lua_online.php"
 -- STUB .. (for d_table) {{{
-function d(args) print(args) end
+function c(args) print(args) end
 COLOR_X = { "", "", "", "", "", "", "", "", "" }
 COLOR_8 =   ""
 COLOR_9 =   ""
