@@ -1,11 +1,9 @@
--- Greymind Quick Slot Bar --{{{
+-- GreymindQuickSlotBar_tag (190928:00h) --{{{
 --  Feature Author: ivanwfr
 --}}}
--- CHANGELOG 190926
---{{{
---[[
-v2.4.8.11 {{{
-- [color="aaffaa"]190926[/color]
+--[[ CHANGELOG
+v2.4.8.12 {{{
+- [color="aaffaa"]190928[/color]
 - [color="magenta"]Trader08_mod:[/color]
 - [color="magenta"][b]LockThisPreset[/b][/color]
 - [color="magenta"][b]DelayPresetSwapWhileInCombat[/b][/color]
@@ -20,11 +18,9 @@ v2.4.8.11 {{{
 - [color="blue"][X] Defaults Settings button[/color] will only reset the Current Preset.
 - You can use the [color="red"]/resetall[/color] slash-command to reset all 5 Preset at once.
 - [color="blue"]Re-shuffled Settings Menu.[/color]
-- [color="blue"]LibStub.txt Version 1.0 r6 .. API 100029[/color]
 
 }}}
 --]]
---}}}
 
 local DEBUG          = false
 local DEBUG_ITEM     = false
@@ -271,7 +267,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8.11", -- 190926 previous: 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.8.12", -- 190928 previous: 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1567,7 +1563,7 @@ function getItem_normalized_link( itemLink )
     if(not itemLink             ) then return "" end
     if(string.len(itemLink) < 10) then return "" end
 
-    local t = string_split(itemLink)
+    local t = string_split(itemLink,":")
 
     -- COLL |H0:item:54339:308:50:8454917
     -- _____1__:2___:3____:4__:5_ 6______
@@ -3174,10 +3170,11 @@ end
 --}}}
 -- string_split {{{
 function string_split(s, sep)
-   local sep, fields = sep or ":", {}
-   local     pattern = string.format("([^%s]+)", sep)
-   s:gsub(   pattern , function(c) fields[#fields+1] = c end)
-   return fields
+   local   fields = {}
+   local      sep = sep or ":"
+   local  pattern = "([^"..sep.."]+)"
+   s:gsub(pattern , function(c) fields[#fields+1] = c end)
+   return  fields
 end
 --}}}
 
@@ -3198,7 +3195,7 @@ D("Initialize()")
     BuildSettingsMenu()
 
   --CHAT_SYSTEM.maxContainerWidth, CHAT_SYSTEM.maxContainerHeight = GuiRoot:GetDimensions()
-    SetChatMax( QSB.Settings.ChatMax )
+  --SetChatMax( QSB.Settings.ChatMax )
 
     -- EVENT HANDLERS
     zo_callLater(RegisterEventHandlers, 500)
@@ -3332,7 +3329,7 @@ end
 
 -- MENU LAM
 -- BuildSettingsMenu {{{
-local LAM   = LibStub("LibAddonMenu-2.0")
+local LAM = LibAddonMenu2
 
 function BuildSettingsMenu()
 D("BuildSettingsMenu()")
@@ -5049,7 +5046,7 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (190926)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (190928)\n"
     .."!!"..COLOR_8.." Update 23 (5.1.5): Scalebreaker (API 100028)\n"
     .."→ "..COLOR_7.."Trader08_mod:\n"
     .."→ "..COLOR_2.."- LockThisPreset\n"
@@ -5066,40 +5063,8 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
 
 -- LINKS
 --[[--{{{
-
 [LUA]
 -- :!start explorer "https://www.tutorialspoint.com/execute_lua_online.php"
--- STUB .. (for d_table) {{{
-function c(args) print(args) end
-COLOR_X = { "", "", "", "", "", "", "", "", "" }
-COLOR_8 =   ""
-COLOR_9 =   ""
-COLOR_0 =   ""
-
-local Table_1 = { name = "Table_1" , ID = "ID_1" , "TAG_1" }
-local Table_2 = { name = "Table_2" , ID = "ID_2" , "TAG_2" , Table_1 }
-local Table_3 = { name = "Table_3" , ID = "ID_3" , "TAG_3" , Table_1 , Table_2 }
-local  SAMPLE = {
-    name = "SAMPLE"
-    ,          1
-    ,         12
-    , key1 = 123
-    , Table_1
-    , Table_2
-    , Table_3
-    , Table_3
-}
-
-d_table('\n\n- UNFILTERED'      , SAMPLE                  )
-d_table('\n\n- FIRST 4 ENTRIES' , SAMPLE, 4               )
-d_table('\n\n- KEY   "name"'    , SAMPLE, 0, 'name'       )
-d_table('\n\n- VALUE "name"'    , SAMPLE, 0, nil  , 'name')
-d_table('\n\n- KEY     "id"'    , SAMPLE, 0, 'id'         )
-d_table('\n\n- VALUE   "id"'    , SAMPLE, 0, nil  , 'id'  )
-d_table('\n\n- KEY    "tag"'    , SAMPLE, 0, 'tag'        )
-d_table('\n\n- VALUE  "tag"'    , SAMPLE, 0, nil  , 'tag' )
-
---}}}
 
 [FILES]
 :new $TEMP/functioncalls.txt
@@ -5109,7 +5074,6 @@ d_table('\n\n- VALUE  "tag"'    , SAMPLE, 0, nil  , 'tag' )
 
 [PATCH NOTES]:
  :!start explorer "https://forums.elderscrollsonline.com/en/categories/patch-notes"
-[uesp]
  :!start explorer "https://esoapi.uesp.net/100017/src/ingame/collections/collectionsinventorysingleton.lua.html"
  :!start explorer "https://esoapi.uesp.net/100022/src/ingame/collections/collectionsbook_manager.lua.html"
  :!start explorer "https://esoapi.uesp.net/100028/data/s/e/l/SelectSlotSimpleAction.html"
@@ -5125,7 +5089,6 @@ d_table('\n\n- VALUE  "tag"'    , SAMPLE, 0, nil  , 'tag' )
  :!start explorer "https://esoapi.uesp.net/100028/src/luadir.html"
  :!start explorer "https://esodata.uesp.net/100028/src/ingame/collections/collectionsinventorysingleton.lua.html"
  :!start explorer "https://esodata.uesp.net/100028/src/ingame/inventory/inventoryslot.lua.html"
-[esoui]
  :!start explorer "https://wiki.esoui.com/APIVersion"
  :!start explorer "https://www.esoui.com/downloads/download1775-StaticsQuickslotProfiles"
  :!start explorer "https://www.esoui.com/downloads/fileinfo.php?id=258"

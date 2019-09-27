@@ -25,6 +25,7 @@
    <Action name="GREYMIND_QUICK_SLOT_BAR_RELOADUI"            > <Down>QSB_ReloadUI()          </Down> </Action>
    <Action name="GREYMIND_QUICK_SLOT_BAR_CLEARCHAT"           > <Down>QSB_ClearChat()         </Down> </Action>
 
+   <Action name="GREYMIND_QUICK_SLOT_BAR_SETTINGS"            > <Down>QSB_Settings()          </Down> </Action>
   </Category>
  </Layer>
 </Bindings>
