@@ -1,12 +1,15 @@
 ## Title: |c4477FFGreymind|r Quick Slot Bar
 ## APIVersion: 100028
+## Version: v2.4.8.13
 ## AddonVersion: 2
-## Version: v2.4.8
-## Description: An in-combat complement to the Quickslot Radial Menu
+## Description: An in-combat complement to the Quickslot Radial Menu |c4040F0 -- embedding LibAddonMenu-2.0 and LibStub |cF0F000 -- ranked-up to API 100028 
 ## SavedVariables: GreymindQuickSlotBarSettings
 ## Author: ivanwfr
 
-## DependsOn: LibStub LibAddonMenu-2.0
+# DOES NOT! DependsOn: LibStub LibAddonMenu-2.0
+# A better solution is:
+# - to check API compliance
+# - and embed all libs here
 
 lib\LibStub\LibStub.lua
 lib\LibAddonMenu-2.0\LibAddonMenu-2.0.lua
