@@ -1,10 +1,11 @@
--- GreymindQuickSlotBar_tag (190928:17h) --{{{
+-- GreymindQuickSlotBar_tag (191001:14h) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: Version: GreymindQuickSlotBar.txt
-v2.4.8.13 {{{
-- [color="aaffaa"]190928[/color]
+v2.4.8.14 {{{
+- [color="aaffaa"]191001[/color]
+- [color="white"]Preventing early calls to [b]Refresh_handler[/b] from globalapi.lua at login[/color]
 - [color="blue"]Deleted ## DependsOn: directive in favor of embedded ranked-up libraries[/color]
 - [color="blue"]Updated ## Description: directive in embedded libraries manifest[/color]
 - [color="magenta"]Trader08_mod:[/color]
@@ -270,7 +271,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8.13", -- 190928 previous: 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.8.13", -- 191001 previous: 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1770,6 +1771,10 @@ function Refresh_handler()
     local log_this = DEBUG_TASKS
 
 if(log_this) then c("...Refresh_handler() .. ".. tostring(Refresh_count_down)) end
+
+    -- (191001) -- error Anceane
+    if not GreymindQuickSlotBarUI then return end
+    if not GreymindQuickSlotBarUI.SetClampedToScreen then return end
 
     -- look for the last call .. ignore preceding ones
     Refresh_count_down = Refresh_count_down -1
@@ -5049,7 +5054,7 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (190928)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (191001)\n"
     .."!!"..COLOR_8.." Update 23 (5.1.5): Scalebreaker (API 100028)\n"
     .."→ "..COLOR_7.."Trader08_mod:\n"
     .."→ "..COLOR_2.."- LockThisPreset\n"
