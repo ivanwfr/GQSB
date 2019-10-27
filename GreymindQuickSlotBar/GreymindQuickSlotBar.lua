@@ -1,27 +1,31 @@
--- GreymindQuickSlotBar_tag (191001:14h) --{{{
+-- GreymindQuickSlotBar_tag (191027:17h) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: Version: GreymindQuickSlotBar.txt
-v2.4.8.14 {{{
-- [color="aaffaa"]191001[/color]
-- [color="white"]Preventing early calls to [b]Refresh_handler[/b] from globalapi.lua at login[/color]
-- [color="blue"]Deleted ## DependsOn: directive in favor of embedded ranked-up libraries[/color]
-- [color="blue"]Updated ## Description: directive in embedded libraries manifest[/color]
-- [color="magenta"]Trader08_mod:[/color]
+v2.4.8 {{{
+[u]191027[/u]
+- [color="yellow"]Checked with Update 24 (5.2.5): Dragonhold (API 100029)[/color]
+[u]Trader08_mod[/u]
 - [color="magenta"][b]LockThisPreset[/b][/color]
 - [color="magenta"][b]DelayPresetSwapWhileInCombat[/b][/color]
 - [color="magenta"][b]Items with same Id but different flavors[/b][/color] improved support based on [b]Items Link[/b].
+[u]Chat[/u]
 - [color="orange"]ChatMax[/color] utility option to unlock Chat Window maximum size.
 - [color="orange"]ChatMute[/color] option to block all Chat warning messages.
-- per-session (i.e. not per-preset), one for Account-wide ON, one for Character-wide.
+- (a per-session option i.e. not per-preset): one for [b]Account-wide[/b], one for [b]Character[/b].
 - [color="blue"][b]LinkToChatOnClick[/b][/color]
+[u]Option defaults[/u]
 - [color="blue"]Default Show Policy[/color] set to [Never] instead of [Always]
 - [color="blue"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
 - [color="blue"]UI layout[/color] may be reduced to a single [1x1 cell] .. down from [2R x 1C]
 - [color="blue"][X] Defaults Settings button[/color] will only reset the Current Preset.
-- You can use the [color="red"]/resetall[/color] slash-command to reset all 5 Preset at once.
+- (use the [color="red"]/resetall[/color] slash-command to reset all 5 Preset at once).
 - [color="blue"]Re-shuffled Settings Menu.[/color]
+[u]Addons dependency[/u]
+- [color="blue"]Preventing early calls to [b]Refresh_handler[/b] from globalapi.lua at login[/color]
+- [color="blue"]Deleted ## DependsOn: directive in favor of embedded ranked-up libraries[/color]
+- [color="blue"]Updated ## Description: directive in embedded libraries manifest[/color]
 
 }}}
 --]]
@@ -136,12 +140,18 @@ local PENDING_TT
 
 -- KEYS
 local MOD_NONE                = "No Modifier"
-local MOD_SHIFT               = "Shift"
-local MOD_CONTROL             = "Control"
+
 local MOD_ALT                 = "Alt"
-local MOD_SHIFT_KEYCODE       = 7
-local MOD_CONTROL_KEYCODE     = 4
-local MOD_ALT_KEYCODE         = 5
+local MOD_ALT_KEYCODE         = 5           -- KEY_ALT
+
+local MOD_COMMAND             = "Command"
+local MOD_COMMAND_KEYCODE     = 6           -- KEY_COMMAND
+
+local MOD_CONTROL             = "Control"
+local MOD_CONTROL_KEYCODE     = 4           -- KEY_CTRL
+
+local MOD_SHIFT               = "Shift"
+local MOD_SHIFT_KEYCODE       = 7           -- KEY_SHIFT
 
 local KEYBINDINGS_PREFIX      = "SI_BINDING_NAME_"
 
@@ -271,7 +281,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8.13", -- 191001 previous: 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.8", -- 191027 previous: 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1288,7 +1298,7 @@ if(log_this) then c("save_QSB_to_SlotItemTable("..bNum.."):") end
         -- for quest_item not to be handled as empty
         -- quest_item itemType AND itemName confirmed .. no other details
         -- eventually, an itemSlot should be an index pointing to a container slot
-        -- :!start explorer "https://esoapi.uesp.net/100028/data/z/o/_/ZO_LinkHandler_ParseLink.html"
+        -- :!start explorer "https://esoapi.uesp.net/100029/data/z/o/_/ZO_LinkHandler_ParseLink.html"
 
         itemSlot = GetQuestItemNameFromLink( itemLink )
         if(itemSlot and CanQuickslotQuestItemById(itemId)) then
@@ -1395,7 +1405,7 @@ function getItem_tooltip(bNum)
     -- ITEM COLLECTIBLE QUEST_ITEM .. f(DEBUG_TOOLTIPS) {{{
     if(DEBUG_TOOLTIPS and itemName) then
         -- LINK NAME SLOT .. f(slotIndex itemLink itemType itemId) {{{
--- :!start explorer "https://esoapi.uesp.net/100028/data/z/o/_/ZO_LinkHandler_ParseLink.html"
+-- :!start explorer "https://esoapi.uesp.net/100029/data/z/o/_/ZO_LinkHandler_ParseLink.html"
 
         local _, _, itemType, itemId = ZO_LinkHandler_ParseLink( itemLink  )
         local name_from_slotIndex    = GetSlotName             ( slotIndex )
@@ -1894,7 +1904,7 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
     else
         GreymindQuickSlotBarUI.data = {
             tooltipText
-            =  QSB.Name.." "..QSB.Version.." Scalebreaker\n"
+            =  QSB.Name.." "..QSB.Version.." Dragonhold\n"
             ..(QSB.AccountWideSettings.SaveAccountWide and COLOR_3.."Account-wide Settings"
             or                                             COLOR_6..GetUnitName("player").."|r Character Settings"
             )
@@ -2784,17 +2794,26 @@ function GetKeyBindInfo( actionID )
 
         local _key, _mod1, _mod2, _mod3, _mod4
         = GetActionBindingInfo(_layerIndex, _categoryIndex, _actionIndex, _bindingIndex)
+-- (191006) {{{
+--[[
+:!start explorer "https://esoapi.uesp.net/100029/src/ingame/keybindings/keyboard/keybindings.lua.html"
+    local ctrl    = ZO_Keybindings_DoesKeyMatchAnyModifiers(KEY_CTRL   , _mod1, _mod2, _mod3, _mod4)
+    local alt     = ZO_Keybindings_DoesKeyMatchAnyModifiers(KEY_ALT    , _mod1, _mod2, _mod3, _mod4)
+    local shift   = ZO_Keybindings_DoesKeyMatchAnyModifiers(KEY_SHIFT  , _mod1, _mod2, _mod3, _mod4)
+    local command = ZO_Keybindings_DoesKeyMatchAnyModifiers(KEY_COMMAND, _mod1, _mod2, _mod3, _mod4)
+--]]
+--}}}
 
-        keyBindInfo[_bindingIndex] = {
-              layerIndex    = _layerIndex
+        keyBindInfo[_bindingIndex]
+        = {   layerIndex    = _layerIndex
             , categoryIndex = _categoryIndex
             , actionIndex   = _actionIndex
             , bindingIndex  = _bindingIndex
-            , keyCode  = _key
-            , mod1     = _mod1
-            , mod2     = _mod2
-            , mod3     = _mod3
-            , mod4     = _mod4
+            , keyCode       = _key
+            , mod1          = _mod1
+            , mod2          = _mod2
+            , mod3          = _mod3
+            , mod4          = _mod4
         }
 
     end
@@ -5054,8 +5073,8 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (191001)\n"
-    .."!!"..COLOR_8.." Update 23 (5.1.5): Scalebreaker (API 100028)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (191027)\n"
+    .."!!"..COLOR_8.." Update 24 (5.2.5): Dragonhold (API 100029)\n"
     .."→ "..COLOR_7.."Trader08_mod:\n"
     .."→ "..COLOR_2.."- LockThisPreset\n"
     .."→ "..COLOR_5.."- DelayPresetSwapWhileInCombat\n"
@@ -5078,25 +5097,27 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
 :new $TEMP/functioncalls.txt
 :new $TEMP/globalfuncs.txt
 :new $TEMP/globals.txt
+:new $TEMP/localfuncs.txt
 :new C:/LOCAL/GAMES/TESO/ADDONS/13_StaticsQuickslotProfiles/StaticsQuickslotProfiles/StaticsQuickslotProfiles.lua
 
 [PATCH NOTES]:
  :!start explorer "https://forums.elderscrollsonline.com/en/categories/patch-notes"
  :!start explorer "https://esoapi.uesp.net/100017/src/ingame/collections/collectionsinventorysingleton.lua.html"
  :!start explorer "https://esoapi.uesp.net/100022/src/ingame/collections/collectionsbook_manager.lua.html"
- :!start explorer "https://esoapi.uesp.net/100028/data/s/e/l/SelectSlotSimpleAction.html"
- :!start explorer "https://esoapi.uesp.net/100028/functions.html"
- :!start explorer "https://esoapi.uesp.net/100028/globalfuncs.txt"
- :!start explorer "https://esoapi.uesp.net/100028/globals.html"
- :!start explorer "https://esoapi.uesp.net/100028/src/ingame/actionbar/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100028/src/ingame/hud/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100028/src/ingame/inventory/inventoryslot.lua.html"
- :!start explorer "https://esoapi.uesp.net/100028/src/ingame/inventory/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100028/src/ingame/quickslot/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100028/src/ingame/tooltip/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100028/src/luadir.html"
- :!start explorer "https://esodata.uesp.net/100028/src/ingame/collections/collectionsinventorysingleton.lua.html"
- :!start explorer "https://esodata.uesp.net/100028/src/ingame/inventory/inventoryslot.lua.html"
+ :!start explorer "https://esoapi.uesp.net/100029"
+ :!start explorer "https://esoapi.uesp.net/100029/data/s/e/l/SelectSlotSimpleAction.html"
+ :!start explorer "https://esoapi.uesp.net/100029/functions.html"
+ :!start explorer "https://esoapi.uesp.net/100029/globalfuncs.txt"
+ :!start explorer "https://esoapi.uesp.net/100029/globals.html"
+ :!start explorer "https://esoapi.uesp.net/100029/src/ingame/actionbar/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100029/src/ingame/hud/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100029/src/ingame/inventory/inventoryslot.lua.html"
+ :!start explorer "https://esoapi.uesp.net/100029/src/ingame/inventory/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100029/src/ingame/quickslot/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100029/src/ingame/tooltip/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100029/src/luadir.html"
+ :!start explorer "https://esodata.uesp.net/100029/src/ingame/collections/collectionsinventorysingleton.lua.html"
+ :!start explorer "https://esodata.uesp.net/100029/src/ingame/inventory/inventoryslot.lua.html"
  :!start explorer "https://wiki.esoui.com/APIVersion"
  :!start explorer "https://www.esoui.com/downloads/download1775-StaticsQuickslotProfiles"
  :!start explorer "https://www.esoui.com/downloads/fileinfo.php?id=258"
