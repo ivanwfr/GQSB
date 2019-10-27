@@ -2,29 +2,10 @@
 ## APIVersion: 100029
 ## Version: v2.4.8
 ## AddonVersion: 2
-## Description: An in-combat complement to the Quickslot Radial Menu |c4040F0 -- embedding LibAddonMenu-2.0 and LibStub |cF0F000 -- ranked-up to API 100029 
+## Description: An in-combat complement to the Quickslot Radial Menu |c4040F0
 ## SavedVariables: GreymindQuickSlotBarSettings
 ## Author: ivanwfr
-
-# DOES NOT! DependsOn: LibStub LibAddonMenu-2.0
-# A better solution is:
-# - to check API compliance
-# - and embed all libs here
-
-lib\LibStub\LibStub.lua
-lib\LibAddonMenu-2.0\LibAddonMenu-2.0.lua
-lib\LibAddonMenu-2.0\controls\panel.lua
-lib\LibAddonMenu-2.0\controls\submenu.lua
-lib\LibAddonMenu-2.0\controls\button.lua
-lib\LibAddonMenu-2.0\controls\checkbox.lua
-lib\LibAddonMenu-2.0\controls\colorpicker.lua
-lib\LibAddonMenu-2.0\controls\custom.lua
-lib\LibAddonMenu-2.0\controls\description.lua
-lib\LibAddonMenu-2.0\controls\dropdown.lua
-lib\LibAddonMenu-2.0\controls\editbox.lua
-lib\LibAddonMenu-2.0\controls\header.lua
-lib\LibAddonMenu-2.0\controls\slider.lua
-lib\LibAddonMenu-2.0\controls\texture.lua
+## DependsOn: LibAddonMenu-2.0
 
 GreymindQuickSlotBar.lua
 GreymindQuickSlotBar.xml

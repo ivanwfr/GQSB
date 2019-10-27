@@ -3,29 +3,33 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: Version: GreymindQuickSlotBar.txt
-v2.4.8 {{{
-[u]191027[/u]
+v2.4.8 191027 {{{
+
 - [color="yellow"]Checked with Update 24 (5.2.5): Dragonhold (API 100029)[/color]
+
 [u]Trader08_mod[/u]
 - [color="magenta"][b]LockThisPreset[/b][/color]
 - [color="magenta"][b]DelayPresetSwapWhileInCombat[/b][/color]
 - [color="magenta"][b]Items with same Id but different flavors[/b][/color] improved support based on [b]Items Link[/b].
+
 [u]Chat[/u]
+- [color="orange"][b]LinkToChatOnClick[/b][/color] to copy button's item link into chat.
 - [color="orange"]ChatMax[/color] utility option to unlock Chat Window maximum size.
 - [color="orange"]ChatMute[/color] option to block all Chat warning messages.
-- (a per-session option i.e. not per-preset): one for [b]Account-wide[/b], one for [b]Character[/b].
-- [color="blue"][b]LinkToChatOnClick[/b][/color]
+- (a per-session option i.e. not per-preset): one for [b]Account-wide[/b], one by [b]Character[/b].
+
 [u]Option defaults[/u]
-- [color="blue"]Default Show Policy[/color] set to [Never] instead of [Always]
-- [color="blue"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
-- [color="blue"]UI layout[/color] may be reduced to a single [1x1 cell] .. down from [2R x 1C]
-- [color="blue"][X] Defaults Settings button[/color] will only reset the Current Preset.
+- [color="lightblue"]Re-shuffled Settings Menu.[/color]
+- [color="lightblue"]Default Show Policy[/color] set to [Never] instead of [Always]
+- [color="lightblue"]Default Visual Cue[/color] set to [OFF] instead of [Warn + Alert]
+- [color="lightblue"]UI layout[/color] may be reduced to a single [1x1 cell] .. down from [2R x 1C]
+- [color="lightblue"][X] Defaults Settings button[/color] will only reset the Current Preset.
 - (use the [color="red"]/resetall[/color] slash-command to reset all 5 Preset at once).
-- [color="blue"]Re-shuffled Settings Menu.[/color]
+
 [u]Addons dependency[/u]
-- [color="blue"]Preventing early calls to [b]Refresh_handler[/b] from globalapi.lua at login[/color]
-- [color="blue"]Deleted ## DependsOn: directive in favor of embedded ranked-up libraries[/color]
-- [color="blue"]Updated ## Description: directive in embedded libraries manifest[/color]
+- [color="lightblue"]Preventing early calls to [b]Refresh_handler[/b] from globalapi.lua at login[/color]
+- [color="lightblue"]Deleted ## DependsOn: directive in favor of embedded ranked-up libraries[/color]
+- [color="lightblue"]Updated ## Description: directive in embedded libraries manifest[/color]
 
 }}}
 --]]
