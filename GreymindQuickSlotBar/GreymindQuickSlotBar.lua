@@ -3,7 +3,11 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: Version: GreymindQuickSlotBar.txt
-v2.4.8 191027 {{{
+v2.4.9.1 191118 {{{
+- [color="yellow"]Saving characters by ID to support renaiming .. [ZO_SavedVars:NewCharacterId] [/color]
+
+}}}
+v2.4.8 191102 {{{
 
 - [color="yellow"]Checked with Update 24 (5.2.5): Dragonhold (API 100029)[/color]
 
@@ -285,7 +289,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.8", -- 191027 previous: 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.9.1", -- 191118 previous: 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -3239,10 +3243,8 @@ function Load_ZO_SavedVars(value)
 
     local changed = (value ~= nil) and QSB_Settings_Changed()
 
-    -- [QSB.AccountWideSettings] .. GET/SET {{{
---[[
-:!start explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
---]]
+    -- [QSB.AccountWideSettings]
+    -- GET/SET {{{
     if(value == nil) then
         QSB.AccountWideSettings = ZO_SavedVars:NewAccountWide(
         "GreymindQuickSlotBarSettings" -- savedVariableTable
@@ -3257,10 +3259,12 @@ function Load_ZO_SavedVars(value)
 
     end
     --}}}
-    -- [QSB.Settings] .. f(AccountWide.SaveAccountWide) {{{
-    if(QSB.AccountWideSettings.SaveAccountWide ) then
-c("LOADING "..COLOR_5.."Account-wide|r Settings")
 
+    if(QSB.AccountWideSettings.SaveAccountWide ) then
+        -- QSB.Settings .. f(AccountWide.SaveAccountWide) {{{
+        --:!start explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
+        --:!start explorer "https://esodata.uesp.net/100029/data/z/o/_/ZO_SavedVars.NewCharacterIdSettings.html"
+c("LOADING "..COLOR_5.."Account-wide|r Settings")
         QSB.Settings = ZO_SavedVars:NewAccountWide(
         "GreymindQuickSlotBarSettings"
         , QSB.SettingsVersion
@@ -3269,8 +3273,10 @@ c("LOADING "..COLOR_5.."Account-wide|r Settings")
         , "AccountWide"
         )
 
+        --}}}
     else
-c("LOADING "..COLOR_3..GetUnitName("player").."|r Character Settings")
+        -- QSB.Settings .. LOAD OLD .. AS FALLBACK FOR NEW {{{
+c("LOADING "..COLOR_4..GetUnitName("player").."|r Character-NAME (OLD Settings)")
 
         QSB.Settings = ZO_SavedVars:New(
         "GreymindQuickSlotBarSettings"
@@ -3279,9 +3285,22 @@ c("LOADING "..COLOR_3..GetUnitName("player").."|r Character Settings")
         , QSB.SettingsDefaults
         , "Default"
         )
+
+        --}}}
+        -- QSB.Settings .. LOAD NEW .. USE OLD AS DEFAULT {{{
+c("LOADING "..COLOR_3..GetUnitName("player").."|r Character-ID (NEW Settings)")
+
+        QSB.Settings = ZO_SavedVars:NewCharacterIdSettings(
+        "GreymindQuickSlotBarSettings"
+        , QSB.SettingsVersion
+        , nil
+        , QSB.Settings -- defaults to OLD
+        , "Default"
+        )
+
+        --}}}
     end
 
-    --}}}
     -- [Loaded_QSB_Settings] {{{
     if(value == nil) then
 --c("ROOTING: "..COLOR_2.." Loaded_QSB_Settings")
@@ -3543,7 +3562,7 @@ D("BuildSettingsMenu()")
         name        = COLOR_5..SYMBOL_GEAR.." Delay|r In Combat Preset Swap",
         tooltip     = "Wheter "..COLOR_5.."In-Combat Preset swap|r"
         ..            " should be remembered to be executed at the end of the fight"
-        ..            " instead of being ignored "..COLOR_8.."(as it not allowed)|r.\n"
+        ..            " instead of being ignored "..COLOR_8.."(as it is not allowed)|r.\n"
         ..            COLOR_M.."Trader08_mod",
         warning     = COLOR_3.."You can turn this option to handle UNAUTHORIZED PRESET-CHANGES while "..COLOR_R.."IN-COMBAT|r\n"
         ..            "\n"
@@ -5077,12 +5096,9 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (191027)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (191118)\n"
     .."!!"..COLOR_8.." Update 24 (5.2.5): Dragonhold (API 100029)\n"
-    .."→ "..COLOR_7.."Trader08_mod:\n"
     .."→ "..COLOR_2.."- LockThisPreset\n"
-    .."→ "..COLOR_5.."- DelayPresetSwapWhileInCombat\n"
-    .."→ "..COLOR_6.."- Behaves! with Items name, type and level\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
