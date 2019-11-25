@@ -3,6 +3,12 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: Version: GreymindQuickSlotBar.txt
+v2.4.9.2 191125 {{{
+- [color="red"]ON-LOAD[/color] .. hide unwanted top-left rectangle
+- [color="red"]ON-LOAD[/color] .. apply Show Policy
+- [color="red"]TOOLTIP[/color] .. empty itemLink shown as [-]
+
+}}}
 v2.4.9.1 191118 {{{
 - [color="yellow"]Saving characters by ID to support renaiming .. [ZO_SavedVars:NewCharacterId] [/color]
 
@@ -289,7 +295,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.9.1", -- 191118 previous: 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.9.2", -- 191125 previous: 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -499,6 +505,15 @@ local PlaySoundSlotted_pending      = false
 local Rebuild_LibAddonMenu_pending  = false
 local Reticle_isHidden              = false
 local SelectNextAuto_pending        = false
+--}}}
+--{{{
+local QSB_BAG_BACKPACK_UPDATE_bagIndex  = -1
+local QSB_BAG_BACKPACK_UPDATE_itemLevel = -1
+local QSB_BAG_BACKPACK_UPDATE_mutex     = false
+
+local tasks_loaded = {} -- collection of clear or equip function calls
+local tasks_posted = {} -- cloned version (for thread-proof in-progress handling)
+local tasks_cooldown_inprogress
 --}}}
 -- LOGGING --{{{
 -- d {{{
@@ -828,15 +843,6 @@ end
 --}}}
 
 -- ITEM EQUIP
---{{{
-local QSB_BAG_BACKPACK_UPDATE_bagIndex  = -1
-local QSB_BAG_BACKPACK_UPDATE_itemLevel = -1
-local QSB_BAG_BACKPACK_UPDATE_mutex     = false
-
-local tasks_loaded = {} -- collection of clear or equip function calls
-local tasks_posted = {} -- cloned version (for thread-proof in-progress handling)
-local tasks_cooldown_inprogress
---}}}
 -- check_QSB_BAG_BACKPACK_UPDATE_bagIndex_to_check {{{
 function check_QSB_BAG_BACKPACK_UPDATE_bagIndex_to_check()
     local       log_this = DEBUG_ITEM
@@ -1348,7 +1354,7 @@ function getItem_tooltip(bNum)
     -- itemLink {{{
     local label = "-"
     local itemLink = GetSlotItemLink( slotIndex )
-    if(   itemLink ) then
+    if(   itemLink and (itemLink ~= "")) then -- 191125 .. ignore empty itemLink
         label = itemLink
     end
     --}}}
@@ -3233,6 +3239,7 @@ D("Initialize()")
   --SetChatMax( QSB.Settings.ChatMax )
 
     -- EVENT HANDLERS
+    GreymindQuickSlotBarUI:SetHidden( true )  -- 191125 .. hide top-left rectangle on reloadui
     zo_callLater(RegisterEventHandlers, 500)
 
 end
@@ -4529,6 +4536,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     --}}}
     -- loaded {{{
     D(string.format("Version %s loaded", QSB.Version))
+    Refresh("RegisterForEvent")             -- 191125 .. apply Show Policy onload 
 
     --}}}
 end
@@ -5096,9 +5104,11 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (191118)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (191125)\n"
     .."!!"..COLOR_8.." Update 24 (5.2.5): Dragonhold (API 100029)\n"
-    .."→ "..COLOR_2.."- LockThisPreset\n"
+    .."→ "..COLOR_2.."- ON-LOAD: hide unwanted top-left rectangle\n"
+    .."→ "..COLOR_2.."- ON-LOAD: apply Show Policy\n"
+    .."→ "..COLOR_2.."- TOOLTIP: empty itemLink shown as [-]\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
