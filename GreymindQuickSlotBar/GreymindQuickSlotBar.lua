@@ -3,6 +3,11 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: Version: GreymindQuickSlotBar.txt
+v2.4.9   200229 {{{
+- [color="yellow"]Checked with Update 25 (5.3.4): Harrowstorm (API 100030)[/color]
+- [color="red"]ZO_ChatWindowTemplate1Buffer[/color] .. Chat clear not supported since Update 25
+
+}}}
 v2.4.9.2 191125 {{{
 - [color="red"]ON-LOAD[/color] .. hide unwanted top-left rectangle
 - [color="red"]ON-LOAD[/color] .. apply Show Policy
@@ -295,7 +300,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.9.2", -- 191125 previous: 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.4.9", -- 200229 previous: 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1918,7 +1923,7 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
     else
         GreymindQuickSlotBarUI.data = {
             tooltipText
-            =  QSB.Name.." "..QSB.Version.." Dragonhold\n"
+            =  QSB.Name.." "..QSB.Version.." Harrowstorm\n"
             ..(QSB.AccountWideSettings.SaveAccountWide and COLOR_3.."Account-wide Settings"
             or                                             COLOR_6..GetUnitName("player").."|r Character Settings"
             )
@@ -3131,9 +3136,18 @@ end
 -- QSB_ClearChat {{{
 function QSB_ClearChat()
 D("QSB_ClearChat()")
+
+local status, err = pcall(
+function()
     for i=1, GetNumChatContainerTabs(1), 1 do
-        _G["ZO_ChatWindowTemplate".. i .."Buffer"]:Clear()
+        _G["ZO_ChatWindowTemplate"..    i .."Buffer"]:Clear()
     end
+end
+)
+if(err) then
+    c("GQSB "..COLOR_2.."* ZO_ChatWindowTemplate is gone since Update 25\n")
+    PlaySound("ITEM_ON_COOLDOWN")
+end
 
     CHAT_SYSTEM:Maximize()
 end
@@ -5105,7 +5119,7 @@ function d_signature()
 
     d("\r\n"
     .."!! GQSB"..COLOR_C.." "..QSB.Version.." (191125)\n"
-    .."!!"..COLOR_8.." Update 24 (5.2.5): Dragonhold (API 100029)\n"
+    .."!!"..COLOR_8.." Update 25 (5.3.4): Harrowstorm (API 100030)\n"
     .."→ "..COLOR_2.."- ON-LOAD: hide unwanted top-left rectangle\n"
     .."→ "..COLOR_2.."- ON-LOAD: apply Show Policy\n"
     .."→ "..COLOR_2.."- TOOLTIP: empty itemLink shown as [-]\n"
@@ -5131,23 +5145,24 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
 :new C:/LOCAL/GAMES/TESO/ADDONS/13_StaticsQuickslotProfiles/StaticsQuickslotProfiles/StaticsQuickslotProfiles.lua
 
 [PATCH NOTES]:
+ :!start explorer "https://forums.elderscrollsonline.com/en/categories/add-ons-and-ui-mods"
  :!start explorer "https://forums.elderscrollsonline.com/en/categories/patch-notes"
  :!start explorer "https://esoapi.uesp.net/100017/src/ingame/collections/collectionsinventorysingleton.lua.html"
  :!start explorer "https://esoapi.uesp.net/100022/src/ingame/collections/collectionsbook_manager.lua.html"
- :!start explorer "https://esoapi.uesp.net/100029"
- :!start explorer "https://esoapi.uesp.net/100029/data/s/e/l/SelectSlotSimpleAction.html"
- :!start explorer "https://esoapi.uesp.net/100029/functions.html"
- :!start explorer "https://esoapi.uesp.net/100029/globalfuncs.txt"
- :!start explorer "https://esoapi.uesp.net/100029/globals.html"
- :!start explorer "https://esoapi.uesp.net/100029/src/ingame/actionbar/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100029/src/ingame/hud/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100029/src/ingame/inventory/inventoryslot.lua.html"
- :!start explorer "https://esoapi.uesp.net/100029/src/ingame/inventory/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100029/src/ingame/quickslot/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100029/src/ingame/tooltip/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100029/src/luadir.html"
- :!start explorer "https://esodata.uesp.net/100029/src/ingame/collections/collectionsinventorysingleton.lua.html"
- :!start explorer "https://esodata.uesp.net/100029/src/ingame/inventory/inventoryslot.lua.html"
+ :!start explorer "https://esoapi.uesp.net/100030"
+ :!start explorer "https://esoapi.uesp.net/100030/data/s/e/l/SelectSlotSimpleAction.html"
+ :!start explorer "https://esoapi.uesp.net/100030/functions.html"
+ :!start explorer "https://esoapi.uesp.net/100030/globalfuncs.txt"
+ :!start explorer "https://esoapi.uesp.net/100030/globals.html"
+ :!start explorer "https://esoapi.uesp.net/100030/src/ingame/actionbar/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100030/src/ingame/hud/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100030/src/ingame/inventory/inventoryslot.lua.html"
+ :!start explorer "https://esoapi.uesp.net/100030/src/ingame/inventory/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100030/src/ingame/quickslot/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100030/src/ingame/tooltip/luadir.html"
+ :!start explorer "https://esoapi.uesp.net/100030/src/luadir.html"
+ :!start explorer "https://esodata.uesp.net/100030/src/ingame/collections/collectionsinventorysingleton.lua.html"
+ :!start explorer "https://esodata.uesp.net/100030/src/ingame/inventory/inventoryslot.lua.html"
  :!start explorer "https://wiki.esoui.com/APIVersion"
  :!start explorer "https://www.esoui.com/downloads/download1775-StaticsQuickslotProfiles"
  :!start explorer "https://www.esoui.com/downloads/fileinfo.php?id=258"
