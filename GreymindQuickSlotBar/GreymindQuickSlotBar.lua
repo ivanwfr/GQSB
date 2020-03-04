@@ -3,6 +3,11 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: Version: GreymindQuickSlotBar.txt
+v2.5.0.1 200304 {{{
+- [color="yellow"]Checked with Update 25 (5.3.4): Harrowstorm (API 100030)[/color]
+- [color="orange"]Chat Clear restored[/color] thanks to still supported code from [color="orange"]ChatWindowManager[/color]
+
+}}}
 v2.4.9   200229 {{{
 - [color="yellow"]Checked with Update 25 (5.3.4): Harrowstorm (API 100030)[/color]
 - [color="red"]ZO_ChatWindowTemplate1Buffer[/color] .. Chat clear not supported since Update 25
@@ -300,7 +305,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.4.9", -- 200229 previous: 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.5.0.1", -- 200304 previous: 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -3140,7 +3145,8 @@ D("QSB_ClearChat()")
 local status, err = pcall(
 function()
     for i=1, GetNumChatContainerTabs(1), 1 do
-        _G["ZO_ChatWindowTemplate"..    i .."Buffer"]:Clear()
+--      _G["ZO_ChatWindowTemplate"..    i .."Buffer"]:Clear()
+        CHAT_SYSTEM.primaryContainer.currentBuffer:Clear()
     end
 end
 )
@@ -4930,13 +4936,17 @@ function OnSlashCommand(arg)
         -- /gqsb lua BAG_BACKPACK
 
         ------------------------------------- TABLE, MAX, KEY, VAL
-        -- /gqsb lua CHAT_SYSTEM.containers[1]     ,   0, "name"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,   0,       nil, "true"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,   5,       nil, "Potion"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,   5, "rawName"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]  ,  20, "rawName"
+        -- /gqsb lua CHAT_SYSTEM                               ,   0, ""
+        -- /gqsb lua CHAT_SYSTEM.primaryContainer              ,   0, ""
+        -- /gqsb lua CHAT_SYSTEM.primaryContainer.currentBuffer,   0, ""
+        -- /gqsb lua ZO_ChatSystem                             ,   0, "ResetContainerPositionAndSize"
+        -- /gqsb lua CHAT_SYSTEM.containers[1]                 ,   0, "name"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,   0,       nil, "true"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,   5,       nil, "Potion"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,   5, "rawName"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,  20, "rawName"
         -- /gqsb lua SHARED_INVENTORY.bagCache[1][1].inventory.sortHeaders.highlightColor
-        -- /gqsb lua SHARED_INVENTORY.bagCache[2]  ,   5, "rawName"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[2]              ,   5, "rawName"
         -- /gqsb lua SHARED_INVENTORY.questCache
         -- /gqsb lua SHARED_FURNITURE
         -- /gqsb lua SHARED_FURNITURE.placeableFurniture
@@ -5118,11 +5128,9 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (191125)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200304)\n"
     .."!!"..COLOR_8.." Update 25 (5.3.4): Harrowstorm (API 100030)\n"
-    .."→ "..COLOR_2.."- ON-LOAD: hide unwanted top-left rectangle\n"
-    .."→ "..COLOR_2.."- ON-LOAD: apply Show Policy\n"
-    .."→ "..COLOR_2.."- TOOLTIP: empty itemLink shown as [-]\n"
+    .."→ "..COLOR_2.."- Chat Clear restored\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
