@@ -1,8 +1,13 @@
--- GreymindQuickSlotBar_tag (191027:17h) --{{{
+-- GreymindQuickSlotBar_tag (200413:16h) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
--- TODO: Version: GreymindQuickSlotBar.txt
+-- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.5.0.2 200413 {{{
+- [color="yellow"]Checked with Update 25 (5.3.4): Harrowstorm (API 100030)[/color]
+- [color="orange"]Blink Changes[/color] shows Slot buttons only, excluding Settings handles
+
+}}}
 v2.5.0.1 200304 {{{
 - [color="yellow"]Checked with Update 25 (5.3.4): Harrowstorm (API 100030)[/color]
 - [color="orange"]Chat Clear restored[/color] thanks to still supported code from [color="orange"]ChatWindowManager[/color]
@@ -62,6 +67,7 @@ local DEBUG_TASKS    = false
 local DEBUG_STATION  = false
 local DEBUG_STATUS   = false
 local DEBUG_TOOLTIPS = false
+local DEBUG_HANDLES  = false
 
 -- LOCAL
 -- SYMBOLS {{{
@@ -305,7 +311,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.5.0.1", -- 200304 previous: 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.5.0.2", -- 200413 previous: 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -607,7 +613,7 @@ c("\r\n".._caller..":")
     if          QSB.Settings.LockThisPreset
         or      QSB.Settings.DelayPresetSwapWhileInCombat
         then
-            c(COLOR_8..COLOR_4.."[".. QSB.Settings.PresetName.."]"
+            c(COLOR_4.."[".. QSB.Settings.PresetName.."]"
             .. (QSB.Settings.LockThisPreset               and (COLOR_2.." .. IS LOCKED"               ) or "")
             .. (QSB.Settings.DelayPresetSwapWhileInCombat and (COLOR_5.." .. EQUIP AFTER COMBAT IS ON") or "")
             )
@@ -763,7 +769,11 @@ if(log_this) then c(QSB.Settings.PresetName..COLOR_M.." → LOCKED → NOT SAVED
 
         SaveCurrentPreset(we_can_save_because)
 
-        ShowUIHandles("SelectPreset( "..selectedPreset.." )")
+        if(QSB.Settings.Visibility ~= VIS_BLINK_CHANGES) then
+            ShowUIHandles("SelectPreset( "..selectedPreset.." )")
+        else
+            HideUIHandles("SelectPreset( "..selectedPreset.." )")
+        end
     end
     --}}}
     -- MainWindow {{{
@@ -1304,7 +1314,7 @@ if(log_this) then c("save_QSB_to_SlotItemTable("..bNum.."):") end
     local itemName  = GetSlotName      ( slotIndex )
     local texture   = GetSlotTexture   ( slotIndex )
     local itemLink  = GetSlotItemLink  ( slotIndex )
-    
+
     local itemSlot  = -1
     if   (itemName ~= nil) and (itemName ~= "") then itemSlot =   getItem_slot_from_name( itemName ) end
     if   (itemSlot == -1                      ) then itemSlot = GetCollectibleIdFromLink( itemLink ) end
@@ -1609,7 +1619,7 @@ function getItem_normalized_link( itemLink )
     -- ITEM |H0:item:54339:308:50:0:0:0:0:0:0:0:0:0:0:0:0:36:0:0:0:0:8454917
     -- _____|1__:2__:3____:4__:5_:.:.:.:.:.:.:.:.:.:.:.:.:..:.:.:.:.:23_____
 
-    if(  #t < 7) then 
+    if(  #t < 7) then
         return itemLink     -- normalized already
 
     else
@@ -2321,6 +2331,7 @@ D("BuildUIHandles():")
             texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..h_num.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
             texture:SetTexture("/esoui/art/quest/tracked_pin.dds")
             texture:SetAnchorFill(button)
+            texture:SetAlpha(0)
             QSB.UIHandles[hLabel] = texture
 
         elseif hLabel == "S" then
@@ -2328,6 +2339,7 @@ D("BuildUIHandles():")
             texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..h_num.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
             texture:SetTexture("/esoui/art/menubar/menubar_mainmenu_over.dds")
             texture:SetAnchorFill(button)
+            texture:SetAlpha(0)
             QSB.UIHandles[hLabel] = texture
 
         else
@@ -2417,9 +2429,11 @@ function ShowOrHide()
         end
     end
 
-    if(hide_msg ~= "") then Hide_delayed(        hide_msg ) end -- HIDE BUTTONS
-    if(show_msg ~= "") then Show_delayed(        show_msg ) end -- SHOW BUTTONS
-    if(show_msg ~= "") then ShowOrHideUIHandles( show_msg ) end -- SHOW HANDLES
+    if    (hide_msg ~= ""          ) then Hide_delayed(        hide_msg                   ) end -- HIDE BUTTONS
+    if    (show_msg ~= ""          ) then Show_delayed(        show_msg                   ) end -- SHOW BUTTONS
+    if    (show_msg ~= ""          ) then ShowOrHideUIHandles( show_msg                   )     -- SHOW HANDLES
+    elseif(vis == VIS_BLINK_CHANGES) then       HideUIHandles( hide_msg.." POSSIBLY SHOWN") end -- HIDE HANDLES
+
 end
 --}}}
 -- Show_delayed {{{
@@ -2523,9 +2537,8 @@ end
 --}}}
 -- SetUIHandlesVisibility {{{
 function SetUIHandlesVisibility(visible, _caller)
-if(DEBUG_STATUS) then D_STATUS(
-    (visible and COLOR_4 or COLOR_8).."HANDLES VISIBILITY "..(visible and "ON" or "OFF")
-    .." ".._caller
+if(DEBUG_STATUS or DEBUG_HANDLES) then D_STATUS(
+    "HANDLES VISIBILITY "..(visible and COLOR_4 or COLOR_8)..(visible and "ON" or "OFF") .." .. ".._caller
     )
 end
     if not QSB.UIHandles then return end
@@ -3104,6 +3117,12 @@ function QSB_ForceBarVisibility()
     or             COLOR_8.."FORCED OFF"
 
 c(keyName..COLOR_5.." GQSB: Bar Visibility "..COLOR_9..QSB.Settings.Visibility..COLOR_4.." "..state)
+
+    if(QSB.Settings.Visibility ~= VIS_BLINK_CHANGES) then
+        ShowUIHandles(QSB.Settings.Visibility)
+    else
+        HideUIHandles(QSB.Settings.Visibility)
+    end
 
     Refresh("Bar Visibility "..state)
 
@@ -4556,7 +4575,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     --}}}
     -- loaded {{{
     D(string.format("Version %s loaded", QSB.Version))
-    Refresh("RegisterForEvent")             -- 191125 .. apply Show Policy onload 
+    Refresh("RegisterForEvent")             -- 191125 .. apply Show Policy onload
 
     --}}}
 end
@@ -4890,12 +4909,13 @@ function OnSlashCommand(arg)
     --}}}
     -- DEBUG -- {{{
     elseif(arg == "debug"         ) then DEBUG          = not DEBUG         ; c("...DEBUG..........=[" ..tostring( DEBUG          ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_event"   ) then DEBUG_EVENT    = not DEBUG_EVENT   ; c("...DEBUG_EVENT....=[" ..tostring( DEBUG_EVENT    ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_equip"   ) then DEBUG_EQUIP    = not DEBUG_EQUIP   ; c("...DEBUG_EQUIP....=[" ..tostring( DEBUG_EQUIP    ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_event"   ) then DEBUG_EVENT    = not DEBUG_EVENT   ; c("...DEBUG_EVENT....=[" ..tostring( DEBUG_EVENT    ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_handles" ) then DEBUG_HANDLES  = not DEBUG_HANDLES ; c("...DEBUG_HANDLES..=[" ..tostring( DEBUG_HANDLES  ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_item"    ) then DEBUG_ITEM     = not DEBUG_ITEM    ; c("...DEBUG_ITEM.....=[" ..tostring( DEBUG_ITEM     ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_tasks"   ) then DEBUG_TASKS    = not DEBUG_TASKS   ; c("...DEBUG_TASKS....=[" ..tostring( DEBUG_TASKS    ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_station" ) then DEBUG_STATION  = not DEBUG_STATION ; c("...DEBUG_STATION..=[" ..tostring( DEBUG_STATION  ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_status"  ) then DEBUG_STATUS   = not DEBUG_STATUS  ; c("...DEBUG_STATUS...=[" ..tostring( DEBUG_STATUS   ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_tasks"   ) then DEBUG_TASKS    = not DEBUG_TASKS   ; c("...DEBUG_TASKS....=[" ..tostring( DEBUG_TASKS    ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_tooltip" ) then DEBUG_TOOLTIPS = not DEBUG_TOOLTIPS; c("...DEBUG_TOOLTIPS.=[" ..tostring( DEBUG_TOOLTIPS ).. "]"); ui_may_have_changed = true
     --}}}
     else -- LUA
@@ -4935,19 +4955,24 @@ function OnSlashCommand(arg)
         ------------ VAR
         -- /gqsb lua BAG_BACKPACK
 
-        ------------------------------------- TABLE, MAX, KEY, VAL
-        -- /gqsb lua CHAT_SYSTEM                               ,   0, ""
-        -- /gqsb lua CHAT_SYSTEM.primaryContainer              ,   0, ""
-        -- /gqsb lua CHAT_SYSTEM.primaryContainer.currentBuffer,   0, ""
-        -- /gqsb lua ZO_ChatSystem                             ,   0, "ResetContainerPositionAndSize"
+        ------------ FUNCTION
+        -- /gqsb lua CHAT_SYSTEM.primaryContainer.currentBuffer.GetNumHistoryLines
+
+        -------------------------------------             TABLE, MAX, KEY      , VAL
+        -- /gqsb lua CHAT_SYSTEM
+        -- /gqsb lua CHAT_SYSTEM.primaryContainer
+        -- /gqsb lua CHAT_SYSTEM.primaryContainer              ,   0, ""       , "function"
+        -- /gqsb lua CHAT_SYSTEM.primaryContainer              ,   0, ""       , "bool"
+        -- /gqsb lua ZO_ChatSystem                             ,   0, ""       , "function"
         -- /gqsb lua CHAT_SYSTEM.containers[1]                 ,   0, "name"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,   0,       nil, "true"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,   5,       nil, "Potion"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,   0, nil      , "true"
+        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,   5, nil      , "Potion"
         -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,   5, "rawName"
         -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,  20, "rawName"
         -- /gqsb lua SHARED_INVENTORY.bagCache[1][1].inventory.sortHeaders.highlightColor
         -- /gqsb lua SHARED_INVENTORY.bagCache[2]              ,   5, "rawName"
         -- /gqsb lua SHARED_INVENTORY.questCache
+        -- /gqsb lua SHARED_INVENTORY.questCache               ,   0, nil      , "string"
         -- /gqsb lua SHARED_FURNITURE
         -- /gqsb lua SHARED_FURNITURE.placeableFurniture
         -- /gqsb lua SHARED_FURNITURE.placeableFurniture[1][1][8].slotData
@@ -5101,6 +5126,7 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
             local v_lower =               string.lower( v_str )
             local k_match = k_filter and (string.find ( k_lower, k_filter) ~= nil)
             local v_match = v_filter and (string.find ( v_lower, v_filter) ~= nil)
+            or              v_filter and (string.find ( v_type , v_filter) ~= nil)
 
             if((not filtering) or k_match or v_match) then
 
@@ -5128,9 +5154,10 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200304)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200413)\n"
     .."!!"..COLOR_8.." Update 25 (5.3.4): Harrowstorm (API 100030)\n"
     .."→ "..COLOR_2.."- Chat Clear restored\n"
+    .."→ "..COLOR_3.."- Blink Changes: shows Slot buttons only\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
