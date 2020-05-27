@@ -1,8 +1,13 @@
--- GreymindQuickSlotBar_tag (200413:16h) --{{{
+-- GreymindQuickSlotBar_tag (200527:23h:32) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.5.0   200527 {{{
+- [color="yellow"]Checked with Update 26 (6.0.5): Greymoor (API 100031)[/color]
+- [color="orange"]Chat Clear restored[/color] thanks to still supported code from [color="orange"]ChatWindowManager[/color]
+- [color="orange"]Blink Changes[/color] shows Slot buttons only, excluding Settings handles
+}}}
 v2.5.0.2 200413 {{{
 - [color="yellow"]Checked with Update 25 (5.3.4): Harrowstorm (API 100030)[/color]
 - [color="orange"]Blink Changes[/color] shows Slot buttons only, excluding Settings handles
@@ -28,7 +33,7 @@ v2.4.9.1 191118 {{{
 - [color="yellow"]Saving characters by ID to support renaiming .. [ZO_SavedVars:NewCharacterId] [/color]
 
 }}}
-v2.4.8 191102 {{{
+v2.4.8   191102 {{{
 
 - [color="yellow"]Checked with Update 24 (5.2.5): Dragonhold (API 100029)[/color]
 
@@ -311,7 +316,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.5.0.2", -- 200413 previous: 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.0", -- 200527 previous: 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1938,7 +1943,7 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
     else
         GreymindQuickSlotBarUI.data = {
             tooltipText
-            =  QSB.Name.." "..QSB.Version.." Harrowstorm\n"
+            =  QSB.Name.." "..QSB.Version.." Greymoor\n"
             ..(QSB.AccountWideSettings.SaveAccountWide and COLOR_3.."Account-wide Settings"
             or                                             COLOR_6..GetUnitName("player").."|r Character Settings"
             )
@@ -2383,14 +2388,16 @@ end
 function ShowOrHide()
     if not QSB.Settings then return end
 
-    local inventory_showing = not ZO_PlayerInventory:IsHidden()
+    -- CURRENT STATE OF USER-INTERFACE
+    local               vis =     QSB.Settings.Visibility
     local qsb_panel_showing = not QSB.Panel:IsHidden()
+    local inventory_showing = not ZO_PlayerInventory:IsHidden()
     local quickslot_showing = not ZO_QuickSlot:IsHidden()
-    local          crafting = ZO_CraftingUtils_IsCraftingWindowOpen()
-    local               vis = QSB.Settings.Visibility
+    local          crafting =     ZO_CraftingUtils_IsCraftingWindowOpen()
+
+    -- SHOULD TRANSITION TO SHOWING OR HIDING
     local          show_msg = ""
     local          hide_msg = ""
-
     if         qsb_panel_showing        then show_msg = "VIS-"..vis.." .. GQSB-MENU SHOWING"
     elseif not QSB.Settings.LockUI      then show_msg = "NOT LOCKED ON SCREEN"
     elseif     BlockBarVisibility       then hide_msg = "BLOCKED IS ON"
@@ -2429,8 +2436,11 @@ function ShowOrHide()
         end
     end
 
+    -- BUTTONS SHOWING OR HIDING
     if    (hide_msg ~= ""          ) then Hide_delayed(        hide_msg                   ) end -- HIDE BUTTONS
     if    (show_msg ~= ""          ) then Show_delayed(        show_msg                   ) end -- SHOW BUTTONS
+
+    -- HANDLES SHOWING (BLINK BACK INTO HIDING)
     if    (show_msg ~= ""          ) then ShowOrHideUIHandles( show_msg                   )     -- SHOW HANDLES
     elseif(vis == VIS_BLINK_CHANGES) then       HideUIHandles( hide_msg.." POSSIBLY SHOWN") end -- HIDE HANDLES
 
@@ -5156,8 +5166,8 @@ function d_signature()
     d("\r\n"
     .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200413)\n"
     .."!!"..COLOR_8.." Update 25 (5.3.4): Harrowstorm (API 100030)\n"
-    .."→ "..COLOR_2.."- Chat Clear restored\n"
-    .."→ "..COLOR_3.."- Blink Changes: shows Slot buttons only\n"
+    .."!!"..COLOR_3.."- Checked with Update 26 (6.0.5): Greymoor (API 100031)\n"
+    .."→ "..COLOR_3.."- Chat Clear restored\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
@@ -5180,8 +5190,11 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
 :new C:/LOCAL/GAMES/TESO/ADDONS/13_StaticsQuickslotProfiles/StaticsQuickslotProfiles/StaticsQuickslotProfiles.lua
 
 [PATCH NOTES]:
- :!start explorer "https://forums.elderscrollsonline.com/en/categories/add-ons-and-ui-mods"
+ :!start explorer "https://wiki.esoui.com/APIVersion"
+ :!start explorer "https://www.esoui.com/forums/showthread.php?p=40862"
  :!start explorer "https://forums.elderscrollsonline.com/en/categories/patch-notes"
+ :!start explorer "https://forums.elderscrollsonline.com/en/categories/add-ons-and-ui-mods"
+
  :!start explorer "https://esoapi.uesp.net/100017/src/ingame/collections/collectionsinventorysingleton.lua.html"
  :!start explorer "https://esoapi.uesp.net/100022/src/ingame/collections/collectionsbook_manager.lua.html"
  :!start explorer "https://esoapi.uesp.net/100030"
@@ -5198,7 +5211,6 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
  :!start explorer "https://esoapi.uesp.net/100030/src/luadir.html"
  :!start explorer "https://esodata.uesp.net/100030/src/ingame/collections/collectionsinventorysingleton.lua.html"
  :!start explorer "https://esodata.uesp.net/100030/src/ingame/inventory/inventoryslot.lua.html"
- :!start explorer "https://wiki.esoui.com/APIVersion"
  :!start explorer "https://www.esoui.com/downloads/download1775-StaticsQuickslotProfiles"
  :!start explorer "https://www.esoui.com/downloads/fileinfo.php?id=258"
  :!start explorer "https://www.esoui.com/downloads/fileinfo.php?id=258#comments"
