@@ -1,8 +1,12 @@
--- GreymindQuickSlotBar_tag (200527:23h:32) --{{{
+-- GreymindQuickSlotBar_tag (200530:19h:37) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.0   200530 {{{
+- [color="yellow"]Checked with Update 26 (6.0.5): Greymoor (API 100031)[/color]
+- [color="orange"]UI hidden while scrying or digging Antiquities[/color]
+}}}
 v2.5.0   200527 {{{
 - [color="yellow"]Checked with Update 26 (6.0.5): Greymoor (API 100031)[/color]
 - [color="orange"]Chat Clear restored[/color] thanks to still supported code from [color="orange"]ChatWindowManager[/color]
@@ -68,11 +72,11 @@ local DEBUG          = false
 local DEBUG_ITEM     = false
 local DEBUG_EQUIP    = false
 local DEBUG_EVENT    = false
-local DEBUG_TASKS    = false
+local DEBUG_TASK     = false
 local DEBUG_STATION  = false
 local DEBUG_STATUS   = false
-local DEBUG_TOOLTIPS = false
-local DEBUG_HANDLES  = false
+local DEBUG_TOOLTIP  = false
+local DEBUG_HANDLE   = false
 
 -- LOCAL
 -- SYMBOLS {{{
@@ -316,7 +320,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.0", -- 200527 previous: 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.0", -- 200530 previous: 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -937,7 +941,7 @@ end
 --}}}
 -- loadPresetSlots {{{
 function loadPresetSlots()
-local log_this = DEBUG_EQUIP or DEBUG_TASKS or DEBUG_STATUS or DEBUG_ITEM
+local log_this = DEBUG_EQUIP or DEBUG_TASK or DEBUG_STATUS or DEBUG_ITEM
     -- SETTINGS CHECK .. (nothing to load when just installed) {{{
     if not loadPresetSlots_checkSlotItemTable(log_this) then return end
 
@@ -1161,12 +1165,12 @@ end
 function tasks_cooldown_begin()
     -- NO STACKING COOLDOWN {{{
     if tasks_cooldown_inprogress then
-if(DEBUG_TASKS) then c(COLOR_8.."TASK .. COOLDOWN ALREADY IN PROGRESS") end
+if(DEBUG_TASK) then c(COLOR_8.."TASK .. COOLDOWN ALREADY IN PROGRESS") end
 
         return
     end
     --}}}
-if(DEBUG_TASKS) then c(COLOR_7.."TASK .. COOLDOWN BEGIN") end
+if(DEBUG_TASK) then c(COLOR_7.."TASK .. COOLDOWN BEGIN") end
     tasks_cooldown_inprogress = true
 
     zo_callLater(tasks_cooldown_end, ZO_COOL_DOWN_DELAY_TASKS)
@@ -1177,11 +1181,11 @@ function tasks_cooldown_end()
     tasks_cooldown_inprogress = false
 
     if(#tasks_loaded > 0) then
-if(DEBUG_TASKS) then c(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_4.."POSTING "..#tasks_loaded.." LOADED TASKS") end
+if(DEBUG_TASK) then c(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_4.."POSTING "..#tasks_loaded.." LOADED TASKS") end
 
         tasks_post(ZO_CALLLATER_DELAY_TASKS)
     else
-if(DEBUG_TASKS) then c(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_8.."NO MORE LOADED TASKS") end
+if(DEBUG_TASK) then c(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_8.."NO MORE LOADED TASKS") end
 
         Refresh("TASKS COOLDOWN END")
     end
@@ -1190,7 +1194,7 @@ end
 --}}}
 -- tasks_post {{{
 function tasks_post(delay)
-if(DEBUG_TASKS) then c(COLOR_C.."TASK #"..tostring(#tasks_loaded).." .. POST DELAY("..tostring(delay)..") .. "..#tasks_loaded.." LOADED TASKS") end
+if(DEBUG_TASK) then c(COLOR_C.."TASK #"..tostring(#tasks_loaded).." .. POST DELAY("..tostring(delay)..") .. "..#tasks_loaded.." LOADED TASKS") end
     tasks_cooldown_begin()
 
     tasks_posted = DeepCopy(tasks_loaded)
@@ -1202,7 +1206,7 @@ end
 function tasks_handler()
     -- fetch next task {{{
     if(#tasks_posted == 0) then
-if(DEBUG_TASKS) then c(COLOR_8.."TASK .. NO PENDING TASK") end
+if(DEBUG_TASK) then c(COLOR_8.."TASK .. NO PENDING TASK") end
         return
     end
 
@@ -1211,8 +1215,8 @@ if(DEBUG_TASKS) then c(COLOR_8.."TASK .. NO PENDING TASK") end
 
     local  clear_or_equip, bNum, itemName_or_reason, slotId, itemId, itemType, itemLink, itemLevel, texture, log_this = unpack(tasks_entry)
     --}}}
--- DEBUG_TASKS {{{
-if(DEBUG_TASKS) then
+-- DEBUG_TASK {{{
+if(DEBUG_TASK) then
     if    (clear_or_equip == clear_bNum) then
 
         c(     COLOR_6.."TASK .. CLEAR b"..COLOR_8..tostring( bNum               )
@@ -1264,7 +1268,7 @@ end
     --}}}
     -- 2/2 all done and up to date {{{
     elseif(#tasks_loaded == 0) then
-if(DEBUG_TASKS) then c(COLOR_3.."TASK .. REQUESTED ALL DONE") end
+if(DEBUG_TASK) then c(COLOR_3.."TASK .. REQUESTED ALL DONE") end
 
         tasks_cooldown_begin()
 
@@ -1425,8 +1429,8 @@ function getItem_tooltip(bNum)
     local  tt = color  .. label .."|r"
 
     --}}}
-    -- QSB .. f(DEBUG_TOOLTIPS) {{{
-    if(DEBUG_TOOLTIPS) then
+    -- QSB .. f(DEBUG_TOOLTIP) {{{
+    if(DEBUG_TOOLTIP) then
 
         tt = tt
         .."\n"
@@ -1441,8 +1445,8 @@ function getItem_tooltip(bNum)
 
     end
     --}}}
-    -- ITEM COLLECTIBLE QUEST_ITEM .. f(DEBUG_TOOLTIPS) {{{
-    if(DEBUG_TOOLTIPS and itemName) then
+    -- ITEM COLLECTIBLE QUEST_ITEM .. f(DEBUG_TOOLTIP) {{{
+    if(DEBUG_TOOLTIP and itemName) then
         -- LINK NAME SLOT .. f(slotIndex itemLink itemType itemId) {{{
 -- :!start explorer "https://esoapi.uesp.net/100029/data/z/o/_/ZO_LinkHandler_ParseLink.html"
 
@@ -1817,7 +1821,7 @@ end
 -- Refresh_handler {{{
 function Refresh_handler()
 -- Refresh_count_down {{{
-    local log_this = DEBUG_TASKS
+    local log_this = DEBUG_TASK
 
 if(log_this) then c("...Refresh_handler() .. ".. tostring(Refresh_count_down)) end
 
@@ -2394,6 +2398,8 @@ function ShowOrHide()
     local inventory_showing = not ZO_PlayerInventory:IsHidden()
     local quickslot_showing = not ZO_QuickSlot:IsHidden()
     local          crafting =     ZO_CraftingUtils_IsCraftingWindowOpen()
+    local           digging =     ANTIQUITY_DIGGING_ACTIONS_FRAGMENT:IsShowing()
+    local           scrying =     IsScryingInProgress()
 
     -- SHOULD TRANSITION TO SHOWING OR HIDING
     local          show_msg = ""
@@ -2404,6 +2410,8 @@ function ShowOrHide()
     elseif     ForceBarVisibility       then show_msg = "FORCED IS ON"
 
     elseif     crafting                 then hide_msg = "WHILE CRAFTING"
+    elseif      digging                 then hide_msg = "WHILE DIGGING"
+    elseif      scrying                 then hide_msg = "WHILE SCRYING"
     elseif not ZO_Skills:IsHidden()     then hide_msg = "WHILE SKILL TUNING"
 
     elseif     vis == VIS_NEVER         then hide_msg = "VIS-"..vis
@@ -2547,7 +2555,7 @@ end
 --}}}
 -- SetUIHandlesVisibility {{{
 function SetUIHandlesVisibility(visible, _caller)
-if(DEBUG_STATUS or DEBUG_HANDLES) then D_STATUS(
+if(DEBUG_STATUS or DEBUG_HANDLE) then D_STATUS(
     "HANDLES VISIBILITY "..(visible and COLOR_4 or COLOR_8)..(visible and "ON" or "OFF") .." .. ".._caller
     )
 end
@@ -4327,23 +4335,23 @@ D("BuildSettingsMenu()")
     -- Verbose Tooltips {{{
     control = {
         type        = "checkbox",
-        reference   = "QSB_DEBUG_TOOLTIPS",
+        reference   = "QSB_DEBUG_TOOLTIP",
         name        = "Verbose "..COLOR_M.."Tooltips",
         tooltip     = COLOR_M.."to insert technical details into buttons tooltips",
         warning     = COLOR_8.."...a dev-tool",
         getFunc     = function()
-            if( DEBUG_TOOLTIPS == nil) then
-                DEBUG_TOOLTIPS = false
+            if( DEBUG_TOOLTIP == nil) then
+                DEBUG_TOOLTIP = false
             end
-            return DEBUG_TOOLTIPS
+            return DEBUG_TOOLTIP
         end,
         setFunc     = function(value)
-            DEBUG_TOOLTIPS = value
-            if(DEBUG_TOOLTIPS) then c("DEBUG_TOOLTIPS "..COLOR_M.."ON" )
-                else                c("DEBUG_TOOLTIPS "..COLOR_8.."OFF")
+            DEBUG_TOOLTIP = value
+            if(DEBUG_TOOLTIP) then c("DEBUG_TOOLTIP "..COLOR_M.."ON" )
+                else               c("DEBUG_TOOLTIP "..COLOR_8.."OFF")
                 end
 
-            Refresh("DEBUG_TOOLTIPS")
+            Refresh("DEBUG_TOOLTIP")
         end,
         width       = "full",
     }
@@ -4587,6 +4595,157 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     D(string.format("Version %s loaded", QSB.Version))
     Refresh("RegisterForEvent")             -- 191125 .. apply Show Policy onload
 
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_SCRYING_RESULT --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_SCRYING_RESULT"
+    ,                                    EVENT_ANTIQUITY_SCRYING_RESULT
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_SCRYING_RESULT")
+                           Hide_delayed("EVENT_ANTIQUITY_SCRYING_RESULT") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITIES_UPDATED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITIES_UPDATED"
+    ,                                    EVENT_ANTIQUITIES_UPDATED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITIES_UPDATED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIGGING_ACTIVE_SKILL_CHANGED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIGGING_ACTIVE_SKILL_CHANGED"
+    ,                                    EVENT_ANTIQUITY_DIGGING_ACTIVE_SKILL_CHANGED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIGGING_ACTIVE_SKILL_CHANGED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIGGING_ANTIQUITY_UNEARTHED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIGGING_ANTIQUITY_UNEARTHED"
+    ,                                    EVENT_ANTIQUITY_DIGGING_ANTIQUITY_UNEARTHED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIGGING_ANTIQUITY_UNEARTHED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIGGING_BONUS_LOOT_UNEARTHED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIGGING_BONUS_LOOT_UNEARTHED"
+    ,                                    EVENT_ANTIQUITY_DIGGING_BONUS_LOOT_UNEARTHED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIGGING_BONUS_LOOT_UNEARTHED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIGGING_DIG_POWER_REFUND --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIGGING_DIG_POWER_REFUND"
+    ,                                    EVENT_ANTIQUITY_DIGGING_DIG_POWER_REFUND
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIGGING_DIG_POWER_REFUND") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIGGING_EXIT_RESPONSE --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIGGING_EXIT_RESPONSE"
+    ,                                    EVENT_ANTIQUITY_DIGGING_EXIT_RESPONSE
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIGGING_EXIT_RESPONSE") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIGGING_GAME_OVER --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIGGING_GAME_OVER"
+    ,                                    EVENT_ANTIQUITY_DIGGING_GAME_OVER
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIGGING_GAME_OVER") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIGGING_MOUSE_OVER_ACTIVE_SKILL_CHANGED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIGGING_MOUSE_OVER_ACTIVE_SKILL_CHANGED"
+    ,                                    EVENT_ANTIQUITY_DIGGING_MOUSE_OVER_ACTIVE_SKILL_CHANGED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIGGING_MOUSE_OVER_ACTIVE_SKILL_CHANGED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIGGING_NUM_RADARS_REMAINING_CHANGED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIGGING_NUM_RADARS_REMAINING_CHANGED"
+    ,                                    EVENT_ANTIQUITY_DIGGING_NUM_RADARS_REMAINING_CHANGED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIGGING_NUM_RADARS_REMAINING_CHANGED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIGGING_READY_TO_PLAY --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIGGING_READY_TO_PLAY"
+    ,                                    EVENT_ANTIQUITY_DIGGING_READY_TO_PLAY
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIGGING_READY_TO_PLAY") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIG_SITES_UPDATED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIG_SITES_UPDATED"
+    ,                                    EVENT_ANTIQUITY_DIG_SITES_UPDATED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIG_SITES_UPDATED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIG_SPOT_DIG_POWER_CHANGED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIG_SPOT_DIG_POWER_CHANGED"
+    ,                                    EVENT_ANTIQUITY_DIG_SPOT_DIG_POWER_CHANGED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIG_SPOT_DIG_POWER_CHANGED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIG_SPOT_DURABILITY_CHANGED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIG_SPOT_DURABILITY_CHANGED"
+    ,                                    EVENT_ANTIQUITY_DIG_SPOT_DURABILITY_CHANGED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIG_SPOT_DURABILITY_CHANGED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_DIG_SPOT_STABILITY_CHANGED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_DIG_SPOT_STABILITY_CHANGED"
+    ,                                    EVENT_ANTIQUITY_DIG_SPOT_STABILITY_CHANGED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_DIG_SPOT_STABILITY_CHANGED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_LEAD_ACQUIRED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_LEAD_ACQUIRED"
+    ,                                    EVENT_ANTIQUITY_LEAD_ACQUIRED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_LEAD_ACQUIRED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_SEARCH_RESULTS_READY --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_SEARCH_RESULTS_READY"
+    ,                                    EVENT_ANTIQUITY_SEARCH_RESULTS_READY
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_SEARCH_RESULTS_READY") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_SHOW_CODEX_ENTRY --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_SHOW_CODEX_ENTRY"
+    ,                                    EVENT_ANTIQUITY_SHOW_CODEX_ENTRY
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_SHOW_CODEX_ENTRY") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_TRACKING_INITIALIZED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_TRACKING_INITIALIZED"
+    ,                                    EVENT_ANTIQUITY_TRACKING_INITIALIZED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_TRACKING_INITIALIZED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_TRACKING_UPDATE --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_TRACKING_UPDATE"
+    ,                                    EVENT_ANTIQUITY_TRACKING_UPDATE
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_TRACKING_UPDATE") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_ANTIQUITY_UPDATED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_UPDATED"
+    ,                                    EVENT_ANTIQUITY_UPDATED
+    , function(self) D_EVENT(           "EVENT_ANTIQUITY_UPDATED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_PLAYER_ACTIVATED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_PLAYER_ACTIVATED"
+    ,                                    EVENT_PLAYER_ACTIVATED
+    , function(self) D_EVENT(           "EVENT_PLAYER_ACTIVATED") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_REQUEST_ANTIQUITY_DIGGING_EXIT --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_REQUEST_ANTIQUITY_DIGGING_EXIT"
+    ,                                    EVENT_REQUEST_ANTIQUITY_DIGGING_EXIT
+    , function(self) D_EVENT(           "EVENT_REQUEST_ANTIQUITY_DIGGING_EXIT") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_START_ANTIQUITY_DIGGING --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_START_ANTIQUITY_DIGGING"
+    ,                                    EVENT_START_ANTIQUITY_DIGGING
+    , function(self) D_EVENT(           "EVENT_START_ANTIQUITY_DIGGING") end
+    )
+    --}}}
+    -- Refresh ========================= EVENT_STOP_ANTIQUITY_DIGGING --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_STOP_ANTIQUITY_DIGGING"
+    ,                                    EVENT_STOP_ANTIQUITY_DIGGING
+    , function(self) D_EVENT(           "EVENT_STOP_ANTIQUITY_DIGGING") end
+    )
     --}}}
 end
 --}}}
@@ -4832,22 +4991,23 @@ function OnSlashCommand(arg)
 
     --}}}
     -- hide show refresh reset p1-5 kbclr kbmod {{{
-    elseif(arg == "hide"     ) then Hide_delayed("OnSlashCommand /"..arg)
-    elseif(arg == "show"     ) then Show_delayed("OnSlashCommand /"..arg)
-    elseif(arg == "refresh"  ) then Refresh("OnSlashCommand")
-    elseif(arg == "reset"    ) then ResetThisPreset()
-    elseif(arg == "resetall" ) then ResetAllPresets()
-    elseif(arg == "account"  ) then Load_ZO_SavedVars(not QSB.AccountWideSettings.SaveAccountWide)
-    elseif(arg == "compare"  ) then QSB_Settings_Changed()
+    elseif(arg == "hide"       ) then Hide_delayed("OnSlashCommand /"..arg)
+    elseif(arg == "show"       ) then Show_delayed("OnSlashCommand /"..arg)
+    elseif(arg == "showorhide" ) then ShowOrHide()
+    elseif(arg == "refresh"    ) then Refresh("OnSlashCommand")
+    elseif(arg == "reset"      ) then ResetThisPreset()
+    elseif(arg == "resetall"   ) then ResetAllPresets()
+    elseif(arg == "account"    ) then Load_ZO_SavedVars(not QSB.AccountWideSettings.SaveAccountWide)
+    elseif(arg == "compare"    ) then QSB_Settings_Changed()
 
-    elseif(arg == "p1"       ) then presetName = PRESETNAMES[1]
-    elseif(arg == "p2"       ) then presetName = PRESETNAMES[2]
-    elseif(arg == "p3"       ) then presetName = PRESETNAMES[3]
-    elseif(arg == "p4"       ) then presetName = PRESETNAMES[4]
-    elseif(arg == "p5"       ) then presetName = PRESETNAMES[5]
+    elseif(arg == "p1"         ) then presetName = PRESETNAMES[1]
+    elseif(arg == "p2"         ) then presetName = PRESETNAMES[2]
+    elseif(arg == "p3"         ) then presetName = PRESETNAMES[3]
+    elseif(arg == "p4"         ) then presetName = PRESETNAMES[4]
+    elseif(arg == "p5"         ) then presetName = PRESETNAMES[5]
 
-    elseif(arg == "kbclr"    ) then ClearKeyBindings()
-    elseif(arg == "kbmod"    ) then ApplyKeyBindingsModifier(); ApplyKeyBindingsModifier_SWAPS()
+    elseif(arg == "kbclr"      ) then ClearKeyBindings()
+    elseif(arg == "kbmod"      ) then ApplyKeyBindingsModifier(); ApplyKeyBindingsModifier_SWAPS()
     --}}}
     -- clone {{{
     elseif(arg == "clone") then
@@ -4921,12 +5081,12 @@ function OnSlashCommand(arg)
     elseif(arg == "debug"         ) then DEBUG          = not DEBUG         ; c("...DEBUG..........=[" ..tostring( DEBUG          ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_equip"   ) then DEBUG_EQUIP    = not DEBUG_EQUIP   ; c("...DEBUG_EQUIP....=[" ..tostring( DEBUG_EQUIP    ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_event"   ) then DEBUG_EVENT    = not DEBUG_EVENT   ; c("...DEBUG_EVENT....=[" ..tostring( DEBUG_EVENT    ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_handles" ) then DEBUG_HANDLES  = not DEBUG_HANDLES ; c("...DEBUG_HANDLES..=[" ..tostring( DEBUG_HANDLES  ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_handle"  ) then DEBUG_HANDLE   = not DEBUG_HANDLE  ; c("...DEBUG_HANDLE...=[" ..tostring( DEBUG_HANDLE   ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_item"    ) then DEBUG_ITEM     = not DEBUG_ITEM    ; c("...DEBUG_ITEM.....=[" ..tostring( DEBUG_ITEM     ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_station" ) then DEBUG_STATION  = not DEBUG_STATION ; c("...DEBUG_STATION..=[" ..tostring( DEBUG_STATION  ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_status"  ) then DEBUG_STATUS   = not DEBUG_STATUS  ; c("...DEBUG_STATUS...=[" ..tostring( DEBUG_STATUS   ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_tasks"   ) then DEBUG_TASKS    = not DEBUG_TASKS   ; c("...DEBUG_TASKS....=[" ..tostring( DEBUG_TASKS    ).. "]"); ui_may_have_changed = true
-    elseif(arg == "debug_tooltip" ) then DEBUG_TOOLTIPS = not DEBUG_TOOLTIPS; c("...DEBUG_TOOLTIPS.=[" ..tostring( DEBUG_TOOLTIPS ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_task"    ) then DEBUG_TASK     = not DEBUG_TASK    ; c("...DEBUG_TASK.....=[" ..tostring( DEBUG_TASK     ).. "]"); ui_may_have_changed = true
+    elseif(arg == "debug_tooltip" ) then DEBUG_TOOLTIP  = not DEBUG_TOOLTIP ; c("...DEBUG_TOOLTIP..=[" ..tostring( DEBUG_TOOLTIP  ).. "]"); ui_may_have_changed = true
     --}}}
     else -- LUA
         -- _G --{{{
@@ -5164,10 +5324,9 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200413)\n"
-    .."!!"..COLOR_8.." Update 25 (5.3.4): Harrowstorm (API 100030)\n"
-    .."!!"..COLOR_3.."- Checked with Update 26 (6.0.5): Greymoor (API 100031)\n"
-    .."→ "..COLOR_3.."- Chat Clear restored\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200530)\n"
+    .."!!"..COLOR_6.."- Update 26 (6.0.5): Greymoor (API 100031)\n"
+    .."!!"..COLOR_6.."- UI hidden while scrying or digging Antiquities\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
@@ -5179,43 +5338,7 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
 
 -- LINKS
 --[[--{{{
-[LUA]
--- :!start explorer "https://www.tutorialspoint.com/execute_lua_online.php"
-
-[FILES]
-:new $TEMP/functioncalls.txt
-:new $TEMP/globalfuncs.txt
-:new $TEMP/globals.txt
-:new $TEMP/localfuncs.txt
-:new C:/LOCAL/GAMES/TESO/ADDONS/13_StaticsQuickslotProfiles/StaticsQuickslotProfiles/StaticsQuickslotProfiles.lua
-
-[PATCH NOTES]:
- :!start explorer "https://wiki.esoui.com/APIVersion"
- :!start explorer "https://www.esoui.com/forums/showthread.php?p=40862"
- :!start explorer "https://forums.elderscrollsonline.com/en/categories/patch-notes"
- :!start explorer "https://forums.elderscrollsonline.com/en/categories/add-ons-and-ui-mods"
-
- :!start explorer "https://esoapi.uesp.net/100017/src/ingame/collections/collectionsinventorysingleton.lua.html"
- :!start explorer "https://esoapi.uesp.net/100022/src/ingame/collections/collectionsbook_manager.lua.html"
- :!start explorer "https://esoapi.uesp.net/100030"
- :!start explorer "https://esoapi.uesp.net/100030/data/s/e/l/SelectSlotSimpleAction.html"
- :!start explorer "https://esoapi.uesp.net/100030/functions.html"
- :!start explorer "https://esoapi.uesp.net/100030/globalfuncs.txt"
- :!start explorer "https://esoapi.uesp.net/100030/globals.html"
- :!start explorer "https://esoapi.uesp.net/100030/src/ingame/actionbar/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100030/src/ingame/hud/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100030/src/ingame/inventory/inventoryslot.lua.html"
- :!start explorer "https://esoapi.uesp.net/100030/src/ingame/inventory/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100030/src/ingame/quickslot/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100030/src/ingame/tooltip/luadir.html"
- :!start explorer "https://esoapi.uesp.net/100030/src/luadir.html"
- :!start explorer "https://esodata.uesp.net/100030/src/ingame/collections/collectionsinventorysingleton.lua.html"
- :!start explorer "https://esodata.uesp.net/100030/src/ingame/inventory/inventoryslot.lua.html"
- :!start explorer "https://www.esoui.com/downloads/download1775-StaticsQuickslotProfiles"
- :!start explorer "https://www.esoui.com/downloads/fileinfo.php?id=258"
- :!start explorer "https://www.esoui.com/downloads/fileinfo.php?id=258#comments"
- :!start explorer "https://www.esoui.com/forums/showthread.php?p=31752"
- :!start explorer "https://www.esoui.com/forums/showthread.php?p=31942"
+:new C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/P.txt
 
 --]]--}}}
 
