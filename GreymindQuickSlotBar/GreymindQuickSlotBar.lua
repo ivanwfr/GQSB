@@ -1,8 +1,12 @@
--- GreymindQuickSlotBar_tag (200530:19h:37) --{{{
+-- GreymindQuickSlotBar_tag (200614:21h:36) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.1   200614 {{{
+- [color="yellow"]Checked with Update 26 (6.0.5): Greymoor (API 100031)[/color]
+- [color="orange"]Solved issue "3137: function expected" .. global conflict declared local[/color]
+}}}
 v2.6.0   200530 {{{
 - [color="yellow"]Checked with Update 26 (6.0.5): Greymoor (API 100031)[/color]
 - [color="orange"]UI hidden while scrying or digging Antiquities[/color]
@@ -320,7 +324,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.0", -- 200530 previous: 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.1", -- 200614 previous: 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -444,6 +448,7 @@ local BuildSettingsMenu
 local BuildUIHandles
 local ButtonSizeChanged
 local ClearKeyBindings
+local ClearKeyBindings
 local CopyFromTo
 local CopyNotNilSettingsFromTo
 local DeepCopy
@@ -542,7 +547,7 @@ local tasks_cooldown_inprogress
 --}}}
 -- LOGGING --{{{
 -- d {{{
-function c(args)
+local function c(args)
     if not QSB                   then return end
     if not QSB.Settings          then return end
     if     QSB.Settings.ChatMute then return end
@@ -5180,7 +5185,7 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200530)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200614)\n"
     .."!!"..COLOR_6.."- Update 26 (6.0.5): Greymoor (API 100031)\n"
     .."!!"..COLOR_6.."- UI hidden while scrying or digging Antiquities\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
