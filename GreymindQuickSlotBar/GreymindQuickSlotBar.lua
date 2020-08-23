@@ -1,8 +1,12 @@
--- GreymindQuickSlotBar_tag (200717:02h:39) --{{{
+-- GreymindQuickSlotBar_tag (200823:18h:01) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.1.4 200823 {{{
+- [color="yellow"]Checked with Update XX (X.X.X): PTS (API 100032)[/color]
+- [color="orange"]Saving last Preset selected slot[/color]
+}}}
 v2.6.1.3 200717  {{{
 - [color="yellow"]Checked with Update XX (X.X.X): PTS (API 100032)[/color]
 }}}
@@ -330,7 +334,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.1.3", -- 200717 previous: 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.1.4", -- 200823 previous: 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -408,6 +412,7 @@ QSB.SettingsDefaults = {
     SoundAlert                          = SOUNDNAMES[1],
     SoundSlotted                        = SOUNDNAMES[2],
 
+    -- (170615 - Marazota)
     SlotItem = {
         KeyBindAlignH                   = ALIGNH[2],
         KeyBindAlignV                   = ALIGNV[2],
@@ -424,10 +429,6 @@ QSB.SettingsDefaults = {
         ShowQuantityLabels              = true,
         VisualCue                       = VISCUE_OFF,
     },
-
-    Presets                             = { P1={}, P2={}, P3={}, P4={}, P5={} },
-
-    -- (170615 - Marazota)
     SlotItemTable  = {
         { itemName = "", slotId = 0, itemId = 0, itemLink = 0, texture = nil, itemLevel = nil },
         { itemName = "", slotId = 0, itemId = 0, itemLink = 0, texture = nil, itemLevel = nil },
@@ -439,6 +440,11 @@ QSB.SettingsDefaults = {
         { itemName = "", slotId = 0, itemId = 0, itemLink = 0, texture = nil, itemLevel = nil }
     },
 
+    -- (200823 - Atavus)
+    CurrentSlotIndex                    = 0,
+
+    -- (200823 - moved to table end)
+    Presets                             = { P1={}, P2={}, P3={}, P4={}, P5={} },
 
 } --}}}
 -- FORWARD DECLARATIONS --{{{
@@ -485,6 +491,7 @@ local PlaySoundAlert
 local PlaySoundSlotted
 local Process_preset_pending_IN_COMBAT
 local QSB_SetCurrentQuickslot
+local QSB_SetCurrentQuickslot_handler
 local QSB_Setting_Preset_Changed
 local QSB_Settings_Changed
 local Refresh
@@ -1281,6 +1288,8 @@ end
     elseif(#tasks_loaded == 0) then
 if(DEBUG_TASK) then c(COLOR_3.."TASK .. REQUESTED ALL DONE") end
 
+        zo_callLater(QSB_SetCurrentQuickslot_handler, 500)
+
         tasks_cooldown_begin()
 
         QSB_BAG_BACKPACK_UPDATE_mutex = false
@@ -1738,6 +1747,7 @@ function CopyNotNilSettingsFromTo(orig, dest)
     if( orig.SoundSlotted                             ~= nil) then dest.SoundSlotted                             = orig.SoundSlotted                             end
     if( orig.SoundAlert                               ~= nil) then dest.SoundAlert                               = orig.SoundAlert                               end
     if( orig.SlotItemTable                            ~= nil) then dest.SlotItemTable                            = DeepCopy(orig.SlotItemTable)                  end
+    if( orig.CurrentSlotIndex                         ~= nil) then dest.CurrentSlotIndex                         = DeepCopy(orig.CurrentSlotIndex)               end
 
     if( orig.SlotItem.KeyBindAlignH                   ~= nil) then dest.SlotItem.KeyBindAlignH                   = orig.SlotItem.KeyBindAlignH                   end
     if( orig.SlotItem.KeyBindAlignV                   ~= nil) then dest.SlotItem.KeyBindAlignV                   = orig.SlotItem.KeyBindAlignV                   end
@@ -1781,6 +1791,7 @@ function CopySettingsDefaultsTo(dest)
     dest.SoundSlotted                             = QSB.SettingsDefaults.SoundSlotted
     dest.SoundAlert                               = QSB.SettingsDefaults.SoundAlert
     dest.SlotItemTable                            = DeepCopy(QSB.SettingsDefaults.SlotItemTable)
+    dest.CurrentSlotIndex                         = QSB.SettingsDefaults.CurrentSlotIndex
 
     dest.SlotItem.KeyBindAlignH                   = QSB.SettingsDefaults.SlotItem.KeyBindAlignH
     dest.SlotItem.KeyBindAlignV                   = QSB.SettingsDefaults.SlotItem.KeyBindAlignV
@@ -1987,10 +1998,11 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
             button:SetHidden(false)
             button:SetEnabled(true)
             button:SetVerticalAlignment(1)
-            button:SetHandler("OnClicked"   , function() OnClicked_bNum(bNum) end)
 
+            button:SetHandler("OnClicked"   , function() OnClicked_bNum(bNum) end)
             button:SetHandler("OnMouseEnter",            OnMouseEnter)
             button:SetHandler("OnMouseExit" ,            OnMouseExit )
+
             QSB.Basegrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBaseground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local baseground            = QSB.Basegrounds[bNum]
             baseground                  :SetTexture(BASEBACKGROUNDTEXTURE)
@@ -2456,12 +2468,12 @@ function ShowOrHide()
     end
 
     -- BUTTONS SHOWING OR HIDING
-    if    (hide_msg ~= ""          ) then Hide_delayed(        hide_msg                   ) end -- HIDE BUTTONS
-    if    (show_msg ~= ""          ) then Show_delayed(        show_msg                   ) end -- SHOW BUTTONS
+    if    (hide_msg ~= ""          ) then Hide_delayed(        hide_msg                   ) end
+    if    (show_msg ~= ""          ) then Show_delayed(        show_msg                   ) end
 
     -- HANDLES SHOWING (BLINK BACK INTO HIDING)
-    if    (show_msg ~= ""          ) then ShowOrHideUIHandles( show_msg                   )     -- SHOW HANDLES
-    elseif(vis == VIS_BLINK_CHANGES) then       HideUIHandles( hide_msg.." POSSIBLY SHOWN") end -- HIDE HANDLES
+    if    (show_msg ~= ""          ) then ShowOrHideUIHandles( show_msg                   )    
+    elseif(vis == VIS_BLINK_CHANGES) then       HideUIHandles( hide_msg.." POSSIBLY SHOWN") end
 
 end
 --}}}
@@ -3097,6 +3109,7 @@ D("NextItem()")
 
     if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("NextItem")
+        QSB.Settings.CurrentSlotIndex = slotIndex
         QSB_SetCurrentQuickslot(bNum_to_slotIndex(bNum), " NEXT ITEM")
     else
         PlaySoundAlert("NextItem")
@@ -3123,6 +3136,7 @@ D("PreviousItem()")
 
     if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("PreviousItem")
+        QSB.Settings.CurrentSlotIndex = slotIndex
         QSB_SetCurrentQuickslot(bNum_to_slotIndex(bNum), " PREV ITEM")
     else
         PlaySoundAlert("NextItem")
@@ -3243,23 +3257,27 @@ D("SelectButton(bNum=["..tostring(bNum).."])")
 
     local slotIndex = bNum_to_slotIndex( bNum )
 
+    QSB.Settings.CurrentSlotIndex = slotIndex
     if not IsEmptySlot(slotIndex) then
         PlaySoundSlotted("SelectButton")
-        QSB_SetCurrentQuickslot(slotIndex, "")
+        QSB_SetCurrentQuickslot(slotIndex, "SELECT SLOTTED bNum "..tostring(bNum))
     else
         PlaySoundAlert("SelectButton")
-        QSB_SetCurrentQuickslot(slotIndex, " (EMPTY SLOT)") -- force scanning
+        QSB_SetCurrentQuickslot(slotIndex, "SELECT (EMPTY) bNum "..tostring(bNum)) -- force scanning .. (through callbacks)
         SelectNextAuto("BUTTON "..tostring(bNum))
     end
 
 end
 --}}}
 -- QSB_SetCurrentQuickslot {{{
+function QSB_SetCurrentQuickslot_handler()
+    QSB_SetCurrentQuickslot(QSB.Settings.CurrentSlotIndex, " CURRENT SLOT")
+end
+
 function QSB_SetCurrentQuickslot(slotIndex, _caller)
-D("QSB_SetCurrentQuickslot("..tostring(slotIndex)..", "..tostring(_caller)..")")
+D("QSB_SetCurrentQuickslot("..tostring(slotIndex)..COLOR_G.." bNum "..slotIndex_to_bNum(slotIndex).."|r , "..tostring(_caller)..")")
 
     SetCurrentQuickslot( slotIndex )
-
 end
 --}}}
 -- IsEmptySlot {{{
@@ -3392,6 +3410,7 @@ c(COLOR_2.." GQSB RELOADING\n"..COLOR_2..tostring(changed))
             Rebuild_LibAddonMenu()
 
             loadPresetSlots()
+            zo_callLater(QSB_SetCurrentQuickslot_handler, 500)
             Refresh("Load_ZO_SavedVars")
         end
     end
@@ -3415,26 +3434,27 @@ end
 function QSB_Setting_Preset_Changed(q,l,presetName)
 
     local k
-    k = "NextAuto"                     ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "SoundSlotted"                 ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "ButtonSize"                   ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "version"                      ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "GameActionButtonHide"         ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "Visibility"                   ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "SoundAlert"                   ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "SaveAccountWide"              ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "ShowBackground"               ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "ButtonsDisplayed"             ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "PresetName"                   ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "ButtonColumns"                ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "NextPrevWrap"                 ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "LockUI"                       ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ButtonFontSize"               ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ButtonSize"                   ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ButtonsDisplayed"             ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "ChatMax"                      ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "ChatMute"                     ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "LockThisPreset"               ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "CurrentSlotIndex"             ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "DelayPresetSwapWhileInCombat" ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "GameActionButtonHide"         ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "LockThisPreset"               ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "LockUI"                       ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "NextAuto"                     ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "NextPrevWrap"                 ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "PresetName"                   ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "SaveAccountWide"              ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "ShowBackground"               ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "SoundAlert"                   ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "SoundSlotted"                 ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
     k = "SwapBackgroundColors"         ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
-    k = "ButtonFontSize"               ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "Visibility"                   ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
+    k = "version"                      ; if(q[k] and l[k] and (q[k] ~= l[k])) then return(presetName.." "..k.." FROM ["..l[k].."] TO ["..q[k].."]") end
 
     return false
 end
@@ -3612,6 +3632,7 @@ D("BuildSettingsMenu()")
         ..            "\n"
         ..            COLOR_3.."Conclusion:|r\n"
         ..                     "Better do your homework in the "..COLOR_8.."OFF|r state"
+        ..                     ", choose your "..COLOR_8.."default selected slot|r,"
         ..                     " and only then, you can "..COLOR_M.."LOCK ON everything|r.\n"
         ..            "\n"
         ..            COLOR_2.."You still can save a messed-up bar from here"
@@ -4335,7 +4356,7 @@ D("BuildSettingsMenu()")
         .."\n"
         .."First you will have to click on "..COLOR_3.."Not Bound|r keys"
         .." in the "..COLOR_4.."CONTROLS-Keybinds|r window"
-        .." which eventually show up as "..COLOR_6.."SHIFT-F12 - F24|r you must redefine.\n"
+        .." which eventually shows up as "..COLOR_6.."SHIFT-F12 - F24|r you must redefine.\n"
         .."\n"
         .." Just another quest that could cost you a few calls to /reloadUI ..."
         .." Good luck!\n",
@@ -5191,9 +5212,10 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200717)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200823)\n"
     .."!!"..COLOR_6.."- Update XX (X.X.X): PTS (API 100032)\n"
     .."!!"..COLOR_6.."- UI hidden while scrying or digging Antiquities\n"
+    .."!!"..COLOR_6.."- Saving last Preset selected slot\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
