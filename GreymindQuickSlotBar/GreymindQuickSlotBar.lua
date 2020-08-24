@@ -1,8 +1,12 @@
--- GreymindQuickSlotBar_tag (200823:18h:01) --{{{
+-- GreymindQuickSlotBar_tag (200824:20h:08) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.2 200824 {{{
+- [color="yellow"]Checked with Update 27 Stonethorn (6.1.0): PTS (API 100032)[/color]
+- [color="orange"]Saving last Preset selected slot[/color]
+}}}
 v2.6.1.4 200823 {{{
 - [color="yellow"]Checked with Update XX (X.X.X): PTS (API 100032)[/color]
 - [color="orange"]Saving last Preset selected slot[/color]
@@ -334,7 +338,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.1.4", -- 200823 previous: 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.2", -- 200824 previous: 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -5212,8 +5216,8 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200823)\n"
-    .."!!"..COLOR_6.."- Update XX (X.X.X): PTS (API 100032)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200824)\n"
+    .."!!"..COLOR_6.."- Update 27 Stonethorn (6.1.0): (API 100032)\n"
     .."!!"..COLOR_6.."- UI hidden while scrying or digging Antiquities\n"
     .."!!"..COLOR_6.."- Saving last Preset selected slot\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
