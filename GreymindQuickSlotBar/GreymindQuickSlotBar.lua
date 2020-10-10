@@ -5,6 +5,7 @@
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
 v2.6.2.1 201010 {{{
 - [color="yellow"]Checked: PTS (API 100033)[/color]
+- [color="orange"]Button Background Opacity[/color]
 }}}
 v2.6.1   200824 {{{
 - [color="yellow"]Checked with Update 27 Stonethorn (6.1.0): PTS (API 100032)[/color]
