@@ -1,9 +1,12 @@
--- GreymindQuickSlotBar_tag (200824:20h:13) --{{{
+-- GreymindQuickSlotBar_tag (201010:19h:53) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
-v2.6.1 200824 {{{
+v2.6.2.1 201010 {{{
+- [color="yellow"]Checked: PTS (API 100033)[/color]
+}}}
+v2.6.1   200824 {{{
 - [color="yellow"]Checked with Update 27 Stonethorn (6.1.0): PTS (API 100032)[/color]
 - [color="orange"]Saving last Preset selected slot[/color]
 }}}
@@ -139,9 +142,10 @@ local COLOR_NORMAL                  = { R =0.6, G =0.6, B =0.6, A = 0.6 } -- gra
 -- CURRENT SLOT
 local COLOR_CURRENTSLOT             = { R =0.5, G =1  , B =0.5, A = 1   }
 
--- ACTIVE WEAPON PAIR
-local COLOR_ACTIVEWEAPONPAIR1       = { R =0  , G =1  , B =0  , A = 0.4 }
-local COLOR_ACTIVEWEAPONPAIR2       = { R =0  , G =0.8, B =1  , A = 0.4 }
+-- BACKGROUND AnD ACTIVE WEAPON PAIR
+local COLOR_BACKGROUND              = { R =0  , G =0  , B =0  , A = 0.6 } -- was COLOR_NORMAL as of 2.6.1
+local COLOR_ACTIVEWEAPONPAIR1       = { R =0  , G =1  , B =0  , A = 1.0 }
+local COLOR_ACTIVEWEAPONPAIR2       = { R =1  , G =0  , B =0  , A = 1.0 }
 
 -- COLORS --}}}
 -- CONSTANTS --{{{
@@ -338,7 +342,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.1", -- 200824 previous: 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.2.1", -- 201010 previous: 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -420,6 +424,7 @@ QSB.SettingsDefaults = {
     SlotItem = {
         KeyBindAlignH                   = ALIGNH[2],
         KeyBindAlignV                   = ALIGNV[2],
+        ButtonBackgroundOpacity         = 60,
         NotSelectedButtonOpacity        = 30,
             OverlayButtonOpacity        = 30,
         QuantityAlert                   = 5,
@@ -1755,6 +1760,7 @@ function CopyNotNilSettingsFromTo(orig, dest)
 
     if( orig.SlotItem.KeyBindAlignH                   ~= nil) then dest.SlotItem.KeyBindAlignH                   = orig.SlotItem.KeyBindAlignH                   end
     if( orig.SlotItem.KeyBindAlignV                   ~= nil) then dest.SlotItem.KeyBindAlignV                   = orig.SlotItem.KeyBindAlignV                   end
+    if( orig.SlotItem.ButtonBackgroundOpacity         ~= nil) then dest.SlotItem.ButtonBackgroundOpacity         = orig.SlotItem.ButtonBackgroundOpacity         end
     if( orig.SlotItem.NotSelectedButtonOpacity        ~= nil) then dest.SlotItem.NotSelectedButtonOpacity        = orig.SlotItem.NotSelectedButtonOpacity        end
     if( orig.SlotItem.OverlayButtonOpacity            ~= nil) then dest.SlotItem.OverlayButtonOpacity            = orig.SlotItem.OverlayButtonOpacity            end
     if( orig.SlotItem.QuantityAlert                   ~= nil) then dest.SlotItem.QuantityAlert                   = orig.SlotItem.QuantityAlert                   end
@@ -1799,6 +1805,7 @@ function CopySettingsDefaultsTo(dest)
 
     dest.SlotItem.KeyBindAlignH                   = QSB.SettingsDefaults.SlotItem.KeyBindAlignH
     dest.SlotItem.KeyBindAlignV                   = QSB.SettingsDefaults.SlotItem.KeyBindAlignV
+    dest.SlotItem.ButtonBackgroundOpacity         = QSB.SettingsDefaults.SlotItem.ButtonBackgroundOpacity
     dest.SlotItem.NotSelectedButtonOpacity        = QSB.SettingsDefaults.SlotItem.NotSelectedButtonOpacity
     dest.SlotItem.OverlayButtonOpacity            = QSB.SettingsDefaults.SlotItem.OverlayButtonOpacity
     dest.SlotItem.QuantityAlert                   = QSB.SettingsDefaults.SlotItem.QuantityAlert
@@ -2293,7 +2300,7 @@ end
             --}}}
             -- background f(background_color) OR f(GetActiveWeaponPairInfo -- 150329) {{{
             if( background_color ~= nil) then
-                color = background_color
+                color       = background_color
 
             elseif QSB.Settings.SwapBackgroundColors then
                 local activeWeaponPair = GetActiveWeaponPairInfo()
@@ -2303,11 +2310,14 @@ end
                     color   = COLOR_ACTIVEWEAPONPAIR2
                 end
             else
-                    color   = COLOR_NORMAL
+                color       = COLOR_BACKGROUND
             end
 
             background:SetColor(color.R, color.G, color.B)
-            background:SetAlpha(color.A)
+
+            alpha           = slot_settings.ButtonBackgroundOpacity / 100     -- from [1-100] to [0-1.0]
+            background:SetAlpha(alpha)
+
             --}}}
         end
     end
@@ -3903,6 +3913,30 @@ D("BuildSettingsMenu()")
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
      --}}}
+    -- ButtonBackgroundOpacity {{{
+    control = {
+        type        = "slider",
+        reference   = "QSB_SlotItem_ButtonBackgroundOpacity",
+        name        = "Button Background Opacity"..COLOR_3.." ( new since v2.6.2.1 )|r",
+        tooltip     = "From plain invisible to full opacity",
+        min         = 0,
+        max         = 100,
+        step        = 5,
+        getFunc     = function()
+            return QSB.Settings.SlotItem.ButtonBackgroundOpacity
+        end,
+        setFunc     = function(value)
+            value   = tonumber(value); if not value then return end
+            value   = math.max(value,   0)
+            value   = math.min(value, 100)
+            QSB.Settings.SlotItem.ButtonBackgroundOpacity = value
+            Refresh("SlotItem_ButtonBackgroundOpacity")
+        end,
+        width       = "full",
+    }
+
+    QSB.SettingsControls[#QSB.SettingsControls+1] = control
+    --}}}
     -- NotSelectedButtonOpacity {{{
     control = {
         type        = "slider",
@@ -3916,9 +3950,9 @@ D("BuildSettingsMenu()")
             return QSB.Settings.SlotItem.NotSelectedButtonOpacity
         end,
         setFunc     = function(value)
-            value = tonumber(value); if not value then return end
-            value = math.max(value,   0)
-            value = math.min(value, 100)
+            value   = tonumber(value); if not value then return end
+            value   = math.max(value,   0)
+            value   = math.min(value, 100)
             QSB.Settings.SlotItem.NotSelectedButtonOpacity = value
             Refresh("SlotItem_NotSelectedButtonOpacity")
         end,
@@ -4969,6 +5003,42 @@ function OnSlashCommand(arg)
         QSB_BlockBarVisibility()
 
     --}}}
+    -- color {{{
+    elseif(arg == "bg") then
+        COLOR_BACKGROUND   = { R =0  , G =0  , B =0  , A = 1.0 }
+        Refresh(arg .. "COLOR_BACKGROUND=" .. tostring(COLOR_BACKGROUND))
+
+    elseif(arg == "black") then
+        COLOR_BACKGROUND.R =0
+        COLOR_BACKGROUND.G =0
+        COLOR_BACKGROUND.B =0
+        Refresh(arg .. "COLOR_BACKGROUND=" .. tostring(COLOR_BACKGROUND))
+
+    elseif(arg == "white") then
+        COLOR_BACKGROUND.R =1
+        COLOR_BACKGROUND.G =1
+        COLOR_BACKGROUND.B =1
+        Refresh(arg .. "COLOR_BACKGROUND=" .. tostring(COLOR_BACKGROUND))
+
+    elseif(arg == "red") then
+        COLOR_BACKGROUND.R =1
+        COLOR_BACKGROUND.G =0
+        COLOR_BACKGROUND.B =0
+        Refresh(arg .. "COLOR_BACKGROUND=" .. tostring(COLOR_BACKGROUND))
+
+    elseif(arg == "green") then
+        COLOR_BACKGROUND.R =0
+        COLOR_BACKGROUND.G =1
+        COLOR_BACKGROUND.B =0
+        Refresh(arg .. "COLOR_BACKGROUND=" .. tostring(COLOR_BACKGROUND))
+
+    elseif(arg == "blue") then
+        COLOR_BACKGROUND.R =0
+        COLOR_BACKGROUND.G =0
+        COLOR_BACKGROUND.B =1
+        Refresh(arg .. "COLOR_BACKGROUND=" .. tostring(COLOR_BACKGROUND))
+
+    --}}}
     -- DEBUG -- {{{
     elseif(arg == "debug"         ) then DEBUG          = not DEBUG         ; c("...DEBUG..........=[" ..tostring( DEBUG          ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_equip"   ) then DEBUG_EQUIP    = not DEBUG_EQUIP   ; c("...DEBUG_EQUIP....=[" ..tostring( DEBUG_EQUIP    ).. "]"); ui_may_have_changed = true
@@ -5216,10 +5286,11 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (200824)\n"
-    .."!!"..COLOR_6.."- Update 27 Stonethorn (6.1.0): (API 100032)\n"
-    .."!!"..COLOR_6.."- UI hidden while scrying or digging Antiquities\n"
-    .."!!"..COLOR_6.."- Saving last Preset selected slot\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (201010)\n"
+    .."!!"..COLOR_6.."- PTS: (API 100033)\n"
+--  .."!!"..COLOR_6.."- Update 27 Stonethorn (6.1.0): (API 100033)\n"
+--  .."!!"..COLOR_6.."- UI hidden while scrying or digging Antiquities\n"
+--  .."!!"..COLOR_6.."- Saving last Preset selected slot\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
