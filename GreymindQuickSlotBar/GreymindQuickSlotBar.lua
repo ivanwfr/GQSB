@@ -1,8 +1,13 @@
--- GreymindQuickSlotBar_tag (201010:19h:53) --{{{
+-- GreymindQuickSlotBar_tag (201018:17h:22) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.2.2 201018 {{{
+- [color="yellow"]Checked: PTS (API 100033)[/color]
+- [color="orange"]Button Background Opacity slider[/color]
+- [color="orange"]UI Handles hidden by default (unless Lock UI is off)[/color]
+}}}
 v2.6.2.1 201010 {{{
 - [color="yellow"]Checked: PTS (API 100033)[/color]
 - [color="orange"]Button Background Opacity[/color]
@@ -343,7 +348,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.2.1", -- 201010 previous: 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.2.2", -- 201018 previous: 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2488,7 +2493,8 @@ function ShowOrHide()
 
     -- HANDLES SHOWING (BLINK BACK INTO HIDING)
     if    (show_msg ~= ""          ) then ShowOrHideUIHandles( show_msg                   )    
-    elseif(vis == VIS_BLINK_CHANGES) then       HideUIHandles( hide_msg.." POSSIBLY SHOWN") end
+    elseif(QSB.Settings.LockUI     ) then ShowOrHideUIHandles( "LOCKED ON SCREEN"         )
+    else                                        HideUIHandles( hide_msg.." POSSIBLY SHOWN") end
 
 end
 --}}}
@@ -5287,8 +5293,10 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (201010)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (201018)\n"
     .."!!"..COLOR_6.."- PTS: (API 100033)\n"
+    .."!!"..COLOR_6.."- Button Background Opacity slider\n"
+    .."!!"..COLOR_6.."- UI Handles hidden by default\n"
 --  .."!!"..COLOR_6.."- Update 27 Stonethorn (6.1.0): (API 100033)\n"
 --  .."!!"..COLOR_6.."- UI hidden while scrying or digging Antiquities\n"
 --  .."!!"..COLOR_6.."- Saving last Preset selected slot\n"
