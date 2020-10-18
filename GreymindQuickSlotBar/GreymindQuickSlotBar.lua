@@ -1,4 +1,4 @@
--- GreymindQuickSlotBar_tag (201018:19h:02) --{{{
+-- GreymindQuickSlotBar_tag (201018:19h:52) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
@@ -7,6 +7,7 @@ v2.6.2.2 201018 {{{
 - [color="yellow"]Checked: PTS (API 100033)[/color]
 - [color="orange"]Button Background Opacity slider[/color]
 - [color="orange"]UI Handles hidden by default (unless Lock UI is off)[/color]
+- [color="orange"]Weapon swap color applies to current slot button when Hiding buttons background is ON[/color]
 }}}
 v2.6.2.1 201010 {{{
 - [color="yellow"]Checked: PTS (API 100033)[/color]
@@ -2256,9 +2257,13 @@ end
             -- display-hide
             --{{{
             if( background_color ~= nil) then
-                background      : SetHidden(false)
+                background      : SetHidden( false )
             else
-                background      : SetHidden(    slot_settings.HideSlotBackground)
+                if(QSB.Settings.SwapBackgroundColors and (slotIndex == current_slotIndex)) then
+                    background  : SetHidden( false )
+                else
+                    background  : SetHidden( slot_settings.HideSlotBackground )
+                end
             end
 
             if( tasks_pending ) then
@@ -3907,8 +3912,9 @@ D("BuildSettingsMenu()")
         type        = "checkbox",
         reference   = "QSB_SwapBackgroundColors",
         name        = "Weapon swap "..COLOR_6.." background "..COLOR_5.." color",
-        tooltip     = "Whether to change frame background colors on Weapon Swap\n"
-        ..COLOR_2.."When not hiding buttons background",
+        tooltip     = "Whether to change buttons background colors on Weapon Swap\n"
+        ..COLOR_2.."Applies only to selected slot when\n"
+        ..COLOR_5.."Hiding buttons background is ON",
         getFunc     = function()
             return QSB.Settings.SwapBackgroundColors
         end,
