@@ -1,4 +1,4 @@
--- GreymindQuickSlotBar_tag (201018:17h:22) --{{{
+-- GreymindQuickSlotBar_tag (201018:19h:02) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
@@ -2305,16 +2305,17 @@ end
 
             --}}}
             -- background f(background_color) OR f(GetActiveWeaponPairInfo -- 150329) {{{
-            if( background_color ~= nil) then
-                color       = background_color
-
-            elseif QSB.Settings.SwapBackgroundColors then
+            if QSB.Settings.SwapBackgroundColors then
                 local activeWeaponPair = GetActiveWeaponPairInfo()
                 if(activeWeaponPair == 1) then
                     color   = COLOR_ACTIVEWEAPONPAIR1
                 else
                     color   = COLOR_ACTIVEWEAPONPAIR2
                 end
+
+            elseif( background_color ~= nil) then
+                color       = background_color
+
             else
                 color       = COLOR_BACKGROUND
             end
