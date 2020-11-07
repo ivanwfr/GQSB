@@ -1,8 +1,14 @@
--- GreymindQuickSlotBar_tag (201018:19h:52) --{{{
+-- GreymindQuickSlotBar_tag (201107:15h:13) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.2   201107 {{{
+- [color="yellow"]Checked with Update 28 Markarth (6.2.0): PTS (API 100033)[/color]
+- [color="orange"]Button Background Opacity slider[/color]
+- [color="orange"]UI Handles hidden by default (unless Lock UI is off)[/color]
+- [color="orange"]Weapon swap color applies to current slot button when Hiding buttons background is ON[/color]
+}}}
 v2.6.2.2 201018 {{{
 - [color="yellow"]Checked: PTS (API 100033)[/color]
 - [color="orange"]Button Background Opacity slider[/color]
