@@ -1,8 +1,15 @@
--- GreymindQuickSlotBar_tag (201107:15h:13) --{{{
+-- GreymindQuickSlotBar_tag (210313:22h:11) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.3.1 210313 {{{
+- [color="yellow"]Checked with Update 29 Flames of Ambition (6.3.0): (API 100034)[/color]
+- [color="magenta"]Issue from TheMikrobe: "Next <-o-> Previous wrap" was broken[/color]
+}}}
+v2.6.3   210312 {{{
+- [color="yellow"]Checked with Update 29 Flames of Ambition 100034 (6.3.0): (API 100034)[/color]
+}}}
 v2.6.2   201107 {{{
 - [color="yellow"]Checked with Update 28 Markarth (6.2.0): PTS (API 100033)[/color]
 - [color="orange"]Button Background Opacity slider[/color]
@@ -355,7 +362,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.2", -- 201107 previous: 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.3.1", -- 210313 previous: 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1523,6 +1530,7 @@ function getItem_tooltip(bNum)
             tt = tt
             .."\n"
             .."\n"..COLOR_3.."---------------------- ITEM -----------------------"
+            .."\n- GetSlotItemCount("..slotIndex..")"..s..")"       ..COLOR_2.. " ["..tostring(        GetSlotItemCount( slotIndex )).."]|r"
             .."\n- getItem_itID_from_slot("   ..s..")"              ..COLOR_2.. " ["..tostring(  getItem_itID_from_slot( bagIndex  )).."]|r"
             .."\n- GetItemId("                ..s..")"              ..COLOR_2.. " ["..tostring(  GetItemId(BAG_BACKPACK, bagIndex  )).."]|r"
             .."\n- GetItemName("              ..s..")"              ..COLOR_4..":\n"..tostring(GetItemName(BAG_BACKPACK, bagIndex  )).. "|r"
@@ -1993,7 +2001,7 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
     else
         GreymindQuickSlotBarUI.data = {
             tooltipText
-            =  QSB.Name.." "..QSB.Version.." Markarth\n"
+            =  QSB.Name.." "..QSB.Version.." Flames of Ambition\n"
             ..(QSB.AccountWideSettings.SaveAccountWide and COLOR_3.."Account-wide Settings"
             or                                             COLOR_6..GetUnitName("player").."|r Character Settings"
             )
@@ -3321,7 +3329,7 @@ D("IsEmptySlot("..tostring(slotIndex)..")")
 --D_ITEM("...slotItemCount=["..tostring( slotItemCount    ).."]")
 
     if(slotItemCount == nil) then   -- 150329 -- (ticket from ESOUI) -- GreymindQuickSlotBar.lua:1272: operator < is not supported for nil < number
-        return false
+        return true                 -- 210313 -- "Next <-o-> Previous wrap" was broken
     else
         return (GetSlotTexture( slotIndex ) == "") or (slotItemCount < 1)
     end
@@ -3937,7 +3945,7 @@ D("BuildSettingsMenu()")
     control = {
         type        = "slider",
         reference   = "QSB_SlotItem_ButtonBackgroundOpacity",
-        name        = "Button Background Opacity"..COLOR_3.." (new since v2.6.2)|r",
+        name        = "Button Background Opacity",
         tooltip     = "From plain invisible to full opacity",
         min         = 0,
         max         = 100,
@@ -5306,10 +5314,8 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (201107)\n"
-    .."!!"..COLOR_6.."- Checked with Update 28 Markarth (6.2.0) API 100033\n"
-    .."!!"..COLOR_6.."- Button Background Opacity slider\n"
-    .."!!"..COLOR_6.."- UI Handles hidden by default\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210313)\n"
+    .."!!"..COLOR_7.."- Checked with Update 29 Flames of Ambition (6.3.0) API 100034\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
