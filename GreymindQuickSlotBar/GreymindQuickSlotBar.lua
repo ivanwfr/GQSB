@@ -1,8 +1,12 @@
--- GreymindQuickSlotBar_tag (210313:22h:11) --{{{
+-- GreymindQuickSlotBar_tag (210314:15h:36) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.3.2 210314 {{{
+- [color="yellow"]Checked with Update 29 Flames of Ambition (6.3.0): (API 100034)[/color]
+- [color="magenta"]Issue from Neverlands: quick slot swapping snap back[/color]
+}}}
 v2.6.3.1 210313 {{{
 - [color="yellow"]Checked with Update 29 Flames of Ambition (6.3.0): (API 100034)[/color]
 - [color="magenta"]Issue from TheMikrobe: "Next <-o-> Previous wrap" was broken[/color]
@@ -362,7 +366,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.3.1", -- 210313 previous: 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.3.2", -- 210314 previous: 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -3323,17 +3327,14 @@ end
 --}}}
 -- IsEmptySlot {{{
 function IsEmptySlot(slotIndex)
-D("IsEmptySlot("..tostring(slotIndex)..")")
+D_ITEM("IsEmptySlot(" ..tostring( slotIndex )..")")
 
-       slotItemCount = GetSlotItemCount(slotIndex)
---D_ITEM("...slotItemCount=["..tostring( slotItemCount    ).."]")
+    local slotName = GetSlotName( slotIndex )
+    local is_empty = (slotIndex == nil) or (slotName == "")
 
-    if(slotItemCount == nil) then   -- 150329 -- (ticket from ESOUI) -- GreymindQuickSlotBar.lua:1272: operator < is not supported for nil < number
-        return true                 -- 210313 -- "Next <-o-> Previous wrap" was broken
-    else
-        return (GetSlotTexture( slotIndex ) == "") or (slotItemCount < 1)
-    end
-
+    local color = (is_empty and COLOR_R) or COLOR_G
+D_ITEM("...slotName=["..tostring( slotName  ).."] "..color.."...return "..tostring(is_empty))
+    return is_empty
 end
 --}}}
 -- string_split {{{
@@ -5314,7 +5315,7 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210313)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210314)\n"
     .."!!"..COLOR_7.."- Checked with Update 29 Flames of Ambition (6.3.0) API 100034\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
