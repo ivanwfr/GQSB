@@ -1,8 +1,12 @@
--- GreymindQuickSlotBar_tag (210425:00h:56) --{{{
+-- GreymindQuickSlotBar_tag (210505:15h:29) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.3.4 210505 {{{
+- [color="yellow"]Checked with Update 29 Flames of Ambition (6.3.0): (API 100034)[/color]
+- [color="magenta"]Issue from Marazota: [color="orange"]LockThisPreset[/color] option set to NOT remove items on preset switch[/color]
+}}}
 v2.6.3.3 210424 {{{
 - [color="yellow"]Checked with Update 29 Flames of Ambition (6.3.0): (API 100034)[/color]
 - [color="magenta"]Issue from Marazota: Hide buttons when champion dialog is showing[/color]
@@ -370,7 +374,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.3.3", -- 210424 previous: 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.3.4", -- 210505 previous: 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1119,7 +1123,30 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
         -- ITEM COUNT AND SLOT {{{
         local bagIndex   = getItem_slot_from_link(itemLink)
         local _,   count = GetItemInfo(BAG_BACKPACK, bagIndex)
-        if(        count > 0 and IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
+        if(QSB.Settings.LockThisPreset) then
+--          CallSecureProtected("SelectSlotItem"   ,BAG_BACKPACK, bagIndex, slotIndex)
+
+            if(    count <= 0 or not IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
+
+                -- ZO ALERT .. REFILL FOR A LOCKED PRESET {{{
+                local warnMsg = "You need a refill"
+
+                ZO_Alert(UI_ALERT_CATEGORY_ERROR
+                , QSB.Settings.SoundAlert
+                , "You're out of '"..itemName.."' in your inventory, "..warnMsg
+                )
+
+                --}}}
+                -- CHAT ALERT {{{
+                c(                      COLOR_2..QSB.Name..":\r\n"
+                ..COLOR_3.."You're out of|r "..tostring(itemLink)
+                ..COLOR_3.." in your inventory,|r "
+                ..COLOR_4.. warnMsg
+                )
+
+                --}}}
+            end
+        elseif(    count > 0 and IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
             CallSecureProtected("SelectSlotItem"   ,BAG_BACKPACK, bagIndex, slotIndex)
 
             --}}}
@@ -1140,7 +1167,7 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
                     QSB.Settings.SlotItemTable[bNum].itemLink  = nil
             end
 
-            -- ZO ALERT
+            -- ZO ALERT .. SLOT CLEARED IN A NOT LOCKED PRESET {{{
             local warnMsg
             =      QSB.Settings.LockThisPreset
             and     "can't quickslot"
@@ -1151,13 +1178,15 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
             , "You're out of '"..itemName.."' in your inventory, "..warnMsg
             )
 
-            -- CHAT ALERT
+            --}}}
+            -- CHAT ALERT {{{
             c(                      COLOR_2..QSB.Name..":\r\n"
             ..COLOR_3.."You're out of|r "..tostring(itemLink)
             ..COLOR_3.." in your inventory,|r "
             ..COLOR_4.. warnMsg
             )
 
+            --}}}
         --}}}
         -- ITEM_2_EQUIP_ERROR_SLOT {{{
         else
@@ -2294,15 +2323,20 @@ end
                 visualCueBorder : SetHidden(        slot_settings.VisualCue == VISCUE_OFF                          )
             end
 
-            button              : SetHidden(       (slot_settings.VisualCue == VISCUE_WAC) and (slotItemCount == 0))
-            overground          : SetHidden(       (slot_settings.VisualCue == VISCUE_WAC) and (slotItemCount == 0))
+            button              : SetHidden(       (slot_settings.VisualCue == VISCUE_WAC) and (slotItemCount == 0) and not QSB.Settings.LockThisPreset)
+            overground          : SetHidden(       (slot_settings.VisualCue == VISCUE_WAC) and (slotItemCount == 0) and not QSB.Settings.LockThisPreset)
             keyLabel            : SetHidden(    not slot_settings.ShowKeyBindings                                  )
             quantityLabel       : SetHidden(    not slot_settings.ShowQuantityLabels                               )
 
             -- empty slots
-            if emptySlot then
+            if(emptySlot) then
                 overground      : SetHidden(true)
             end
+
+if(QSB.Settings.LockThisPreset) then --//FIXME
+    button     : SetHidden(false)
+    overground : SetHidden(false)
+end
 
             -- UNLOCKED LAYOUT
             if not QSB.Settings.LockUI then
@@ -4584,6 +4618,8 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
         end
         --}}}
 
+        loadPresetSlots() -- may have a refill for depleted items
+
         SelectNextAuto("INVENTORY UPDATED")
         Refresh("INVENTORY UPDATED")
 
@@ -5340,7 +5376,7 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210424)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210505)\n"
     .."!!"..COLOR_7.."- Checked with Update 29 Flames of Ambition (6.3.0) API 100034\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
