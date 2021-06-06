@@ -1,8 +1,14 @@
--- GreymindQuickSlotBar_tag (210605:17h:35) --{{{
+-- GreymindQuickSlotBar_tag (210606:22h:07) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.4.1 210606 {{{
+- [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
+- [color="orange"]alternate characters equipped with obsolete-version-item-reference automatically reset[/orange]
+- [color="magenta"]Default Show Policy changed form [color="orange"]Never[/color] to [color="orange"]Always[/color] [/color]
+- [color="magenta"]Default [color="orange"]Auto-Clone previous-to-empty preset[/color] changed from [color="red"]false[/color] to [color="green"]true[/color] [/color]
+}}}
 v2.6.4   210605 {{{
 - [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
 - [color="magenta"]Issue from Marazota: [color="orange"]LockThisPreset[/color] option set to NOT remove items on preset switch[/color]
@@ -364,6 +370,7 @@ local ITEM_2_EQUIP_ERROR_ITEMLINK    = COLOR_2.."ITEM EQUIP ERROR LINK"
 local ITEM_2_EQUIP_ERROR_SLOT        = COLOR_2.."ITEM EQUIP ERROR SLOT"
 local ITEM_2_EQUIP_ERROR_TYPE        = COLOR_2.."ITEM EQUIP ERROR TYPE"
 local ITEM_6_UPDATE                  = COLOR_6.."ITEM UPDATE"
+local ITEM_9_EQUIP_ERROR_CLEARED     = COLOR_9.."OBSOLETE EQUIP HAS BEEN CLEARED"
 
 --}}}
 -- ATTRIBUTES {{{
@@ -378,7 +385,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.4", -- 210605 previous: 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.4.1", -- 210606 previous: 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -409,7 +416,7 @@ local QSB = {
     Presets                             = { P1={}, P2={}, P3={}, P4={}, P5={} },
 
     SomeSlotItemChanged                 = false,
-    CloneCurrentToEmtpyPreset           = false,
+    CloneCurrentToEmtpyPreset           = true,
 
     -- small helper tags
     UIHandles_label_tooltip             = {
@@ -451,7 +458,7 @@ QSB.SettingsDefaults = {
     NextAuto                            = false,
     ShowBackground                      = false,
     SwapBackgroundColors                = false,
-    Visibility                          = VIS_NEVER,
+    Visibility                          = VIS_ALWAYS,
     PresetName                          = PRESETNAMES[1],
     SoundAlert                          = SOUNDNAMES[1],
     SoundSlotted                        = SOUNDNAMES[2],
@@ -1219,6 +1226,12 @@ D_EQUIP(ITEM_2_EQUIP_ERROR_SLOT, bNum, itemId, itemType, itemLevel, itemLink)
 D_EQUIP(ITEM_2_EQUIP_ERROR_ITEMLINK, bNum, itemId, itemType, itemLevel, itemLink)
     else
 D_EQUIP(ITEM_2_EQUIP_ERROR_TYPE, bNum, itemId, itemType, itemLevel, itemLink)
+            QSB.Settings.SlotItemTable[bNum].itemName  = nil
+            QSB.Settings.SlotItemTable[bNum].itemLevel = nil
+            QSB.Settings.SlotItemTable[bNum].slotId    = nil
+            QSB.Settings.SlotItemTable[bNum].texture   = nil
+            QSB.Settings.SlotItemTable[bNum].itemLink  = nil
+D(ITEM_9_EQUIP_ERROR_CLEARED)
     end
     --}}}
 end
@@ -5392,7 +5405,7 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210605)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210606)\n"
     .."!!"..COLOR_7.."- Checked with Update 30 Blackwood (7.0.5) API 100035\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
