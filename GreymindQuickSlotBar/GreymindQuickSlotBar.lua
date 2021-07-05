@@ -1,13 +1,23 @@
--- GreymindQuickSlotBar_tag (210606:22h:07) --{{{
+-- GreymindQuickSlotBar_tag (210705:19h:28) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.4.3 210705 {{{
+- [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
+- [color="orange"]...trying to solve CHARACTERS item sapping (reported by jacozilla)[/orange]
+- [color="yellow"]1 - Removed loading settings from characters-name as a default (overloaded by [ZO_SavedVars:NewCharacterId]) [/color]
+}}}
+v2.6.4.2 210612 {{{
+- [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
+- [color="orange"]...trying to patch COMPANION issue[/orange]
+}}}
 v2.6.4.1 210606 {{{
 - [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
 - [color="orange"]alternate characters equipped with obsolete-version-item-reference automatically reset[/orange]
 - [color="magenta"]Default Show Policy changed form [color="orange"]Never[/color] to [color="orange"]Always[/color] [/color]
 - [color="magenta"]Default [color="orange"]Auto-Clone previous-to-empty preset[/color] changed from [color="red"]false[/color] to [color="green"]true[/color] [/color]
+- [color="orange"]show-hide USER FORCED or BLOCKED have priority over SETTINGS VISIBILITY policy[/orange]
 }}}
 v2.6.4   210605 {{{
 - [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
@@ -385,7 +395,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.4.1", -- 210606 previous: 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.4.3", -- 210705 previous: 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1160,7 +1170,7 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
         elseif(    count > 0 and IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
             CallSecureProtected("SelectSlotItem"   ,BAG_BACKPACK, bagIndex, slotIndex)
 
-            --}}}
+        --}}}
         -- ITEM COUNT=0 WARNING {{{
         elseif(count == 0 or bagIndex == -1) then
             -- Trader08 (190925) {{{
@@ -2536,13 +2546,13 @@ function ShowOrHide()
     if         qsb_panel_showing        then show_msg = "VIS-"..vis.." .. GQSB-MENU SHOWING"
     elseif not QSB.Settings.LockUI      then show_msg = "NOT LOCKED ON SCREEN"
 
-    -- USER DEFAULT
-    elseif     vis == VIS_NEVER         then hide_msg = "VIS-"..vis
-    elseif     vis == VIS_ALWAYS        then show_msg = "VIS-"..vis
-
     -- USER FORCED
     elseif     BlockBarVisibility       then hide_msg = "BLOCKED IS ON"
     elseif     ForceBarVisibility       then show_msg = "FORCED IS ON"
+
+    -- USER DEFAULT
+    elseif     vis == VIS_NEVER         then hide_msg = "VIS-"..vis
+    elseif     vis == VIS_ALWAYS        then show_msg = "VIS-"..vis
 
     elseif     vis == VIS_BLINK_CHANGES then
         if     inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
@@ -3477,6 +3487,7 @@ c("LOADING "..COLOR_5.."Account-wide|r Settings")
 
         --}}}
     else
+--[[
         -- QSB.Settings .. LOAD OLD .. AS FALLBACK FOR NEW {{{
 c("LOADING "..COLOR_4..GetUnitName("player").."|r Character-NAME (OLD Settings)")
 
@@ -3489,6 +3500,7 @@ c("LOADING "..COLOR_4..GetUnitName("player").."|r Character-NAME (OLD Settings)"
         )
 
         --}}}
+--]]
         -- QSB.Settings .. LOAD NEW .. USE OLD AS DEFAULT {{{
 c("LOADING "..COLOR_3..GetUnitName("player").."|r Character-ID (NEW Settings)")
 
@@ -5405,8 +5417,9 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210606)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210705)\n"
     .."!!"..COLOR_7.."- Checked with Update 30 Blackwood (7.0.5) API 100035\n"
+    .."→ ... trying to solve jacozilla items issue|r\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
