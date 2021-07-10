@@ -1,9 +1,13 @@
--- GreymindQuickSlotBar_tag (210705:19h:28) --{{{
+-- GreymindQuickSlotBar_tag (210710:16h:46) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
-v2.6.4.3 210705 {{{
+v2.6.4.4 210710 {{{
+- [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
+- [color="yellow"]Using ZO_CachedStrFormat to cleanup ZO compound names[/color]
+}}}
+v2.6.4.3 210708 {{{
 - [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
 - [color="orange"]...trying to solve CHARACTERS item sapping (reported by jacozilla)[/orange]
 - [color="yellow"]1 - Removed loading settings from characters-name as a default (overloaded by [ZO_SavedVars:NewCharacterId]) [/color]
@@ -395,7 +399,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.4.3", -- 210705 previous: 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.4.3", -- 210710 previous: 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -522,14 +526,16 @@ local BuildSettingsMenu
 local BuildUIHandles
 local ButtonSizeChanged
 local ClearKeyBindings
-local ClearKeyBindings
 local CopyFromTo
 local CopyNotNilSettingsFromTo
+local CopySettingsDefaultsTo
 local DeepCopy
 local GameActionButtonHideHandler
 local GetAlignmentXY
 local GetKeyBindInfo
 local GetSlotItemKeyName
+local GetSoundAfter
+local GetSoundBefore
 local Get_preset_pending_IN_COMBAT
 local HideUIHandles
 local Hide_delayed
@@ -543,6 +549,7 @@ local OnMouseClicked
 local OnMouseDown
 local OnMouseEnter
 local OnMouseExit
+local OnMouseExit_handler
 local OnMouseNotClicked
 local OnMoveStart
 local OnMoveStop
@@ -550,12 +557,12 @@ local OnResizeStart
 local OnResizeStop
 local OnSlashCommand
 local PlaySoundAlert
+local PlaySoundAlert_delayed
 local PlaySoundSlotted
+local PlaySoundSlotted_delayed
 local Process_preset_pending_IN_COMBAT
-local QSB_SetCurrentQuickslot
-local QSB_SetCurrentQuickslot_handler
-local QSB_Setting_Preset_Changed
-local QSB_Settings_Changed
+local Rebuild_LibAddonMenu
+local Rebuild_LibAddonMenu_delayed
 local Refresh
 local Refresh_handler
 local RegisterEventHandlers
@@ -570,12 +577,12 @@ local SelectPreset
 local SetChatMax
 local SetUIHandlesVisibility
 local Set_preset_pending_IN_COMBAT
-local Settings_Locked
 local ShowOrHide
 local ShowOrHideUIHandles
 local ShowOrHideUIHandles_handler
 local ShowUIHandles
 local Show_delayed
+local Show_handler
 local UIWindowChanged
 local bNum_to_slotIndex
 local check_QSB_BAG_BACKPACK_UPDATE_bagIndex_to_check
@@ -584,6 +591,8 @@ local d_signature
 local d_table
 local equip_bNum
 local getItem_itID_from_slot
+local getItem_levl_from_slot
+local getItem_link_from_slot
 local getItem_name_from_slot
 local getItem_normalized_link
 local getItem_slot_from_link
@@ -592,16 +601,22 @@ local getItem_tooltip
 local handle_ACTION_SLOT_UPDATED
 local is_SlotItemTable_empty
 local is_same_item_link
+local is_same_slotted_item
 local loadPresetSlots
+local loadPresetSlots_checkSlotItemTable
 local populate_an_empty_SlotItemTable
 local save_QSB_to_SlotItemTable
+local set_LockThisPreset_state
 local slotIndex_to_bNum
 local string_split
 local table_includes
 local tasks_cooldown_begin
 local tasks_cooldown_end
 local tasks_handler
+local tasks_post
 
+--}}}
+--{{{
 local BlockBarVisibility            = false
 local ForceBarVisibility            = false
 local Hide_pending                  = false
@@ -610,8 +625,7 @@ local PlaySoundSlotted_pending      = false
 local Rebuild_LibAddonMenu_pending  = false
 local Reticle_isHidden              = false
 local SelectNextAuto_pending        = false
---}}}
---{{{
+
 local QSB_BAG_BACKPACK_UPDATE_bagIndex  = -1
 local QSB_BAG_BACKPACK_UPDATE_itemLevel = -1
 local QSB_BAG_BACKPACK_UPDATE_mutex     = false
@@ -1038,7 +1052,7 @@ local log_this = DEBUG_EQUIP or DEBUG_TASK or DEBUG_STATUS or DEBUG_ITEM
         local slotIndex       = bNum_to_slotIndex( bNum                                      )
         local slottedName     =       GetSlotName( slotIndex                                 )
         local emptyPresetSlot = (presetItemName == nil) or (presetItemName == "")
-        if(   emptyPresetSlot ) then
+        if(   emptyPresetSlot   ) then
             if(slottedName == "") then
 if(log_this) then c(COLOR_8.."TASK: SKIP  EMPTY") end
 
@@ -1154,7 +1168,7 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
 
                 ZO_Alert(UI_ALERT_CATEGORY_ERROR
                 , QSB.Settings.SoundAlert
-                , "You're out of '"..itemName.."' in your inventory, "..warnMsg
+                , "You're out of '"..ZO_CachedStrFormat('<<C:1>>',itemName).."' in your inventory, "..warnMsg
                 )
 
                 --}}}
@@ -1196,7 +1210,7 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
 
             ZO_Alert(UI_ALERT_CATEGORY_ERROR
             , QSB.Settings.SoundAlert
-            , "You're out of '"..itemName.."' in your inventory, "..warnMsg
+            , "You're out of '"..ZO_CachedStrFormat('<<C:1>>',itemName).."' in your inventory, "..warnMsg
             )
 
             --}}}
@@ -1595,11 +1609,12 @@ function getItem_tooltip(bNum)
             .."\n"
             .."\n"..COLOR_3.."---------------------- ITEM -----------------------"
             .."\n- GetSlotItemCount("..slotIndex..")"..s..")"       ..COLOR_2.. " ["..tostring(        GetSlotItemCount( slotIndex )).."]|r"
-            .."\n- getItem_itID_from_slot("   ..s..")"              ..COLOR_2.. " ["..tostring(  getItem_itID_from_slot( bagIndex  )).."]|r"
-            .."\n- GetItemId("                ..s..")"              ..COLOR_2.. " ["..tostring(  GetItemId(BAG_BACKPACK, bagIndex  )).."]|r"
-            .."\n- GetItemName("              ..s..")"              ..COLOR_4..":\n"..tostring(GetItemName(BAG_BACKPACK, bagIndex  )).. "|r"
-            .."\n- getItem_link_from_slot("   ..s..")"              ..COLOR_9..":\n"..tostring(  getItem_link_from_slot( bagIndex  )).. "|r"
-            .."\n- getItem_name_from_slot("   ..s..")"              ..COLOR_4..":\n"..tostring(  getItem_name_from_slot( bagIndex  )).. "|r"
+            .."\n- getItem_itID_from_slot("          ..s..")"       ..COLOR_2.. " ["..tostring(  getItem_itID_from_slot( bagIndex  )).."]|r"
+            .."\n- GetItemId("                       ..s..")"       ..COLOR_2.. " ["..tostring(  GetItemId(BAG_BACKPACK, bagIndex  )).."]|r"
+            .."\n- GetItemName("                     ..s..")"       ..COLOR_4..":\n"..tostring(GetItemName(BAG_BACKPACK, bagIndex  )).. "|r"
+            .."\n- ZO_CachedStrFormat('<<C:1>>',   itemName)"       ..COLOR_5..":\n"..ZO_CachedStrFormat('<<C:1>>',      itemName   ).. "|r"
+            .."\n- getItem_link_from_slot("          ..s..")"       ..COLOR_9..":\n"..tostring(  getItem_link_from_slot( bagIndex  )).. "|r"
+            .."\n- getItem_name_from_slot("          ..s..")"       ..COLOR_4..":\n"..tostring(  getItem_name_from_slot( bagIndex  )).. "|r"
             .."\n"
 
         end
@@ -1663,7 +1678,7 @@ if(log_this) then c("getItem_slot_from_name("..BAG_BACKPACK..","..itemName..")")
 
     for _, data in pairs(SHARED_INVENTORY.bagCache[BAG_BACKPACK]) do
         if data ~= nil then
-            local bagItemName  = GetItemName(BAG_BACKPACK, data.slotIndex)
+            local bagItemName  = ZO_CachedStrFormat("<<C:1>>", GetItemName(BAG_BACKPACK, data.slotIndex))
             if(   bagItemName == itemName) then
 
 if(log_this) then c(COLOR_3.."...return [data.slotIndex "..tostring(data.slotIndex).."]") end
@@ -5417,7 +5432,7 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210705)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210710)\n"
     .."!!"..COLOR_7.."- Checked with Update 30 Blackwood (7.0.5) API 100035\n"
     .."→ ... trying to solve jacozilla items issue|r\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
