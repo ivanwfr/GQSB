@@ -1,8 +1,12 @@
--- GreymindQuickSlotBar_tag (210710:16h:46) --{{{
+-- GreymindQuickSlotBar_tag (210725:21h:26) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.4.5 210725 {{{
+- [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
+- [color="yellow"]Using GetWorldName to load SavedVariables[/color]
+}}}
 v2.6.4.4 210710 {{{
 - [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
 - [color="yellow"]Using ZO_CachedStrFormat to cleanup ZO compound names[/color]
@@ -399,7 +403,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.4.3", -- 210710 previous: 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.4.5", -- 210725 previous: 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -3465,33 +3469,39 @@ D("Initialize()")
 end
 --}}}
 -- Load_ZO_SavedVars {{{
-function Load_ZO_SavedVars(value)
---c(COLOR_9.." Load_ZO_SavedVars("..tostring(value)..")")
+function Load_ZO_SavedVars(accountwide)
+--c(COLOR_9.." Load_ZO_SavedVars("..tostring(accountwide)..")")
 
-    local changed = (value ~= nil) and QSB_Settings_Changed()
+    local WorldName = GetWorldName()
 
-    -- [QSB.AccountWideSettings]
-    -- GET/SET {{{
-    if(value == nil) then
+    if(accountwide == nil) then
+
         QSB.AccountWideSettings = ZO_SavedVars:NewAccountWide(
         "GreymindQuickSlotBarSettings" -- savedVariableTable
         , QSB.SettingsVersion          -- version
-        , nil                          -- namespace
+        , WorldName                    -- namespace
         , QSB.SettingsDefaults         -- defaults
         , "AccountWide"                -- profile
         )                              -- displayName
 
+        if( QSB.AccountWideSettings == nil ) then
+            QSB.AccountWideSettings = ZO_SavedVars:NewAccountWide(
+            "GreymindQuickSlotBarSettings" -- savedVariableTable
+            , QSB.SettingsVersion          -- version
+            , nil                          -- namespace
+            , QSB.SettingsDefaults         -- defaults
+            , "AccountWide"                -- profile
+            )                              -- displayName
+        end
+
     else
-        QSB.AccountWideSettings.SaveAccountWide = value
+        QSB.AccountWideSettings.SaveAccountWide = accountwide
 
     end
-    --}}}
 
     if(QSB.AccountWideSettings.SaveAccountWide ) then
-        -- QSB.Settings .. f(AccountWide.SaveAccountWide) {{{
-        --:!start explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
-        --:!start explorer "https://esodata.uesp.net/100029/data/z/o/_/ZO_SavedVars.NewCharacterIdSettings.html"
-c("LOADING "..COLOR_5.."Account-wide|r Settings")
+
+c(COLOR_5.."GQSB LOADING "..COLOR_3.." Account-wide Settings "..COLOR_7.."["..WorldName.."]")
         QSB.Settings = ZO_SavedVars:NewAccountWide(
         "GreymindQuickSlotBarSettings"
         , QSB.SettingsVersion
@@ -3500,25 +3510,19 @@ c("LOADING "..COLOR_5.."Account-wide|r Settings")
         , "AccountWide"
         )
 
-        --}}}
+        if( QSB.Settings == nil) then
+c(COLOR_5.."GQSB LOADING "..COLOR_3.." Account-wide Settings "..COLOR_8.."[default]")
+            QSB.Settings = ZO_SavedVars:NewAccountWide(
+            "GreymindQuickSlotBarSettings"
+            , QSB.SettingsVersion
+            , nil
+            , QSB.SettingsDefaults
+            , "AccountWide"
+            )
+        end
     else
---[[
-        -- QSB.Settings .. LOAD OLD .. AS FALLBACK FOR NEW {{{
-c("LOADING "..COLOR_4..GetUnitName("player").."|r Character-NAME (OLD Settings)")
 
-        QSB.Settings = ZO_SavedVars:New(
-        "GreymindQuickSlotBarSettings"
-        , QSB.SettingsVersion
-        , nil
-        , QSB.SettingsDefaults
-        , "Default"
-        )
-
-        --}}}
---]]
-        -- QSB.Settings .. LOAD NEW .. USE OLD AS DEFAULT {{{
-c("LOADING "..COLOR_3..GetUnitName("player").."|r Character-ID (NEW Settings)")
-
+c(COLOR_6.."GQSB LOADING "..COLOR_4.." "..GetUnitName("player").." Settings "..COLOR_7.."["..WorldName.."]")
         QSB.Settings = ZO_SavedVars:NewCharacterIdSettings(
         "GreymindQuickSlotBarSettings"
         , QSB.SettingsVersion
@@ -3527,30 +3531,36 @@ c("LOADING "..COLOR_3..GetUnitName("player").."|r Character-ID (NEW Settings)")
         , "Default"
         )
 
-        --}}}
+        if( QSB.Settings == nil) then
+c(COLOR_6.."GQSB LOADING "..COLOR_4..""..GetUnitName("player").." Settings "..COLOR_8.."[default]")
+            QSB.Settings = ZO_SavedVars:NewCharacterIdSettings(
+            "GreymindQuickSlotBarSettings"
+            , QSB.SettingsVersion
+            , nil
+            , QSB.Settings -- defaults to OLD
+            , "Default"
+            )
+        end
     end
 
-    -- [Loaded_QSB_Settings] {{{
-    if(value == nil) then
+    if(accountwide == nil) then
 --c("ROOTING: "..COLOR_2.." Loaded_QSB_Settings")
 
         Loaded_QSB_Settings = DeepCopy(QSB.Settings)
-    --}}}
-    -- [QSB_ReloadUI] or [Refresh] .. f(changed) {{{
     else
-        if( changed ) then
-c(COLOR_2.." GQSB RELOADING\n"..COLOR_2..tostring(changed))
+        local changed = QSB_Settings_Changed()
+changed       = false --//FIXME
 
+        if changed then
+c(COLOR_2.." GQSB RELOADING\n")
             zo_callLater(QSB_ReloadUI, 3000)
         else
             Rebuild_LibAddonMenu()
-
             loadPresetSlots()
             zo_callLater(QSB_SetCurrentQuickslot_handler, 500)
             Refresh("Load_ZO_SavedVars")
         end
     end
-    --}}}
 end
 --}}}
 -- QSB_Settings_Changed {{{
@@ -5432,9 +5442,8 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210710)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210725)\n"
     .."!!"..COLOR_7.."- Checked with Update 30 Blackwood (7.0.5) API 100035\n"
-    .."→ ... trying to solve jacozilla items issue|r\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
@@ -5449,6 +5458,8 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
 :new C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/P.txt
 :e   C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/ARCHIVES/BAK/GreymindQuickSlotBar_210425.lua
 :e   C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/ARCHIVES/BAK/GreymindQuickSlotBar_210509.lua
+:!start explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
+:!start explorer "https://esodata.uesp.net/100029/data/z/o/_/ZO_SavedVars.NewCharacterIdSettings.html"
 
 :!start explorer "https://esoapi.uesp.net/100035"
 --]]--}}}
