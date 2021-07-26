@@ -3,6 +3,10 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.4.6 210727 {{{
+- [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
+- [color="yellow"]Fixed GetWorldName to migrate and load SavedVariables -> Baertram[/color]
+}}}
 v2.6.4.5 210725 {{{
 - [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
 - [color="yellow"]Using GetWorldName to load SavedVariables[/color]
@@ -158,6 +162,16 @@ local DEBUG_STATION  = false
 local DEBUG_STATUS   = false
 local DEBUG_TOOLTIP  = false
 local DEBUG_HANDLE   = false
+
+--SpeedUp pointers to_G table
+local EM = EVENT_MANAGER
+local WM = WINDOW_MANAGER
+
+--Server, Account and character data
+local displayName = GetDisplayName()
+local currentCharId = GetCurrentCharacterId()
+local worldName = GetWorldName()
+local playerName = ZO_CachedStrFormat(SI_UNIT_NAME, GetUnitName("player"))
 
 -- LOCAL
 -- SYMBOLS {{{
@@ -403,7 +417,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.4.5", -- 210725 previous: 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.4.6", -- 210725 previous: 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -2086,7 +2100,7 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
             tooltipText
             =  QSB.Name.." "..QSB.Version.." Flames of Ambition\n"
             ..(QSB.AccountWideSettings.SaveAccountWide and COLOR_3.."Account-wide Settings"
-            or                                             COLOR_6..GetUnitName("player").."|r Character Settings"
+            or                                             COLOR_6..playerName.."|r Character Settings"
             )
         }
 
@@ -2096,7 +2110,7 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
     ----- button_font = "EsoUI/Common/Fonts/esocartographer-bold.otf".."|"..tostring(QSB.Settings.ButtonFontSize).."|".."outline"
     local button_font = "EsoUI/Common/Fonts/univers57.otf"           .."|"..tostring(QSB.Settings.ButtonFontSize).."|".."soft-shadow-thin"
 
-    local x, y, hAlign, vAlign, row, col, color, alpha
+    local x, y, hAlign, vAlign, row, col, color, alpha, tostring_bNum
     row = 0
     col = 0
     local current_slotIndex = GetCurrentQuickslot()
@@ -2105,7 +2119,7 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
         -- Buttons first build {{{
         if (QSB.Buttons[bNum] == nil) then
             tostring_bNum = tostring(bNum)
-            QSB.Buttons[bNum] = WINDOW_MANAGER:CreateControl("QuickSlotBarButton" .. tostring_bNum, GreymindQuickSlotBarUI, CT_BUTTON)
+            QSB.Buttons[bNum] = WM:CreateControl("QuickSlotBarButton" .. tostring_bNum, GreymindQuickSlotBarUI, CT_BUTTON)
             local button = QSB.Buttons[bNum]
             button:SetDimensions(buttonSize, buttonSize)
             button:SetState(BSTATE_NORMAL)
@@ -2118,36 +2132,36 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
             button:SetHandler("OnMouseEnter",            OnMouseEnter)
             button:SetHandler("OnMouseExit" ,            OnMouseExit )
 
-            QSB.Basegrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBaseground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
+            QSB.Basegrounds[bNum]       = WM:CreateControl("QuickSlotBarButtonBaseground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local baseground            = QSB.Basegrounds[bNum]
             baseground                  :SetTexture(BASEBACKGROUNDTEXTURE)
             baseground                  :SetAnchorFill(button)
 
-            QSB.Backgrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBackground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
+            QSB.Backgrounds[bNum]       = WM:CreateControl("QuickSlotBarButtonBackground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local background            = QSB.Backgrounds[bNum]
             background                  :SetTexture(BACKGROUNDTEXTURE)
             background                  :SetAnchorFill(button)
 
-            QSB.VisualCueBorders[bNum]  = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonVisualCue"        .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
+            QSB.VisualCueBorders[bNum]  = WM:CreateControl("QuickSlotBarButtonVisualCue"        .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local visualCueBorder       = QSB.VisualCueBorders[bNum]
             visualCueBorder             :SetTexture(VISUALCUEBORDERTEXTURE)
             visualCueBorder             :SetAnchorFill(button)
 
-            QSB.Borders[bNum]           = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBorder"           .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
+            QSB.Borders[bNum]           = WM:CreateControl("QuickSlotBarButtonBorder"           .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local border                = QSB.Borders[bNum]
             border                      :SetTexture(BORDERTEXTURE)
             border                      :SetAnchorFill(button)
 
-            QSB.Overgrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonOverground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
+            QSB.Overgrounds[bNum]       = WM:CreateControl("QuickSlotBarButtonOverground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local overground            = QSB.Overgrounds[bNum]
             overground                  :SetAnchorFill(button)
             overground                  :SetColor(0.0,0.0,0.0)
 
-            QSB.KeyLabels[bNum]         = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonKeyName"          .. tostring_bNum, GreymindQuickSlotBarUI, CT_LABEL)
+            QSB.KeyLabels[bNum]         = WM:CreateControl("QuickSlotBarButtonKeyName"          .. tostring_bNum, GreymindQuickSlotBarUI, CT_LABEL)
             local keyLabel              = QSB.KeyLabels[bNum]
             keyLabel                    :SetAnchor(CENTER, button, CENTER, 0, -(buttonSize / 2) - QSB.ButtonPadding)
 
-            QSB.QuantityLabels[bNum]    = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonQuantityLabel"    .. tostring_bNum, GreymindQuickSlotBarUI, CT_LABEL)
+            QSB.QuantityLabels[bNum]    = WM:CreateControl("QuickSlotBarButtonQuantityLabel"    .. tostring_bNum, GreymindQuickSlotBarUI, CT_LABEL)
             local quantityLabel         = QSB.QuantityLabels[bNum]
             quantityLabel               :SetAnchor(CENTER, button, CENTER, 0, -(buttonSize / 2) - QSB.ButtonPadding)
 
@@ -2480,7 +2494,7 @@ D("BuildUIHandles():")
         local hTooltip = hNameTooltip.tooltip
 
         -- button
-        button = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..h_num, GreymindQuickSlotBarUI, CT_BUTTON)
+        button = WM:CreateControl("QuickSlotHandle_"..h_num, GreymindQuickSlotBarUI, CT_BUTTON)
         button:SetDimensions(handleSize, handleSize)
         button:SetAnchor(BOTTOMLEFT, GreymindQuickSlotBarUI, TOPLEFT, offsetX, 0)
         offsetX = offsetX + 2 + handleSize
@@ -2494,7 +2508,7 @@ D("BuildUIHandles():")
 
         if    hLabel == "L" then
             button:SetDimensions(32,32)
-            texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..h_num.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
+            texture = WM:CreateControl("QuickSlotHandle_"..h_num.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
             texture:SetTexture("/esoui/art/quest/tracked_pin.dds")
             texture:SetAnchorFill(button)
             texture:SetAlpha(0)
@@ -2502,14 +2516,14 @@ D("BuildUIHandles():")
 
         elseif hLabel == "S" then
             button:SetDimensions(32,32)
-            texture = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..h_num.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
+            texture = WM:CreateControl("QuickSlotHandle_"..h_num.."_texture", GreymindQuickSlotBarUI, CT_TEXTURE)
             texture:SetTexture("/esoui/art/menubar/menubar_mainmenu_over.dds")
             texture:SetAnchorFill(button)
             texture:SetAlpha(0)
             QSB.UIHandles[hLabel] = texture
 
         else
-            label = WINDOW_MANAGER:CreateControl("QuickSlotHandle_"..h_num.."_label", GreymindQuickSlotBarUI, CT_LABEL)
+            label = WM:CreateControl("QuickSlotHandle_"..h_num.."_label", GreymindQuickSlotBarUI, CT_LABEL)
             label:SetAnchor(CENTER, button, CENTER, 0, 0)
             label:SetFont(HANDLE_FONT)
             label:SetText(hLabel)
@@ -3445,6 +3459,7 @@ end
 
 -- INIT
 -- Initialize {{{
+local doReload = false
 function Initialize(eventCode, addOnName)
 D("Initialize()")
     if (addOnName ~= QSB.Name) then return end
@@ -3457,110 +3472,212 @@ D("Initialize()")
 
     Load_ZO_SavedVars(nil)
 
-    BuildSettingsMenu()
+    if not doReload then
+        BuildSettingsMenu()
 
-  --CHAT_SYSTEM.maxContainerWidth, CHAT_SYSTEM.maxContainerHeight = GuiRoot:GetDimensions()
-  --SetChatMax( QSB.Settings.ChatMax )
+        --CHAT_SYSTEM.maxContainerWidth, CHAT_SYSTEM.maxContainerHeight = GuiRoot:GetDimensions()
+        --SetChatMax( QSB.Settings.ChatMax )
 
-    -- EVENT HANDLERS
-    GreymindQuickSlotBarUI:SetHidden( true )  -- 191125 .. hide top-left rectangle on reloadui
-    zo_callLater(RegisterEventHandlers, 500)
+        -- EVENT HANDLERS
+        GreymindQuickSlotBarUI:SetHidden( true )  -- 191125 .. hide top-left rectangle on reloadui
 
+        zo_callLater(RegisterEventHandlers, 500)
+    else
+        EM:RegisterForEvent("GQSB.PLAYER_ACTIVATED"
+        , EVENT_PLAYER_ACTIVATED
+        , function(self)
+            D_EVENT("PLAYER_ACTIVATED")
+            ReloadUI("ingame")
+        end)
+
+    end
 end
+
+--As the base SV including the servername was created already before in function Load_ZO_SavedVars we will remove it here
+local migratedAccountWideToServer
+local migratedCharacterToServer
+
+--Remove the megaserver name subtable from the copied data, if given
+local function removeServerDataOnce(svTableOld)
+    d("[removeServerDataOnce]worldName: " ..tostring(worldName))
+    local copyOfOldSV = ZO_ShallowTableCopy(svTableOld)
+    if copyOfOldSV[worldName] ~= nil then
+d(">>found existing servername data -> stripped!")
+        copyOfOldSV[worldName] = nil
+    end
+    return copyOfOldSV
+end
+
+local function migrateToServerSVs(useAccountWide)
+d(string.format(">>migrateToServerSVs - useAccountWide: %s, settingsGiven: %s", tostring(useAccountWide), tostring(QSB.AccountWideSettings ~= nil)))
+    if not QSB.AccountWideSettings then return end
+    local copyOfOldSV
+    if useAccountWide == true and migratedAccountWideToServer == false then
+        --use account wide old SV data without server
+        local oldNonServerSVAccountWide = GreymindQuickSlotBarSettings and GreymindQuickSlotBarSettings["AccountWide"]
+                                            and GreymindQuickSlotBarSettings["AccountWide"][displayName]
+                                            and GreymindQuickSlotBarSettings["AccountWide"][displayName]["$AccountWide"]
+        if oldNonServerSVAccountWide == nil then
+            d(">old non-server dependent account wide settings are missing! Using defaults")
+            oldNonServerSVAccountWide = QSB.SettingsDefaults
+        else
+            d(">found old account wide settings and copied them")
+            copyOfOldSV = removeServerDataOnce(oldNonServerSVAccountWide)
+        end
+        QSB.Settings = ZO_SavedVars:NewAccountWide(
+                "GreymindQuickSlotBarSettings"
+        , QSB.SettingsVersion
+        , worldName
+        , copyOfOldSV --copy from old existing tables ->not the ZO_SavedVars wrapper including functions!
+        , "AccountWide"
+        )
+        QSB.Settings._migratedAcountWideToServerDependent = true
+        d(">>reloadui account -> set to true!")
+        doReload = true
+        --write the new SV to the disk and update the QSB.AccountWideSettings
+    elseif useAccountWide == false and migratedCharacterToServer == false then
+        --use per character old SV data without server
+        local oldNonServerSVCharacter = GreymindQuickSlotBarSettings and GreymindQuickSlotBarSettings["Default"]
+                                        and GreymindQuickSlotBarSettings["Default"][displayName]
+                                        and GreymindQuickSlotBarSettings["Default"][displayName][currentCharId]
+        if oldNonServerSVCharacter == nil then
+            d(">old non-server dependent character settings are missing for \"".. playerName .."\"! Using defaults")
+            oldNonServerSVCharacter = QSB.SettingsDefaults
+        else
+            d(">found old character settings for \"".. playerName .."\" and copied them")
+            copyOfOldSV = removeServerDataOnce(oldNonServerSVCharacter)
+        end
+        QSB.Settings = ZO_SavedVars:NewCharacterIdSettings(
+                "GreymindQuickSlotBarSettings"
+        , QSB.SettingsVersion
+        , worldName
+        , copyOfOldSV --copy from old existing tables ->not the ZO_SavedVars wrapper including functions!
+        , "Default"
+        )
+        QSB.Settings._migratedCharacterToServerDependent = true
+        d(">>reloadui character! -> set to true!")
+        doReload = true
+    end
+end
+
 --}}}
 -- Load_ZO_SavedVars {{{
-function Load_ZO_SavedVars(accountwide)
---c(COLOR_9.." Load_ZO_SavedVars("..tostring(accountwide)..")")
+function Load_ZO_SavedVars(value)
+    --c(COLOR_9.." Load_ZO_SavedVars("..tostring(value)..")")
 
-    local WorldName = GetWorldName()
+    local changed = (value ~= nil) and QSB_Settings_Changed()
 
-    if(accountwide == nil) then
-
+    -- [QSB.AccountWideSettings]
+    -- GET/SET {{{
+    if(value == nil) then
         QSB.AccountWideSettings = ZO_SavedVars:NewAccountWide(
-        "GreymindQuickSlotBarSettings" -- savedVariableTable
+                "GreymindQuickSlotBarSettings" -- savedVariableTable
         , QSB.SettingsVersion          -- version
-        , WorldName                    -- namespace
+        , worldName                    -- namespace
         , QSB.SettingsDefaults         -- defaults
         , "AccountWide"                -- profile
         )                              -- displayName
-
-        if( QSB.AccountWideSettings == nil ) then
-            QSB.AccountWideSettings = ZO_SavedVars:NewAccountWide(
-            "GreymindQuickSlotBarSettings" -- savedVariableTable
-            , QSB.SettingsVersion          -- version
-            , nil                          -- namespace
-            , QSB.SettingsDefaults         -- defaults
-            , "AccountWide"                -- profile
-            )                              -- displayName
-        end
-
     else
-        QSB.AccountWideSettings.SaveAccountWide = accountwide
-
+        QSB.AccountWideSettings.SaveAccountWide = value
     end
 
+    --}}}
+
     if(QSB.AccountWideSettings.SaveAccountWide ) then
+        -- QSB.Settings .. f(AccountWide.SaveAccountWide) {{{
+        --:!start explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
+        --:!start explorer "https://esodata.uesp.net/100029/data/z/o/_/ZO_SavedVars.NewCharacterIdSettings.html"
+        c(COLOR_5.."GQSB LOADING "..COLOR_3.." Account-wide Settings "..COLOR_7.."["..worldName.."]")
 
-c(COLOR_5.."GQSB LOADING "..COLOR_3.." Account-wide Settings "..COLOR_7.."["..WorldName.."]")
-        QSB.Settings = ZO_SavedVars:NewAccountWide(
-        "GreymindQuickSlotBarSettings"
-        , QSB.SettingsVersion
-        , nil
-        , QSB.SettingsDefaults
-        , "AccountWide"
-        )
+        if migratedAccountWideToServer == nil then
+            migratedAccountWideToServer = (GreymindQuickSlotBarSettings and GreymindQuickSlotBarSettings["AccountWide"]
+                    and GreymindQuickSlotBarSettings["AccountWide"][displayName]
+                    and GreymindQuickSlotBarSettings["AccountWide"][displayName]["$AccountWide"]
+                    and GreymindQuickSlotBarSettings["AccountWide"][displayName]["$AccountWide"][worldName]
+                    and GreymindQuickSlotBarSettings["AccountWide"][displayName]["$AccountWide"][worldName]._migratedAcountWideToServerDependent == true) or false
+        end
 
-        if( QSB.Settings == nil) then
-c(COLOR_5.."GQSB LOADING "..COLOR_3.." Account-wide Settings "..COLOR_8.."[default]")
+        if not migratedAccountWideToServer then
+            migrateToServerSVs(true)
+        else
             QSB.Settings = ZO_SavedVars:NewAccountWide(
-            "GreymindQuickSlotBarSettings"
+                    "GreymindQuickSlotBarSettings"
             , QSB.SettingsVersion
-            , nil
+            , worldName
             , QSB.SettingsDefaults
             , "AccountWide"
             )
         end
-    else
 
-c(COLOR_6.."GQSB LOADING "..COLOR_4.." "..GetUnitName("player").." Settings "..COLOR_7.."["..WorldName.."]")
-        QSB.Settings = ZO_SavedVars:NewCharacterIdSettings(
-        "GreymindQuickSlotBarSettings"
+        --}}}
+    else
+        -- QSB.Settings .. LOAD OLD .. AS FALLBACK FOR NEW {{{
+        --c("LOADING "..COLOR_4..playerName.."|r Character-NAME (OLD Settings)")
+
+        --[[
+        --Removed as character name settings are thaaaaat old that one just needs to reconfigure the addon once if one
+        --installs it now after months/years of non-usage!
+        QSB.Settings = ZO_SavedVars:New(
+                "GreymindQuickSlotBarSettings"
         , QSB.SettingsVersion
         , nil
-        , QSB.Settings -- defaults to OLD
+        , QSB.SettingsDefaults
         , "Default"
         )
+        -- QSB.Settings .. LOAD NEW .. USE OLD AS DEFAULT {{{
+        ]]
 
-        if( QSB.Settings == nil) then
-c(COLOR_6.."GQSB LOADING "..COLOR_4..""..GetUnitName("player").." Settings "..COLOR_8.."[default]")
+        --}}}
+        c(COLOR_6.."GQSB LOADING "..COLOR_4.." "..playerName.." Settings "..COLOR_7.."["..worldName.."]")
+
+        --Were the character settings alreay migrated to tis server?
+        if migratedCharacterToServer == nil then
+            migratedCharacterToServer = (GreymindQuickSlotBarSettings and GreymindQuickSlotBarSettings["Default"]
+                    and GreymindQuickSlotBarSettings["Default"][displayName]
+                    and GreymindQuickSlotBarSettings["Default"][displayName][currentCharId]
+                    and GreymindQuickSlotBarSettings["Default"][displayName][currentCharId][worldName]
+                    and GreymindQuickSlotBarSettings["Default"][displayName][currentCharId][worldName]._migratedCharacterToServerDependent == true) or false
+        end
+
+        if not migratedCharacterToServer then
+            migrateToServerSVs(false)
+        else
             QSB.Settings = ZO_SavedVars:NewCharacterIdSettings(
-            "GreymindQuickSlotBarSettings"
+                    "GreymindQuickSlotBarSettings"
             , QSB.SettingsVersion
-            , nil
-            , QSB.Settings -- defaults to OLD
+            , worldName
+            , QSB.SettingsDefaults -- uses defaults now and not the old character name settings
             , "Default"
             )
         end
+
+        --}}}
+    end
+    --Do a reload here if we changed settings ingame from the settings menu/slash commands: account to character ones or vice-versa
+    if value ~= nil and doReload == true then
+        d("Reloading the UI - At Load_ZO_SavedVars")
+        ReloadUI()
     end
 
-    if(accountwide == nil) then
---c("ROOTING: "..COLOR_2.." Loaded_QSB_Settings")
-
+    -- [Loaded_QSB_Settings] {{{
+    if(value == nil) then
+        --c("ROOTING: "..COLOR_2.." Loaded_QSB_Settings")
         Loaded_QSB_Settings = DeepCopy(QSB.Settings)
+        --}}}
+        -- [QSB_ReloadUI] or [Refresh] .. f(changed) {{{
     else
-        local changed = QSB_Settings_Changed()
-changed       = false --//FIXME
-
-        if changed then
-c(COLOR_2.." GQSB RELOADING\n")
+        if changed  then
+            c(COLOR_2.." GQSB RELOADING\n")
             zo_callLater(QSB_ReloadUI, 3000)
         else
             Rebuild_LibAddonMenu()
+
             loadPresetSlots()
             zo_callLater(QSB_SetCurrentQuickslot_handler, 500)
             Refresh("Load_ZO_SavedVars")
         end
     end
+    --}}}
 end
 --}}}
 -- QSB_Settings_Changed {{{
@@ -3654,7 +3771,7 @@ D("BuildSettingsMenu()")
         type        = "checkbox",
         reference   = "QSB_SaveAccountWide",
         name        = "Account-wide Settings",
-        tooltip     = "Must be OFF for "..COLOR_2..GetUnitName("player").."|r Character Settings",
+        tooltip     = "Must be OFF for "..COLOR_2..playerName.."|r Character Settings",
         getFunc     = function()
             return QSB.AccountWideSettings.SaveAccountWide
         end,
@@ -4609,7 +4726,7 @@ function RegisterEventHandlers()
 D("RegisterEventHandlers()")
     -- Refresh .. ACTION_SLOT_UPDATED --{{{
     -- update from quickslot wheel
-    EVENT_MANAGER:RegisterForEvent("GQSB.ACTION_SLOT_UPDATED"
+    EM:RegisterForEvent("GQSB.ACTION_SLOT_UPDATED"
     , EVENT_ACTION_SLOT_UPDATED
     , function(eventCode, slotIndex)
 D_ITEM(COLOR_4.."ACTION_SLOT_UPDATED: slotIndex=["..slotIndex.."]")
@@ -4634,7 +4751,7 @@ D_ITEM(COLOR_5.."handle_ACTION_SLOT_UPDATED(bNum "..bNum..") .. CALLED" )
     end)
     --}}}
     -- Refresh .. ITEM_SLOT_CHANGED --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.ITEM_SLOT_CHANGED"
+    EM:RegisterForEvent("GQSB.ITEM_SLOT_CHANGED"
     , EVENT_ITEM_SLOT_CHANGED
     , function(event, slotIndex)
 D_ITEM("ITEM_SLOT_CHANGED: slotIndex=["..slotIndex.."]")
@@ -4644,7 +4761,7 @@ D_ITEM("ITEM_SLOT_CHANGED: slotIndex=["..slotIndex.."]")
     end)
     --}}}
     -- Refresh .. ACTIVE_QUICKSLOT_CHANGED --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.ACTIVE_QUICKSLOT_CHANGED"
+    EM:RegisterForEvent("GQSB.ACTIVE_QUICKSLOT_CHANGED"
     , EVENT_ACTIVE_QUICKSLOT_CHANGED
     , function(event, slotIndex) -- (*integer* _slotId_)
 if(DEBUG_EQUIP) then c("ACTIVE_QUICKSLOT_CHANGED: slotIndex=["..slotIndex.."]") end
@@ -4654,7 +4771,7 @@ if(DEBUG_EQUIP) then c("ACTIVE_QUICKSLOT_CHANGED: slotIndex=["..slotIndex.."]") 
     end)
     --}}}
     -- Refresh .. INVENTORY_SINGLE_SLOT_UPDATE --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.INVENTORY_SINGLE_SLOT_UPDATE"
+    EM:RegisterForEvent("GQSB.INVENTORY_SINGLE_SLOT_UPDATE"
     , EVENT_INVENTORY_SINGLE_SLOT_UPDATE
     , function(event, bagId, bagIndex) -- (*integer* _bagId_, *integer* _slotId_, *bool* _isNewItem_, *integer* _itemSoundCategory_, *integer* _updateReason_)
         -- FILTER ON  BAG_BACKPACK
@@ -4693,7 +4810,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     --}}}
     -- Refresh .. ACTION_LAYER_POPPED --{{{
     -- hide or show when some game dialog changed
-    EVENT_MANAGER:RegisterForEvent("GQSB.ACTION_LAYER_POPPED"
+    EM:RegisterForEvent("GQSB.ACTION_LAYER_POPPED"
     , EVENT_ACTION_LAYER_POPPED
     , function(...) -- (...)
         local layer = select(2,...)
@@ -4705,7 +4822,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     --}}}
     -- Refresh .. RETICLE_HIDDEN_UPDATE --{{{
     -- hide or show in sync with VIS_RETICLE
-    EVENT_MANAGER:RegisterForEvent("GQSB.RETICLE_HIDDEN_UPDATE"
+    EM:RegisterForEvent("GQSB.RETICLE_HIDDEN_UPDATE"
     , EVENT_RETICLE_HIDDEN_UPDATE
     , function(...) -- (*bool* _hidden_)
         Reticle_isHidden = select(2,...)
@@ -4724,7 +4841,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     --}}}
     -- _______ .. RETICLE_TARGET_CHANGED .. GameActionButtonHideHandler --{{{
     -- hide or show in sync with VIS_RETICLE state
-    EVENT_MANAGER:RegisterForEvent("GQSB.RETICLE_TARGET_CHANGED"
+    EM:RegisterForEvent("GQSB.RETICLE_TARGET_CHANGED"
     , EVENT_RETICLE_TARGET_CHANGED
     , function(...)
         D_EVENT("RETICLE_TARGET_CHANGED")
@@ -4736,7 +4853,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     --}}}
     -- Refresh .. PLAYER_COMBAT_STATE .. GameActionButtonHideHandler  --{{{
     -- hide or show in sync with VIS_COMBAT state
-    EVENT_MANAGER:RegisterForEvent("GQSB.PLAYER_COMBAT_STATE"
+    EM:RegisterForEvent("GQSB.PLAYER_COMBAT_STATE"
     , EVENT_PLAYER_COMBAT_STATE
     , function(...) -- (*bool* _inCombat_)
         D_EVENT("PLAYER_COMBAT_STATE")
@@ -4752,7 +4869,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     end)
     --}}}
     -- Refresh .. PLAYER_ACTIVATED --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.PLAYER_ACTIVATED"
+    EM:RegisterForEvent("GQSB.PLAYER_ACTIVATED"
     , EVENT_PLAYER_ACTIVATED
     , function(self)
         D_EVENT("PLAYER_ACTIVATED")
@@ -4762,7 +4879,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
 
     --}}}
     -- Refresh .. ACTIVE_WEAPON_PAIR_CHANGED --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.ACTIVE_WEAPON_PAIR_CHANGED"
+    EM:RegisterForEvent("GQSB.ACTIVE_WEAPON_PAIR_CHANGED"
     , EVENT_ACTIVE_WEAPON_PAIR_CHANGED
     , function(eventCode, activeWeaponPair, locked) -- (*integer* _activeWeaponPair_, *bool* _locked_)
         D_EVENT("ACTIVE_WEAPON_PAIR_CHANGED")
@@ -4776,7 +4893,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
 
     --}}}
     -- Refresh .. KEYBINDING_SET --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.KEYBINDING_SET"
+    EM:RegisterForEvent("GQSB.KEYBINDING_SET"
     , EVENT_KEYBINDING_SET
     , function(self) -- (*luaindex* _layerIndex_, *luaindex* _categoryIndex_, *luaindex* _actionIndex_, *luaindex* _bindingIndex_, *integer* _keyCode_, *integer* _mod1_, *integer* _mod2_, *integer* _mod3_, *integer* _mod4_)
         D_EVENT("KEYBINDING_SET")
@@ -4786,7 +4903,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
 
     --}}}
     -- Refresh .. KEYBINDING_CLEARED --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.KEYBINDING_CLEARED"
+    EM:RegisterForEvent("GQSB.KEYBINDING_CLEARED"
     , EVENT_KEYBINDING_CLEARED
     , function(self) -- (*luaindex* _layerIndex_, *luaindex* _categoryIndex_, *luaindex* _actionIndex_, *luaindex* _bindingIndex_)
         D_EVENT("KEYBINDING_CLEARED")
@@ -4796,7 +4913,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     end)
     --}}}
     -- Refresh .. END_FAST_TRAVEL_INTERACTION --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.END_FAST_TRAVEL_INTERACTION"
+    EM:RegisterForEvent("GQSB.END_FAST_TRAVEL_INTERACTION"
     , EVENT_END_FAST_TRAVEL_INTERACTION
     , function(self)
         D_EVENT("END_FAST_TRAVEL_INTERACTION")
@@ -4805,7 +4922,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     end)
     --}}}
     -- Refresh .. END_FAST_TRAVEL_KEEP_INTERACTION --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.END_FAST_TRAVEL_KEEP_INTERACTION"
+    EM:RegisterForEvent("GQSB.END_FAST_TRAVEL_KEEP_INTERACTION"
     , EVENT_END_FAST_TRAVEL_KEEP_INTERACTION
     , function(self)
         D_EVENT("END_FAST_TRAVEL_KEEP_INTERACTION")
@@ -4820,7 +4937,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
 
     --}}}
     -- Refresh ========================= EVENT_ANTIQUITY_SCRYING_RESULT --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.EVENT_ANTIQUITY_SCRYING_RESULT"
+    EM:RegisterForEvent("GQSB.EVENT_ANTIQUITY_SCRYING_RESULT"
     ,                                    EVENT_ANTIQUITY_SCRYING_RESULT
     , function(self) D_EVENT(           "EVENT_ANTIQUITY_SCRYING_RESULT")
                            Hide_delayed("EVENT_ANTIQUITY_SCRYING_RESULT") end
@@ -5033,7 +5150,7 @@ function OnSlashCommand(arg)
     if (arg == "") then
         c("→ GQSB Current Settings: "
         ..(QSB.AccountWideSettings.SaveAccountWide and COLOR_6.." Account-wide"
-        or                                             COLOR_2..GetUnitName("player").."|r Character"))
+        or                                             COLOR_2..playerName.."|r Character"))
         c("\r\n")
 
     elseif (arg ==  "-h"   )
@@ -5053,7 +5170,7 @@ function OnSlashCommand(arg)
         c(QSB_SLASH_COMMAND..  " resetall .. RESET ALL PRESETS SETTINGS TO DEFAULT")
         c(QSB_SLASH_COMMAND..     " force .. to toggle FORCE Bar Visiblity")
         c(QSB_SLASH_COMMAND..     " block .. to toggle BLOCK Bar Visiblity (overrides force)")
-        c(QSB_SLASH_COMMAND..   " account .. to toggle between "..GetUnitName("player").." and Account-wide Settings")
+        c(QSB_SLASH_COMMAND..   " account .. to toggle between "..playerName.." and Account-wide Settings")
         if DEBUG_ITEM then
             c(QSB_SLASH_COMMAND.. '     _G["ZO_ChatWindowTemplate1Buffer"]')
             c(QSB_SLASH_COMMAND.. ' lua _G["ZO_ChatWindowTemplate1Buffer"]:Clear()')
@@ -5451,7 +5568,7 @@ function d_signature()
 end
 --}}}
 GreymindQuickSlotBar = QSB
-EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, Initialize)
+EM:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, Initialize)
 
 -- LINKS
 --[[--{{{
