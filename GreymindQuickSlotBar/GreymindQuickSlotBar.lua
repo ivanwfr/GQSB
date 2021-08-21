@@ -1,8 +1,12 @@
--- GreymindQuickSlotBar_tag (210728:20h:40) --{{{
+-- GreymindQuickSlotBar_tag (210821:22h:42) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.4.8 210821 {{{
+- Checked with Update 30 Blackwood (7.0.5): (API 100035)
+- [color="brown" ]1 - Patch for First time install (/ reinstall from scratch) issue[/color]
+}}}
 v2.6.4.7 210728 {{{
 - Checked with Update 30 Blackwood (7.0.5): (API 100035)
 - [color="yellow"]4 - Cloning PRESET FROM AccountWide TO Character (both ways)[/color]
@@ -419,7 +423,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.4.7", -- 210728 previous: 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.4.8", -- 210821 previous: 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -466,6 +470,9 @@ local QSB = {
 
     -- Settings-Menu entries to be updated at each Preset activation
     SettingsControls                    = {},
+
+    -- Settings 
+    Settings                            = {}
 
 } --}}}
 -- DEFAULTS --{{{
@@ -660,6 +667,10 @@ local tasks_cooldown_inprogress
 -- c c_log {{{
 local logs = {}
 
+local function clear_logs()
+    logs = {}
+end
+
 local function c    (args,logging)
 
     if(logging ~= nil)
@@ -670,9 +681,7 @@ local function c    (args,logging)
         logs[#logs+1] = args
     end
 
-    if(logging == nil) then
-        d(args)
-    end
+    d(args)
 end
 
 local function c_log(args) c(args,true) end
@@ -797,7 +806,7 @@ end
 -- PRESET
 -- ResetAllPresets {{{
 function ResetAllPresets()
-c("QSB: RESETING ALL PRESETS TO DEFAULT VALUES")
+c_log("QSB: RESETING ALL PRESETS TO DEFAULT VALUES")
 
     SelectPreset( PRESETNAMES[1] ); CopySettingsDefaultsTo(QSB.Settings)
     SelectPreset( PRESETNAMES[2] ); CopySettingsDefaultsTo(QSB.Settings)
@@ -805,16 +814,12 @@ c("QSB: RESETING ALL PRESETS TO DEFAULT VALUES")
     SelectPreset( PRESETNAMES[4] ); CopySettingsDefaultsTo(QSB.Settings)
     SelectPreset( PRESETNAMES[5] ); CopySettingsDefaultsTo(QSB.Settings)
 
-    loadPresetSlots()
-
-    ButtonSizeChanged()
-
-    Refresh("ResetAllPresets")
+    ResetThisPreset()
 end
 --}}}
 -- ResetThisPreset {{{
 function ResetThisPreset()
-c("QSB: reseting this preset to default values")
+c_log("QSB: Reseting current settings to default values")
 
     -- KEEP CURRENTLY SELECTED PRESET
 
@@ -891,14 +896,13 @@ if(DEBUG_EQUIP) then c(COLOR_5.."IN COMBAT: PRESET NOT CHANGED: "..QSB.Settings.
         return
     end
 --}}}
-D("SelectPreset("..COLOR_C..selectedPreset.."|r):")
     local log_this = DEBUG_EQUIP
     -- SAVE CURRENT PRESET .. (unless LockThisPreset is ON and Settings menu is hidden) {{{
     if QSB.Settings.LockThisPreset and QSB.Panel:IsHidden() then
 
 if(log_this) then c(QSB.Settings.PresetName..COLOR_M.." → LOCKED → NOT SAVED") end
 
-    else
+    elseif QSB.Settings.PresetName then
         local we_can_save_because -- LUA equivalent to ternary operator ?:
         =    (not QSB.Settings.LockThisPreset)
         and              COLOR_8.."NOT LOCKED"
@@ -915,6 +919,7 @@ if(log_this) then c(QSB.Settings.PresetName..COLOR_M.." → LOCKED → NOT SAVED
     --}}}
     -- MainWindow {{{
     if not QSB.Settings.Presets[selectedPreset].MainWindow then
+c_log("SelectPreset: calling DeepCopy")
         QSB   .Settings.Presets[selectedPreset] = DeepCopy(QSB.SettingsDefaults)
 
     end
@@ -968,7 +973,7 @@ D(      "SelectPreset_clone_empty_content:")
 
     from_PresetName = (from["$LastCharacterName"] or "Account") .." "..from_PresetName
 
-c(COLOR_4.." Preset"  ..COLOR_3.." "..selectedPreset.." "..COLOR_4.."is EMPTY|r .. CLONING "..COLOR_7.." "..from_PresetName.." CONTENT")
+c_log(COLOR_4.." Preset"  ..COLOR_3.." "..selectedPreset.." "..COLOR_4.."is EMPTY|r .. CLONING "..COLOR_7.." "..from_PresetName.." CONTENT")
 
     populate_an_empty_SlotItemTable("EMPTY PRESET: CLONING "..from_PresetName.." QUICK SLOT BAR")
 
@@ -994,14 +999,16 @@ D(      "SelectPreset_clone_unlocked_layout:")
 
     from_PresetName = (from["$LastCharacterName"] or "Account") .." "..from_PresetName
 
-c(COLOR_4.." Preset"  ..COLOR_3.." "..selectedPreset.." "..COLOR_4.."is UNLOCKED|r .. CLONING "..COLOR_6.." "..from_PresetName.." LAYOUT")
+c_log(COLOR_4.." Preset"  ..COLOR_3.." "..selectedPreset.." "..COLOR_4.."is UNLOCKED|r .. CLONING "..COLOR_6.." "..from_PresetName.." LAYOUT")
 
-    to.ButtonColumns    = from.ButtonColumns
-    to.ButtonFontSize   = from.ButtonFontSize
-    to.ButtonSize       = from.ButtonSize
-    to.ButtonsDisplayed = from.ButtonsDisplayed
-    to.MainWindow.X     = from.MainWindow.X
-    to.MainWindow.Y     = from.MainWindow.Y
+    if from.MainWindow then
+        to.ButtonColumns    = from.ButtonColumns
+        to.ButtonFontSize   = from.ButtonFontSize
+        to.ButtonSize       = from.ButtonSize
+        to.ButtonsDisplayed = from.ButtonsDisplayed
+        to.MainWindow.X     = from.MainWindow.X
+        to.MainWindow.Y     = from.MainWindow.Y
+    end
 
 end
 --}}}
@@ -1958,46 +1965,37 @@ end
 --}}}
 -- CopySettingsDefaultsTo {{{
 function CopySettingsDefaultsTo(dest)
---D("CopySettingsDefaultsTo()")
+--c_log("CopySettingsDefaultsTo(dest)")
 
-    dest.MainWindow.X                             = QSB.SettingsDefaults.MainWindow.X
-    dest.MainWindow.Y                             = QSB.SettingsDefaults.MainWindow.Y
-    dest.MainWindow.Width                         = QSB.SettingsDefaults.MainWindow.Width
-    dest.MainWindow.Height                        = QSB.SettingsDefaults.MainWindow.Height
+    local orig = QSB.SettingsDefaults
 
-    dest.ButtonColumns                            = QSB.SettingsDefaults.ButtonColumns
-    dest.ButtonFontSize                           = QSB.SettingsDefaults.ButtonFontSize
-    dest.ButtonSize                               = QSB.SettingsDefaults.ButtonSize
-    dest.ButtonsDisplayed                         = QSB.SettingsDefaults.ButtonsDisplayed
-    dest.GameActionButtonHide                     = QSB.SettingsDefaults.GameActionButtonHide
-    dest.LockUI                                   = QSB.SettingsDefaults.LockUI
-    dest.LockThisPreset                           = QSB.SettingsDefaults.LockThisPreset
-    dest.DelayPresetSwapWhileInCombat             = QSB.SettingsDefaults.DelayPresetSwapWhileInCombat
-    dest.NextPrevWrap                             = QSB.SettingsDefaults.NextPrevWrap
-    dest.NextAuto                                 = QSB.SettingsDefaults.NextAuto
-    dest.ShowBackground                           = QSB.SettingsDefaults.ShowBackground
-    dest.SwapBackgroundColors                     = QSB.SettingsDefaults.SwapBackgroundColors
-    dest.Visibility                               = QSB.SettingsDefaults.Visibility
-    dest.SoundSlotted                             = QSB.SettingsDefaults.SoundSlotted
-    dest.SoundAlert                               = QSB.SettingsDefaults.SoundAlert
-    dest.SlotItemTable                            = DeepCopy(QSB.SettingsDefaults.SlotItemTable)
-    dest.CurrentSlotIndex                         = QSB.SettingsDefaults.CurrentSlotIndex
+    dest.ButtonColumns                                   = orig.ButtonColumns
+    dest.ButtonFontSize                                  = orig.ButtonFontSize
+    dest.ButtonSize                                      = orig.ButtonSize
+    dest.ButtonsDisplayed                                = orig.ButtonsDisplayed
+    dest.GameActionButtonHide                            = orig.GameActionButtonHide
+    dest.LockUI                                          = orig.LockUI
+    dest.LockThisPreset                                  = orig.LockThisPreset
+    dest.DelayPresetSwapWhileInCombat                    = orig.DelayPresetSwapWhileInCombat
+    dest.NextPrevWrap                                    = orig.NextPrevWrap
+    dest.NextAuto                                        = orig.NextAuto
+    dest.ShowBackground                                  = orig.ShowBackground
+    dest.SwapBackgroundColors                            = orig.SwapBackgroundColors
+    dest.Visibility                                      = orig.Visibility
+    dest.SoundSlotted                                    = orig.SoundSlotted
+    dest.SoundAlert                                      = orig.SoundAlert
+    dest.CurrentSlotIndex                                = orig.CurrentSlotIndex
 
-    dest.SlotItem.KeyBindAlignH                   = QSB.SettingsDefaults.SlotItem.KeyBindAlignH
-    dest.SlotItem.KeyBindAlignV                   = QSB.SettingsDefaults.SlotItem.KeyBindAlignV
-    dest.SlotItem.ButtonBackgroundOpacity         = QSB.SettingsDefaults.SlotItem.ButtonBackgroundOpacity
-    dest.SlotItem.NotSelectedButtonOpacity        = QSB.SettingsDefaults.SlotItem.NotSelectedButtonOpacity
-    dest.SlotItem.OverlayButtonOpacity            = QSB.SettingsDefaults.SlotItem.OverlayButtonOpacity
-    dest.SlotItem.QuantityAlert                   = QSB.SettingsDefaults.SlotItem.QuantityAlert
-    dest.SlotItem.QuantityLabelPositionHorizontal = QSB.SettingsDefaults.SlotItem.QuantityLabelPositionHorizontal
-    dest.SlotItem.QuantityLabelPositionVertical   = QSB.SettingsDefaults.SlotItem.QuantityLabelPositionVertical
-    dest.SlotItem.QuantityWarning                 = QSB.SettingsDefaults.SlotItem.QuantityWarning
-    dest.SlotItem.HideSlotBackground              = QSB.SettingsDefaults.SlotItem.HideSlotBackground
-    dest.SlotItem.ShowKeyBindings                 = QSB.SettingsDefaults.SlotItem.ShowKeyBindings
-    dest.SlotItem.ShowNumbers                     = QSB.SettingsDefaults.SlotItem.ShowNumbers
-    dest.SlotItem.LinkToChatOnClick               = QSB.SettingsDefaults.SlotItem.LinkToChatOnClick
-    dest.SlotItem.ShowQuantityLabels              = QSB.SettingsDefaults.SlotItem.ShowQuantityLabels
-    dest.SlotItem.VisualCue                       = QSB.SettingsDefaults.SlotItem.VisualCue
+    if orig.MainWindow    == nil then orig.MainWindow    = {} end
+    if dest.MainWindow    == nil then dest.MainWindow    = {} end
+    if orig.SlotItem      == nil then orig.SlotItem      = {} end
+    if dest.SlotItem      == nil then dest.SlotItem      = {} end
+    if orig.SlotItemTable == nil then orig.SlotItemTable = {} end
+    if dest.SlotItemTable == nil then dest.SlotItemTable = {} end
+
+    dest.MainWindow                                      = DeepCopy(orig.MainWindow   )
+    dest.SlotItem                                        = DeepCopy(orig.SlotItem     )
+    dest.SlotItemTable                                   = DeepCopy(orig.SlotItemTable)
 
 end
 --}}}
@@ -3661,8 +3659,8 @@ c_log(COLOR_9.." Load_AccountWideSettings("..tostring(accountwide)..")")
 
 --  local namespace = nil
     local namespace = GetWorldName()
-c(COLOR_6.."GQSB LOADING "..COLOR_3.."AccountWideSettings "..COLOR_7.."["..tostring(namespace).."]")
-c(COLOR_6.."------------------------------------------------------------")
+c_log(COLOR_6.."GQSB LOADING "..COLOR_3.."AccountWideSettings "..COLOR_7.."["..tostring(namespace).."]")
+c_log(COLOR_6.."------------------------------------------------------------")
 
     QSB.AccountWideSettings = ZO_SavedVars:NewAccountWide(
     "GreymindQuickSlotBarSettings" -- savedVariableTable
@@ -3687,8 +3685,8 @@ c_log(COLOR_9.." Load_Character_Settings")
     else
 --      local namespace = nil
         local namespace = GetWorldName()
-c(COLOR_6.."GQSB LOADING "..COLOR_4..GetUnitName("player").." Settings "..COLOR_7.."["..tostring(namespace).."]")
-c(COLOR_6.."------------------------------------------------------------")
+c_log(COLOR_6.."GQSB LOADING "..COLOR_4..GetUnitName("player").." Settings "..COLOR_7.."["..tostring(namespace).."]")
+c_log(COLOR_6.."------------------------------------------------------------")
 
         QSB.Settings = ZO_SavedVars:NewCharacterIdSettings(
         "GreymindQuickSlotBarSettings"
@@ -3715,8 +3713,8 @@ c_log(COLOR_9.." Load_SwitchTo_AccountWideSettings")
     else
 --      local namespace = nil
         local namespace = GetWorldName()
-c(COLOR_5.."GQSB LOADING "..COLOR_3.." AccountWide Settings "..COLOR_7.."["..tostring(namespace).."]")
-c(COLOR_5.."------------------------------------------------------------")
+c_log(COLOR_5.."GQSB LOADING "..COLOR_3.." AccountWide Settings "..COLOR_7.."["..tostring(namespace).."]")
+c_log(COLOR_5.."------------------------------------------------------------")
 
         QSB.Settings = ZO_SavedVars:NewAccountWide(
         "GreymindQuickSlotBarSettings"
@@ -3772,6 +3770,13 @@ c_log(COLOR_9.." Load_ZO_SavedVars("..tostring(accountwide)..")")
         Load_SwitchTo_AccountWideSettings()
     else
         Load_Character_Settings()
+    end
+
+    if not QSB.Settings.MainWindow then
+c_log(COLOR_2.."GQSB: NO SavedVariables")
+
+        CopySettingsDefaultsTo(QSB.Settings)
+        return
     end
 
     --Do a reload here if we changed settings ingame from the settings menu/slash commands: account to character ones or vice-versa
@@ -4695,18 +4700,18 @@ D("BuildSettingsMenu()")
     control = {
         type        = "checkbox"
         , reference   = "QSB_CloneCurrentToEmtpyPreset"
-        , name        = "Auto-Clone previous-to-empty preset "..COLOR_2.."*"
+        , name        = "Auto-Clone previous-to-empty PRESET "..COLOR_2.."*"
         , tooltip     = "Whether to copy the "
-        ..COLOR_4..   "PREVIOUS PRESET "
-        ..COLOR_5..   "LAYOUT|r or "
-        ..COLOR_7..   "CONTENT|r when changing "
-        ..COLOR_4..   "CURRENT PRESET\n"
+        ..COLOR_4..     "previous PRESET "
+        ..COLOR_5..     "LAYOUT|r or "
+        ..COLOR_7..     "CONTENT|r when changing "
+        ..COLOR_4..     "current PRESET\n"
         .."\n"
-        ..COLOR_6..   "LAYOUT CLONED|r when selecting\n"
-        ..COLOR_4..   "a not locked on screen preset "..COLOR_2.."(red pin)"
+        ..COLOR_5..     "LAYOUT CLONED|r when selecting\n"
+        ..COLOR_4..     "a not locked on screen PRESET"..COLOR_2.." (red pin)\n"
         .."\n"
-        ..COLOR_6..   "CONTENT CLONED|r when selecting\n"
-        ..COLOR_4..   "an empty preset\n"
+        ..COLOR_7..     "CONTENT CLONED|r when selecting\n"
+        ..COLOR_4..     "an empty PRESET\n"
         , getFunc     = function()
             return QSB.CloneCurrentToEmtpyPreset
         end
@@ -5460,10 +5465,15 @@ function OnSlashCommand(arg)
     elseif(arg == "debug_tooltip" ) then DEBUG_TOOLTIP  = not DEBUG_TOOLTIP ; c("...DEBUG_TOOLTIP..=[" ..tostring( DEBUG_TOOLTIP  ).. "]"); ui_may_have_changed = true
     --}}}
     elseif(arg == "logs"      ) then
+        QSB_ClearChat()
+        SetChatMax( true)
         d("GQSB "..COLOR_8.." logs * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
         for k,v in pairs(logs) do d(k..": "..v) end
         d("GQSB "..COLOR_8.."* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
+    elseif(arg == "clear_logs") then
+        clear_logs()
     else -- LUA
+        clear_logs()
         -- _G --{{{
         local lua_expr = string.match(arg, "^%s*_G% *(.*)") -- as a global var name
         if lua_expr then
@@ -5605,6 +5615,7 @@ local match_max
 local tables_visited
 --}}}
 function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter)
+    local c = c_log
     -- ROOT-TABLE {{{
     if(not table) then c(tableName..": "..tostring(table)) return end
 
@@ -5702,7 +5713,7 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210728)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210821)\n"
     .."!!"..COLOR_7.."- Checked with Update 30 Blackwood (7.0.5) API 100035\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
