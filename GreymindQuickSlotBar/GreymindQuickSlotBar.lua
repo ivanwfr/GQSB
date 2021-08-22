@@ -1,26 +1,31 @@
--- GreymindQuickSlotBar_tag (210821:22h:42) --{{{
+-- GreymindQuickSlotBar_tag (210822:20h:20) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.4.9 210822 {{{
+- Checked with Update 30 Blackwood (7.0.5): (API 100035)
+  [color="red"]   2 - better cloning LAYOUT and/or CONTENT between Presets[/color]
+  [color="brown"] 1 - Patch for First time install (/ reinstall from scratch) issue[/color]
+}}}
 v2.6.4.8 210821 {{{
 - Checked with Update 30 Blackwood (7.0.5): (API 100035)
-- [color="brown" ]1 - Patch for First time install (/ reinstall from scratch) issue[/color]
+  [color="brown"] 1 - Patch for First time install (/ reinstall from scratch) issue[/color]
 }}}
 v2.6.4.7 210728 {{{
 - Checked with Update 30 Blackwood (7.0.5): (API 100035)
-- [color="yellow"]4 - Cloning PRESET FROM AccountWide TO Character (both ways)[/color]
-- [color="orange"]3 - Cloning PREVIOUS PRESET CONTENT to    EMPTY preset[/color]
-- [color="red"   ]2 - Cloning PREVIOUS PRESET LAYOUT  to UNLOCKED preset (red pin)[/color]
-- [color="brown" ]1 - Refactoring Baertram server-namespace patch[/color]
+ [color="yellow"]4 - Cloning PRESET FROM AccountWide TO Character (both ways)[/color]
+ [color="orange"]3 - Cloning PREVIOUS PRESET CONTENT to    EMPTY preset[/color]
+ [color="red"]   2 - Cloning PREVIOUS PRESET LAYOUT  to UNLOCKED preset (red pin)[/color]
+ [color="brown"] 1 - Refactoring Baertram server-namespace patch[/color]
 }}}
 v2.6.4.6 210727 {{{
 - Checked with Update 30 Blackwood (7.0.5): (API 100035)
-- [color="green" ]5 - New logs slashCommand to print logged messages[/color]
-- [color="yellow"]4 - Looking for a way to correctly override Saved variables when using GetWorldName[/color]
-- [color="orange"]3 - Using GetWorldName to load SavedVariables[/color]
-- [color="red"   ]2 - Using ZO_CachedStrFormat to cleanup ZO compound names[/color]
-- [color="brown" ]1 - Removed loading settings from characters-name as a default (overloaded by [ZO_SavedVars:NewCharacterId]) [/color]
+ [color="green"] 5 - New logs slashCommand to print logged messages[/color]
+ [color="yellow"]4 - Looking for a way to correctly override Saved variables when using GetWorldName[/color]
+ [color="orange"]3 - Using GetWorldName to load SavedVariables[/color]
+ [color="red"]   2 - Using ZO_CachedStrFormat to cleanup ZO compound names[/color]
+ [color="brown"] 1 - Removed loading settings from characters-name as a default (overloaded by [ZO_SavedVars:NewCharacterId]) [/color]
 }}}
 v2.6.4.5 210725 {{{
 - [color="yellow"]Checked with Update 30 Blackwood (7.0.5): (API 100035)[/color]
@@ -182,7 +187,7 @@ local DEBUG_HANDLE   = false
 -- SYMBOLS {{{
 -- UNICODE -- (utf-8 is not supported by current font)
 --local SYMBOL_GEAR                = "\226\154\153"
-  local SYMBOL_GEAR                = "→"
+local SYMBOL_GEAR                = "→"
 --}}}
 -- COLORS --{{{
 
@@ -358,7 +363,7 @@ local SOUNDNAMES              = {
     NO_SOUND
 }
 --[[
- :!start explorer "https://wiki.esoui.com/Sounds"
+:!start explorer "https://wiki.esoui.com/Sounds"
 --]]
 
 local KEYBINDINGS = {
@@ -423,7 +428,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.4.8", -- 210821 previous: 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.4.9", -- 210822 previous: 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -471,7 +476,7 @@ local QSB = {
     -- Settings-Menu entries to be updated at each Preset activation
     SettingsControls                    = {},
 
-    -- Settings 
+    -- Settings
     Settings                            = {}
 
 } --}}}
@@ -510,7 +515,7 @@ QSB.SettingsDefaults = {
         KeyBindAlignV                   = ALIGNV[2],
         ButtonBackgroundOpacity         = 60,
         NotSelectedButtonOpacity        = 30,
-            OverlayButtonOpacity        = 30,
+        OverlayButtonOpacity            = 30,
         QuantityAlert                   = 5,
         QuantityLabelPositionHorizontal = ALIGNH[4],
         QuantityLabelPositionVertical   = ALIGNV[4],
@@ -601,8 +606,8 @@ local SelectButton
 local SelectNextAuto
 local SelectNextAuto_delayed
 local SelectPreset
-local SelectPreset_clone_empty_content
-local SelectPreset_clone_unlocked_layout
+local SelectPreset_cloneTo_empty_content
+local SelectPreset_cloneTo_unlocked_layout
 local SetChatMax
 local SetUIHandlesVisibility
 local Set_preset_pending_IN_COMBAT
@@ -632,6 +637,7 @@ local is_SlotItemTable_empty
 local is_same_item_link
 local is_same_slotted_item
 local loadPresetSlots
+local register_Loaded_Preset
 local loadPresetSlots_checkSlotItemTable
 local populate_an_empty_SlotItemTable
 local save_QSB_to_SlotItemTable
@@ -667,17 +673,13 @@ local tasks_cooldown_inprogress
 -- c c_log {{{
 local logs = {}
 
-local function clear_logs()
-    logs = {}
-end
+local function clear_logs() logs = {} end
 
 local function c    (args,logging)
-
-    if(logging ~= nil)
-    or not QSB
-    or not QSB.Settings
-    or     QSB.Settings.ChatMute
-    then
+    if        logging ~= nil
+        or not QSB
+        or not QSB.Settings
+        or     QSB.Settings.ChatMute then
         logs[#logs+1] = args
     end
 
@@ -757,13 +759,12 @@ c("\r\n".._caller..":")
 
     -- ACTIVE OPTIONS
     if          QSB.Settings.LockThisPreset
-        or      QSB.Settings.DelayPresetSwapWhileInCombat
-        then
-            c(COLOR_4.."[".. QSB.Settings.PresetName.."]"
-            .. (QSB.Settings.LockThisPreset               and (COLOR_2.." .. IS LOCKED"               ) or "")
-            .. (QSB.Settings.DelayPresetSwapWhileInCombat and (COLOR_5.." .. EQUIP AFTER COMBAT IS ON") or "")
-            )
-        end
+        or      QSB.Settings.DelayPresetSwapWhileInCombat then
+        c(COLOR_4.."[".. QSB.Settings.PresetName.."]"
+        .. (QSB.Settings.LockThisPreset               and (COLOR_2.." .. IS LOCKED"               ) or "")
+        .. (QSB.Settings.DelayPresetSwapWhileInCombat and (COLOR_5.." .. EQUIP AFTER COMBAT IS ON") or "")
+        )
+    end
 
     -- TASKS
     local preset_pending_name =  Get_preset_pending_IN_COMBAT()
@@ -919,7 +920,7 @@ if(log_this) then c(QSB.Settings.PresetName..COLOR_M.." → LOCKED → NOT SAVED
     --}}}
     -- MainWindow {{{
     if not QSB.Settings.Presets[selectedPreset].MainWindow then
-c_log("SelectPreset: calling DeepCopy")
+c_log("NO DEFINED PRESET -> USING DEFAULTS")
         QSB   .Settings.Presets[selectedPreset] = DeepCopy(QSB.SettingsDefaults)
 
     end
@@ -933,9 +934,9 @@ if(log_this) then c(selectedPreset         ..COLOR_M.." → LOADING:") end
 
     --}}}
     -- CLONING {{{
-    SelectPreset_clone_empty_content  ( selectedPreset )
+    SelectPreset_cloneTo_empty_content  ( selectedPreset )
 
-    SelectPreset_clone_unlocked_layout( selectedPreset )
+    SelectPreset_cloneTo_unlocked_layout( selectedPreset )
     --}}}
     -- PRESET SELECTED {{{
     QSB.Settings.PresetName = selectedPreset
@@ -953,9 +954,9 @@ D("...PRESET SELECTED:"..QSB.Settings.PresetName)
     --}}}
 end
 --}}}
---       SelectPreset_clone_empty_content {{{
-function SelectPreset_clone_empty_content(selectedPreset)
-D(      "SelectPreset_clone_empty_content:")
+--       SelectPreset_cloneTo_empty_content {{{
+function SelectPreset_cloneTo_empty_content(selectedPreset)
+D(      "SelectPreset_cloneTo_empty_content:")
 
     if not QSB.CloneCurrentToEmtpyPreset or not is_SlotItemTable_empty() then return end
 
@@ -979,9 +980,9 @@ c_log(COLOR_4.." Preset"  ..COLOR_3.." "..selectedPreset.." "..COLOR_4.."is EMPT
 
 end
 --}}}
---       SelectPreset_clone_unlocked_layout {{{
-function SelectPreset_clone_unlocked_layout(selectedPreset)
-D(      "SelectPreset_clone_unlocked_layout:")
+--       SelectPreset_cloneTo_unlocked_layout {{{
+function SelectPreset_cloneTo_unlocked_layout(selectedPreset)
+D(      "SelectPreset_cloneTo_unlocked_layout:")
 
     if not QSB.CloneCurrentToEmtpyPreset or QSB.Settings.LockUI then return end
 
@@ -999,15 +1000,16 @@ D(      "SelectPreset_clone_unlocked_layout:")
 
     from_PresetName = (from["$LastCharacterName"] or "Account") .." "..from_PresetName
 
+    if from.MainWindow then
 c_log(COLOR_4.." Preset"  ..COLOR_3.." "..selectedPreset.." "..COLOR_4.."is UNLOCKED|r .. CLONING "..COLOR_6.." "..from_PresetName.." LAYOUT")
 
-    if from.MainWindow then
-        to.ButtonColumns    = from.ButtonColumns
-        to.ButtonFontSize   = from.ButtonFontSize
-        to.ButtonSize       = from.ButtonSize
-        to.ButtonsDisplayed = from.ButtonsDisplayed
-        to.MainWindow.X     = from.MainWindow.X
-        to.MainWindow.Y     = from.MainWindow.Y
+        to.ButtonColumns     =          from.ButtonColumns
+        to.ButtonFontSize    =          from.ButtonFontSize
+        to.ButtonSize        =          from.ButtonSize
+        to.ButtonsDisplayed  =          from.ButtonsDisplayed
+        to.MainWindow        = DeepCopy(from.MainWindow)
+
+        ButtonSizeChanged()
     end
 
 end
@@ -1193,12 +1195,8 @@ if(log_this) then c(COLOR_9.."TASK: EQUIP ["..tostring(presetItemName).."]") end
     end
     --}}}
     -- PRESET SELECTED .. (equipment still pending) {{{
---  Loaded_QSB_Settings = DeepCopy(QSB.Settings)
+    register_Loaded_Preset()
 
-    local currentPreset = QSB.Settings.PresetName
-    Loaded_Preset       = DeepCopy( QSB.Settings.Presets[currentPreset] )
-    Loaded_Preset["PresetName"] = currentPreset
-    Loaded_Preset["$LastCharacterName"] = QSB.Settings["$LastCharacterName"]
     --}}}
     -- TASKS START OR COOLDOWN {{{
     if(#tasks_loaded > 0) then
@@ -1213,6 +1211,24 @@ if(log_this) then c(COLOR_9.."TASK: EQUIP ["..tostring(presetItemName).."]") end
 
     end
     --}}}
+end
+--}}}
+-- register_Loaded_Preset {{{
+function register_Loaded_Preset()
+
+    local characterName                 =          QSB.AccountWideSettings.SaveAccountWide and "Account-Wide" or GetUnitName("player")
+    local currentPreset                 =          QSB.Settings.PresetName
+
+    Loaded_Preset                       = DeepCopy(QSB.Settings.Presets[currentPreset])
+    Loaded_Preset["PresetName"]         = currentPreset
+    Loaded_Preset["$LastCharacterName"] = characterName
+    Loaded_Preset.ButtonColumns         =          QSB.Settings.ButtonColumns
+    Loaded_Preset.ButtonFontSize        =          QSB.Settings.ButtonFontSize
+    Loaded_Preset.ButtonSize            =          QSB.Settings.ButtonSize
+    Loaded_Preset.ButtonsDisplayed      =          QSB.Settings.ButtonsDisplayed
+    Loaded_Preset.MainWindow            = DeepCopy(QSB.Settings.MainWindow)
+
+if DEBUG_STATUS then c_log(COLOR_7.."LOADED: "..characterName.." "..currentPreset..COLOR_8.." [ButtonSize "..Loaded_Preset.ButtonSize.."]") end
 end
 --}}}
 -- equip_bNum .. Trader08_mod {{{
@@ -3655,7 +3671,7 @@ end
 --}}}
 -- Load_AccountWideSettings {{{
 local function Load_AccountWideSettings(accountwide)
-c_log(COLOR_9.." Load_AccountWideSettings("..tostring(accountwide)..")")
+if DEBUG_STATUS then c_log(COLOR_9.." Load_AccountWideSettings("..tostring(accountwide)..")") end
 
 --  local namespace = nil
     local namespace = GetWorldName()
@@ -3674,7 +3690,7 @@ end
 --}}}
 -- Load_Character_Settings {{{
 local function Load_Character_Settings()
-c_log(COLOR_9.." Load_Character_Settings")
+if DEBUG_STATUS then c_log(COLOR_9.." Load_Character_Settings") end
 
     if migratedCharacterToServer == nil         then
         Load_eval_migratedCharacterToServer()
@@ -3702,7 +3718,7 @@ end
 --}}}
 -- Load_SwitchTo_AccountWideSettings {{{
 local function Load_SwitchTo_AccountWideSettings()
-c_log(COLOR_9.." Load_SwitchTo_AccountWideSettings")
+if DEBUG_STATUS then c_log(COLOR_9.." Load_SwitchTo_AccountWideSettings") end
 
     if migratedAccountWideToServer == nil       then
         Load_eval_migratedAccountWideToServer()
@@ -3741,24 +3757,29 @@ c_log("Initialize("..addOnName..")")
 
     Load_ZO_SavedVars(nil)
 
-    if not doReload then
-        BuildSettingsMenu()
-        GreymindQuickSlotBarUI:SetHidden( true )  -- 191125 .. hide top-left rectangle on reloadui
+    -- Do a reload here if we changed settings ingame
+    -- from the settings menu/slash commands
+    -- account to character ones or vice-versa
 
-        zo_callLater(RegisterEventHandlers, 500)
-    else
+    if doReload then
+c_log(COLOR_7.."...ReloadUI registered on PLAYER_ACTIVATED")
         EVENT_MANAGER:RegisterForEvent("GQSB.PLAYER_ACTIVATED"
         , EVENT_PLAYER_ACTIVATED
         , function(self)
             D_EVENT("PLAYER_ACTIVATED")
             ReloadUI("ingame")
         end)
+    else
+        BuildSettingsMenu()
+        GreymindQuickSlotBarUI:SetHidden( true )  -- 191125 .. hide top-left rectangle on reloadui
+
+        zo_callLater(RegisterEventHandlers, 500)
     end
 end
 --}}}
 -- Load_ZO_SavedVars {{{
 function Load_ZO_SavedVars(accountwide)
-c_log(COLOR_9.." Load_ZO_SavedVars("..tostring(accountwide)..")")
+if DEBUG_STATUS then c_log(COLOR_9.." Load_ZO_SavedVars("..tostring(accountwide)..")") end
 
     if(accountwide == nil) then
         Load_AccountWideSettings(accountwide)
@@ -3772,44 +3793,33 @@ c_log(COLOR_9.." Load_ZO_SavedVars("..tostring(accountwide)..")")
         Load_Character_Settings()
     end
 
+    -- NO SavedVariables {{{
     if not QSB.Settings.MainWindow then
 c_log(COLOR_2.."GQSB: NO SavedVariables")
 
         CopySettingsDefaultsTo(QSB.Settings)
         return
     end
+    --}}}
 
-    --Do a reload here if we changed settings ingame from the settings menu/slash commands: account to character ones or vice-versa
     if accountwide ~= nil and doReload == true then
 c_log("Reloading the UI - At Load_ZO_SavedVars")
+
         ReloadUI()
     end
 
     -- CLONING {{{
-    SelectPreset_clone_empty_content(   QSB.Settings.PresetName )
+    SelectPreset_cloneTo_empty_content(            QSB.Settings.PresetName )
+    SelectPreset_cloneTo_unlocked_layout(          QSB.Settings.PresetName )
 
-    SelectPreset_clone_unlocked_layout( QSB.Settings.PresetName )
-
-    local currentPreset = QSB.Settings.PresetName
-    Loaded_Preset       = DeepCopy( QSB.Settings.Presets[currentPreset] )
-    Loaded_Preset["PresetName"] = currentPreset
-    Loaded_Preset["$LastCharacterName"] = QSB.Settings["$LastCharacterName"]
+--  register_Loaded_Preset()
     --}}}
 
-    if(accountwide == nil) then
---      Loaded_QSB_Settings = DeepCopy( QSB.Settings )
-
-    else
---      local changed = QSB_Settings_Changed()
---      if changed then
---          c(COLOR_2.." GQSB RELOADING\n")
---          zo_callLater(QSB_ReloadUI, 3000)
---      else
-            Rebuild_LibAddonMenu()
-            loadPresetSlots() -- save next cloning from
-            zo_callLater(QSB_SetCurrentQuickslot_handler, 500)
-            Refresh("Load_ZO_SavedVars")
---      end
+    if(accountwide ~= nil) then
+        Rebuild_LibAddonMenu()
+        loadPresetSlots() -- save next cloning from
+        zo_callLater(QSB_SetCurrentQuickslot_handler, 500)
+        Refresh("Load_ZO_SavedVars")
     end
 end
 --}}}
@@ -3918,7 +3928,7 @@ D("BuildSettingsMenu()")
             end
         end,
         width       = "full",
-        warning     = "May involve "..COLOR_3.."Reloading User Interface|r\n"
+        warning     = "First time activation will "..COLOR_3.."reload the User Interface|r\n"
         ..            "\n"
         ..            "And you should check and possibly "
         ..   COLOR_2.." Reslot|r or"
@@ -3946,7 +3956,8 @@ D("BuildSettingsMenu()")
         getFunc     = function()
             local value = 1
             for k, v in pairs(PRESETNAMES) do
-                if string.match(v, QSB.Settings.PresetName) then
+                local presetName = QSB.Settings.PresetName or PRESETNAMES[0]
+                if string.match(v, presetName) then
                     value = k
                     break
                 end
@@ -5471,6 +5482,7 @@ function OnSlashCommand(arg)
         for k,v in pairs(logs) do d(k..": "..v) end
         d("GQSB "..COLOR_8.."* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
     elseif(arg == "clear_logs") then
+        QSB_ClearChat()
         clear_logs()
     else -- LUA
         clear_logs()
@@ -5713,7 +5725,7 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210821)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210822)\n"
     .."!!"..COLOR_7.."- Checked with Update 30 Blackwood (7.0.5) API 100035\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
