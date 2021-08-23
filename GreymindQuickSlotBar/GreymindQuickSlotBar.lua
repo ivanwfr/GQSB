@@ -1,4 +1,4 @@
--- GreymindQuickSlotBar_tag (210823:17h:17) --{{{
+-- GreymindQuickSlotBar_tag (210823:19h:29) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
@@ -5337,8 +5337,8 @@ function OnSlashCommand(arg)
         c(QSB_SLASH_COMMAND..     " force .. to toggle FORCE Bar Visiblity")
         c(QSB_SLASH_COMMAND..     " block .. to toggle BLOCK Bar Visiblity (overrides force)")
         c(QSB_SLASH_COMMAND..   " account .. to toggle between "..GetUnitName("player").." and AccountWide Settings")
-        c(QSB_SLASH_COMMAND..      " logs .. to show cached logs (and unlock Chat max resize)"
-        c(QSB_SLASH_COMMAND.." clear_logs .. to clear cached logs (and Chat content"
+        c(QSB_SLASH_COMMAND..      " logs .. to show cached logs (and unlock Chat max resize)")
+        c(QSB_SLASH_COMMAND.." clear_logs .. to clear cached logs (and Chat content)")
         if DEBUG_ITEM then
             c(QSB_SLASH_COMMAND.. '     _G["ZO_ChatWindowTemplate1Buffer"]')
             c(QSB_SLASH_COMMAND.. ' lua _G["ZO_ChatWindowTemplate1Buffer"]:Clear()')
