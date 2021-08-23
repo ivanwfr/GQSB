@@ -1,8 +1,19 @@
--- GreymindQuickSlotBar_tag (210822:20h:20) --{{{
+-- GreymindQuickSlotBar_tag (210823:17h:17) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.5   210823 {{{
+Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)
+1 - [color="brown"] 1 - Patch for First time install (/ reinstall from scratch) issue[/color]
+2 - Cloning FROM     PRESET [color="orange"]  AccountWide [/color] to      [color="orange"]  Character      [/color] (both ways)
+3 - Cloning PREVIOUS PRESET [color="green"]   LAYOUT      [/color] to      [color="green"]   UNLOCKED       [/color] PRESET (red pin)
+4 - Cloning PREVIOUS PRESET [color="magenta"] CONTENT     [/color] to      [color="magenta"] EMPTY          [/color] PRESET
+5 - Using                   [color="orange"]  SERVER NAME [/color] to load [color="orange"]  SavedVariables [/color]
+6 - Default Show Policy changed form [color="orange"]Never[/color] to      [color="orange"]  Always         [/color]
+7 - Default [color="orange"]Auto-Clone previous-to-empty PRESET[/color] changed from [color="red"]false[/color] to [color="green"]true[/color]
+8 - show-hide [color="orange"]USER FORCED or BLOCKED[/color] have priority over [color="orange"]SETTINGS VISIBILITY[/color] policy[/orange]
+}}}
 v2.6.4.9 210822 {{{
 - Checked with Update 30 Blackwood (7.0.5): (API 100035)
   [color="red"]   2 - better cloning LAYOUT and/or CONTENT between Presets[/color]
@@ -428,7 +439,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.4.9", -- 210822 previous: 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.5.0", -- 210823 previous: 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -5326,6 +5337,8 @@ function OnSlashCommand(arg)
         c(QSB_SLASH_COMMAND..     " force .. to toggle FORCE Bar Visiblity")
         c(QSB_SLASH_COMMAND..     " block .. to toggle BLOCK Bar Visiblity (overrides force)")
         c(QSB_SLASH_COMMAND..   " account .. to toggle between "..GetUnitName("player").." and AccountWide Settings")
+        c(QSB_SLASH_COMMAND..      " logs .. to show cached logs (and unlock Chat max resize)"
+        c(QSB_SLASH_COMMAND.." clear_logs .. to clear cached logs (and Chat content"
         if DEBUG_ITEM then
             c(QSB_SLASH_COMMAND.. '     _G["ZO_ChatWindowTemplate1Buffer"]')
             c(QSB_SLASH_COMMAND.. ' lua _G["ZO_ChatWindowTemplate1Buffer"]:Clear()')
@@ -5725,8 +5738,8 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210822)\n"
-    .."!!"..COLOR_7.."- Checked with Update 30 Blackwood (7.0.5) API 100035\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210823)\n"
+    .."!!"..COLOR_7.."- Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
