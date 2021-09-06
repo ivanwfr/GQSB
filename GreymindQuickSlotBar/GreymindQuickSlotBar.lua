@@ -1,4 +1,4 @@
--- GreymindQuickSlotBar_tag (210906:21h:56) --{{{
+-- GreymindQuickSlotBar_tag (210906:23h:43) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
@@ -5744,6 +5744,7 @@ function d_signature()
     d("\r\n"
     .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210823)\n"
     .."!!"..COLOR_7.."- Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)\n"
+    .."!!"..COLOR_1.."- Patch for EnigmaniteZ [ITEM EQUIP ERROR] chat spam\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
