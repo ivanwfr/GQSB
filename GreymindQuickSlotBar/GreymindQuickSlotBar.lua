@@ -1,9 +1,15 @@
--- GreymindQuickSlotBar_tag (210906:23h:43) --{{{
+-- GreymindQuickSlotBar_tag (211005:15h:36) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
-v2.6.5.1   210906 {{{
+v2.6.5.2 211005 {{{
+Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)
+1 - Warning and and Alert sounds controled by [color="magenta"]ChatMute Settings[/color] option
+2 - Default Warning and Alert sounds set to none
+3 - Red Gear-Header-tooltip about Locked this Preset
+}}}
+v2.6.5.1 210906 {{{
 Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)
 1 - Patch for EnigmaniteZ [ITEM EQUIP ERROR] chat spam (210906 08:20 PM)
 }}}
@@ -201,8 +207,8 @@ local DEBUG_HANDLE   = false
 -- LOCAL
 -- SYMBOLS {{{
 -- UNICODE -- (utf-8 is not supported by current font)
---local SYMBOL_GEAR                = "\226\154\153"
-local SYMBOL_GEAR                = "→"
+--cal SYMBOL_GEAR                = "\226\154\153"
+local SYMBOL_ARROW_RIGHT         = "→"
 --}}}
 -- COLORS --{{{
 
@@ -335,6 +341,7 @@ local ALIGNV                  = { "Above"   , "Top" , "Middle", "Bottom" , "Belo
 local PRESETNAMES             = { "P1"      , "P2"  , "P3"    , "P4"     , "P5"       }
 local NO_SOUND                = "NO SOUND"
 local SOUNDNAMES              = {
+    NO_SOUND,
     "QUICKSLOT_USE_EMPTY",
     "ABILITY_SLOTTED",
     "ALCHEMY_SOLVENT_PLACED",
@@ -373,9 +380,7 @@ local SOUNDNAMES              = {
 
     "EMPEROR_ABDICATED",
     "GROUP_KICK",
-    "GROUP_PROMOTE",
-
-    NO_SOUND
+    "GROUP_PROMOTE"
 }
 --[[
 :!start explorer "https://wiki.esoui.com/Sounds"
@@ -443,7 +448,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.5.1", -- 210823 previous: 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.5.2", -- 211005 previous: 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -484,7 +489,7 @@ local QSB = {
         , { label="P3" , tooltip="Preset 3"     }
         , { label="P4" , tooltip="Preset 4"     }
         , { label="P5" , tooltip="Preset 5"     }
-        , { label="S"  , tooltip="Settings menu"}
+        , { label="S"  , tooltip="Settings menu\n"..COLOR_2.."(Click to Lock this Preset)" }
     },
     UIHandles                           = {},
 
@@ -521,8 +526,8 @@ QSB.SettingsDefaults = {
     SwapBackgroundColors                = false,
     Visibility                          = VIS_ALWAYS,
     PresetName                          = PRESETNAMES[1],
-    SoundAlert                          = SOUNDNAMES[1],
-    SoundSlotted                        = SOUNDNAMES[2],
+    SoundAlert                          = SOUNDNAMES[1],    -- NO_SOUND
+    SoundSlotted                        = SOUNDNAMES[1],    -- NO_SOUND
 
     -- (170615 - Marazota)
     SlotItem = {
@@ -859,7 +864,7 @@ function Set_preset_pending_IN_COMBAT( selectedPreset )
     if( presetName_pending_IN_COMBAT ~= selectedPreset) then
 if(DEBUG_EQUIP) then c(COLOR_5.."Set_preset_pending_IN_COMBAT: ["..tostring(selectedPreset).. " REQUEST PENDING]") end
 
-        PlaySound( SOUNDS.ACTIVE_SKILL_MORPH_CHOSEN )
+        if not QSB.Settings.ChatMute then PlaySound( SOUNDS.ACTIVE_SKILL_MORPH_CHOSEN ) end
 
         presetName_pending_IN_COMBAT  = selectedPreset
 
@@ -867,7 +872,7 @@ if(DEBUG_EQUIP) then c(COLOR_5.."Set_preset_pending_IN_COMBAT: ["..tostring(sele
     else
 if(DEBUG_EQUIP) then c(COLOR_3.."Set_preset_pending_IN_COMBAT: ["..tostring(selectedPreset).. " REQUEST CANCELED]") end
 
-        PlaySound( SOUNDS.GROUP_PROMOTE )
+        if not QSB.Settings.ChatMute then PlaySound( SOUNDS.GROUP_PROMOTE             ) end
 
         presetName_pending_IN_COMBAT  = ""
     end
@@ -907,7 +912,7 @@ if(DEBUG_EQUIP) then QSB_ClearChat(); c(COLOR_M.."=== CHAT CLEARED BY DEBUG_EQUI
         else
 if(DEBUG_EQUIP) then c(COLOR_5.."IN COMBAT: PRESET NOT CHANGED: "..QSB.Settings.PresetName) end
 
-            PlaySound( SOUNDS.ITEM_ON_COOLDOWN )
+            if not QSB.Settings.ChatMute then PlaySound( SOUNDS.ITEM_ON_COOLDOWN ) end
         end
         return
     end
@@ -1280,24 +1285,25 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
             CallSecureProtected("SelectSlotItem"   ,BAG_BACKPACK, bagIndex, slotIndex)
 
             if(    count <= 0 or not IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
+                if not QSB.Settings.ChatMute then
+                    -- ZO ALERT .. REFILL FOR A LOCKED PRESET {{{
+                    local warnMsg = "You need a refill"
 
-                -- ZO ALERT .. REFILL FOR A LOCKED PRESET {{{
-                local warnMsg = "You need a refill"
+                    ZO_Alert(UI_ALERT_CATEGORY_ERROR
+                    , QSB.Settings.SoundAlert
+                    , "You're out of '"..ZO_CachedStrFormat('<<C:1>>',itemName).."' in your inventory, "..warnMsg
+                    )
 
-                ZO_Alert(UI_ALERT_CATEGORY_ERROR
-                , QSB.Settings.SoundAlert
-                , "You're out of '"..ZO_CachedStrFormat('<<C:1>>',itemName).."' in your inventory, "..warnMsg
-                )
+                    --}}}
+                    -- CHAT ALERT {{{
+                    c(                      COLOR_2..QSB.Name..":\r\n"
+                    ..COLOR_3.."You're out of|r "..tostring(itemLink)
+                    ..COLOR_3.." in your inventory,|r "
+                    ..COLOR_4.. warnMsg
+                    )
 
-                --}}}
-                -- CHAT ALERT {{{
-                c(                      COLOR_2..QSB.Name..":\r\n"
-                ..COLOR_3.."You're out of|r "..tostring(itemLink)
-                ..COLOR_3.." in your inventory,|r "
-                ..COLOR_4.. warnMsg
-                )
-
-                --}}}
+                    --}}}
+                end
             end
         elseif(    count > 0 and IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
             CallSecureProtected("SelectSlotItem"   ,BAG_BACKPACK, bagIndex, slotIndex)
@@ -1319,37 +1325,40 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
                     QSB.Settings.SlotItemTable[bNum].texture   = nil
                     QSB.Settings.SlotItemTable[bNum].itemLink  = nil
             end
+            if not QSB.Settings.ChatMute then
+                -- ZO ALERT .. SLOT CLEARED IN A NOT LOCKED PRESET {{{
+                local warnMsg
+                =      QSB.Settings.LockThisPreset
+                and     "can't quickslot"
+                or      "it won't be in this quickslot preset ["..QSB.Settings.PresetName.."] anymore"
 
-            -- ZO ALERT .. SLOT CLEARED IN A NOT LOCKED PRESET {{{
-            local warnMsg
-            =      QSB.Settings.LockThisPreset
-            and     "can't quickslot"
-            or      "it won't be in this quickslot preset ["..QSB.Settings.PresetName.."] anymore"
+                ZO_Alert(UI_ALERT_CATEGORY_ERROR
+                , QSB.Settings.SoundAlert
+                , "You're out of '"..ZO_CachedStrFormat('<<C:1>>',itemName).."' in your inventory, "..warnMsg
+                )
 
-            ZO_Alert(UI_ALERT_CATEGORY_ERROR
-            , QSB.Settings.SoundAlert
-            , "You're out of '"..ZO_CachedStrFormat('<<C:1>>',itemName).."' in your inventory, "..warnMsg
-            )
+                --}}}
+                -- CHAT ALERT {{{
+                c(                      COLOR_2..QSB.Name..":\r\n"
+                ..COLOR_3.."You're out of|r "..tostring(itemLink)
+                ..COLOR_3.." in your inventory,|r "
+                ..COLOR_4.. warnMsg
+                )
 
-            --}}}
-            -- CHAT ALERT {{{
-            c(                      COLOR_2..QSB.Name..":\r\n"
-            ..COLOR_3.."You're out of|r "..tostring(itemLink)
-            ..COLOR_3.." in your inventory,|r "
-            ..COLOR_4.. warnMsg
-            )
-
-            --}}}
+                --}}}
+            end
         --}}}
         -- ITEM_2_EQUIP_ERROR_SLOT {{{
         else
 D_EQUIP(ITEM_2_EQUIP_ERROR_SLOT, bNum, itemId, itemType, itemLevel, itemLink)
 
-            -- CHAT ALERT
-            c(                      COLOR_2..QSB.Name..":\r\n"
-            .."→. [slotId   ".. tostring( slotId   ) .."]\r\n"
-            .."→. [bagIndex ".. tostring( bagIndex ) .."]\r\n"
-            .."→. [itemName ".. tostring( itemName ) .."]\r\n")
+            if not QSB.Settings.ChatMute then
+                -- CHAT ALERT
+                c(                      COLOR_2..QSB.Name..":\r\n"
+                .."→. [slotId   ".. tostring( slotId   ) .."]\r\n"
+                .."→. [bagIndex ".. tostring( bagIndex ) .."]\r\n"
+                .."→. [itemName ".. tostring( itemName ) .."]\r\n")
+            end
         end
         --}}}
     --}}}
@@ -3032,8 +3041,10 @@ end
 -- PlaySoundAlert {{{
 function PlaySoundAlert(_caller)
 D("PlaySoundAlert("..COLOR_7.._caller.."|r)")
-    if(QSB.Settings.SoundAlert == NO_SOUND) then return end
-    if(not PlaySoundAlert_pending) then
+    if(QSB.Settings.SoundAlert   == NO_SOUND) then return end
+    if(QSB.Settings.ChatMute                ) then return end
+
+    if not PlaySoundAlert_pending then
         PlaySoundAlert_pending = true
         zo_callLater(PlaySoundAlert_delayed, ZO_CALLLATER_DELAY_SOUND)
     end
@@ -3044,16 +3055,15 @@ function PlaySoundAlert_delayed()
 D(COLOR_2.."...PlaySoundAlert_delayed()")
     PlaySoundAlert_pending = false
 
---  PlaySound(SOUNDS.GENERAL_ALERT_ERROR)
---  PlaySound(SOUNDS.QUICKSLOT_USE_EMPTY)
     PlaySound(QSB.Settings.SoundAlert)
 end
-
 --}}}
 -- PlaySoundSlotted {{{
 function PlaySoundSlotted(_caller)
 D("PlaySoundSlotted("..COLOR_7.._caller.."|r)")
     if(QSB.Settings.SoundSlotted == NO_SOUND) then return end
+    if(QSB.Settings.ChatMute                ) then return end
+
     if(not PlaySoundSlotted_pending) then
         PlaySoundSlotted_pending = true
         zo_callLater(PlaySoundSlotted_delayed, ZO_CALLLATER_DELAY_SOUND)
@@ -3065,7 +3075,6 @@ function PlaySoundSlotted_delayed()
 D(COLOR_5.."...PlaySoundSlotted_delayed()|r")
     PlaySoundSlotted_pending = false
 
---  PlaySound(SOUNDS.ABILITY_SLOTTED)
     PlaySound(QSB.Settings.SoundSlotted)
 end
 
@@ -4022,7 +4031,7 @@ D("BuildSettingsMenu()")
     control = {
         type        = "checkbox",
         reference   = "QSB_LockThisPreset",
-        name        = COLOR_2..SYMBOL_GEAR.."|r Lock This Preset ",
+        name        = COLOR_2..SYMBOL_ARROW_RIGHT.."|r Lock this Preset ",
         tooltip     = "Whether to keep this Preset's quickslots static\n"
         ..            COLOR_M.."Trader08_mod\n"
         ..            "\n"
@@ -4077,8 +4086,8 @@ D("BuildSettingsMenu()")
     control = {
         type        = "checkbox",
         reference   = "QSB_DelayCombatPresetSwap",
-        name        = COLOR_5..SYMBOL_GEAR.." Delay|r In Combat Preset Swap",
-        tooltip     = "Wheter "..COLOR_5.."In-Combat Preset swap|r"
+        name        = COLOR_5..SYMBOL_ARROW_RIGHT.." Delay|r In Combat Preset Swap",
+        tooltip     = "Whether "..COLOR_5.."In-Combat Preset swap|r"
         ..            " should be remembered to be executed at the end of the fight"
         ..            " instead of being ignored "..COLOR_8.."(as it is not allowed)|r.\n"
         ..            COLOR_M.."Trader08_mod",
@@ -4160,7 +4169,7 @@ D("BuildSettingsMenu()")
         type        = "checkbox",
         reference   = "QSB_NextPrevWrap",
         name        = "Next <-o-> Previous Wrap",
-        tooltip     = "Wheter Next & Previous selection should jump from one end to the other?"
+        tooltip     = "Whether Next & Previous selection should jump from one end to the other?"
         .." - As an elevator that takes you right to the basenent when you keep going past the roof.",
         getFunc     = function()
             return QSB.Settings.NextPrevWrap
@@ -4778,13 +4787,20 @@ D("BuildSettingsMenu()")
     control = {
         type        = "checkbox",
         reference   = "SetChatMute",
-        name        = "ChatMute",
-        tooltip     = "Whether to suppress all Chat Warning Messages",
+        name        = COLOR_2..SYMBOL_ARROW_RIGHT.."|r ChatMute",
+        tooltip     = "Whether to suppress all\nChat Warning Messages\n"
+        ..            "and Sounds",
         getFunc     = function()      return QSB.Settings.ChatMute end,
-        setFunc     = function(value) QSB.Settings.ChatMute = value if(not value) then c(COLOR_5.." GQSB: ChatMute turned OFF") end end,
+        setFunc     = function(value)
+            QSB.Settings.ChatMute = value
+            if(not value) then c(COLOR_5.." GQSB: ChatMute turned OFF") end
+            Rebuild_LibAddonMenu()
+        end,
         width       = "full",
         warning     = "This is an "..COLOR_3.."all Presets|r option\n\n"
-        ..            "Default is to allow somehow important messages to be displayed in the Main Chat window"
+        ..            "Default is to allow somehow important messages\n"
+        ..            "to be displayed in the Main Chat window and\n"
+        ..            "your Alert and Warning Sounds to be played."
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
@@ -5742,13 +5758,13 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (210823)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (211005)\n"
     .."!!"..COLOR_7.."- Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)\n"
-    .."!!"..COLOR_1.."- Patch for EnigmaniteZ [ITEM EQUIP ERROR] chat spam\n"
+    .."!!"..COLOR_1.."- Patch for Poalima sound spam mutable with "..COLOR_7.."ChatMute Settings option\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
-    if(QSB.Settings.ChatMute) then d(COLOR_2.." GQSB: ChatMute is ON") end
+    if(QSB.Settings.ChatMute) then d(COLOR_7.." GQSB: ChatMute is ON") end
 end
 --}}}
 GreymindQuickSlotBar = QSB
