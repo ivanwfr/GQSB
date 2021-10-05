@@ -1,4 +1,4 @@
--- GreymindQuickSlotBar_tag (211005:21h:25) --{{{
+-- GreymindQuickSlotBar_tag (211005:22h:04) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
@@ -479,7 +479,7 @@ local QSB = {
     Presets                             = { P1={}, P2={}, P3={}, P4={}, P5={} },
 
     SomeSlotItemChanged                 = false,
-    CloneCurrentToEmtpyPreset           = true,
+    CloneCurrentToEmptyPreset           = true,
 
     -- small helper tags
     UIHandles_label_tooltip             = {
@@ -978,7 +978,7 @@ end
 function SelectPreset_cloneTo_empty_content(selectedPreset)
 D(      "SelectPreset_cloneTo_empty_content:")
 
-    if not QSB.CloneCurrentToEmtpyPreset or not is_SlotItemTable_empty() then return end
+    if not QSB.CloneCurrentToEmptyPreset or not is_SlotItemTable_empty() then return end
 
     local currentPreset = QSB.Settings.PresetName
     local from_PresetName
@@ -1004,7 +1004,7 @@ end
 function SelectPreset_cloneTo_unlocked_layout(selectedPreset)
 D(      "SelectPreset_cloneTo_unlocked_layout:")
 
-    if not QSB.CloneCurrentToEmtpyPreset or QSB.Settings.LockUI then return end
+    if not QSB.CloneCurrentToEmptyPreset or QSB.Settings.LockUI then return end
 
     local currentPreset = QSB.Settings.PresetName
     local from_PresetName
@@ -4734,7 +4734,7 @@ D("BuildSettingsMenu()")
 
     control = {
         type        = "checkbox"
-        , reference   = "QSB_CloneCurrentToEmtpyPreset"
+        , reference   = "QSB_CloneCurrentToEmptyPreset"
         , name        = "Auto-Clone previous-to-empty PRESET "..COLOR_2.."*"
         , tooltip     = "Whether to copy the "
         ..COLOR_4..     "previous PRESET "
@@ -4748,12 +4748,12 @@ D("BuildSettingsMenu()")
         ..COLOR_7..     "CONTENT CLONED|r when selecting\n"
         ..COLOR_4..     "an empty PRESET\n"
         , getFunc     = function()
-            return QSB.CloneCurrentToEmtpyPreset
+            return QSB.CloneCurrentToEmptyPreset
         end
         ,
         setFunc     = function(value)
-            QSB.CloneCurrentToEmtpyPreset = value
-            Refresh("CloneCurrentToEmtpyPreset")
+            QSB.CloneCurrentToEmptyPreset = value
+            Refresh("CloneCurrentToEmptyPreset")
         end
         ,
         width       = "full"
@@ -5395,8 +5395,8 @@ function OnSlashCommand(arg)
     --}}}
     -- clone {{{
     elseif(arg == "clone") then
-        QSB.CloneCurrentToEmtpyPreset = not QSB.CloneCurrentToEmtpyPreset
-        if (QSB.CloneCurrentToEmtpyPreset) then
+        QSB.CloneCurrentToEmptyPreset = not QSB.CloneCurrentToEmptyPreset
+        if (QSB.CloneCurrentToEmptyPreset) then
             c(COLOR_6.." @@@ AUTO-CLONING|r IS ON")
         else
             c(COLOR_6.." @@@ AUTO-CLONING|r IS OFF")
