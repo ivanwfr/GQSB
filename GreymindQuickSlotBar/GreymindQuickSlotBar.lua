@@ -1,4 +1,4 @@
--- GreymindQuickSlotBar_tag (211005:15h:36) --{{{
+-- GreymindQuickSlotBar_tag (211005:21h:25) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
@@ -7,7 +7,7 @@ v2.6.5.2 211005 {{{
 Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)
 1 - Warning and and Alert sounds controled by [color="magenta"]ChatMute Settings[/color] option
 2 - Default Warning and Alert sounds set to none
-3 - Red Gear-Header-tooltip about Locked this Preset
+3 - Red Gear-Header-tooltip about Lock this Preset
 }}}
 v2.6.5.1 210906 {{{
 Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)
@@ -994,7 +994,7 @@ D(      "SelectPreset_cloneTo_empty_content:")
 
     from_PresetName = (from["$LastCharacterName"] or "Account") .." "..from_PresetName
 
-c_log(COLOR_4.." Preset"  ..COLOR_3.." "..selectedPreset.." "..COLOR_4.."is EMPTY|r .. CLONING "..COLOR_7.." "..from_PresetName.." CONTENT")
+c_log(COLOR_3..selectedPreset.." "..COLOR_4.."is EMPTY|r .. CLONING "..COLOR_7.." "..from_PresetName.." CONTENT")
 
     populate_an_empty_SlotItemTable("EMPTY PRESET: CLONING "..from_PresetName.." QUICK SLOT BAR")
 
@@ -1021,7 +1021,7 @@ D(      "SelectPreset_cloneTo_unlocked_layout:")
     from_PresetName = (from["$LastCharacterName"] or "Account") .." "..from_PresetName
 
     if from.MainWindow then
-c_log(COLOR_4.." Preset"  ..COLOR_3.." "..selectedPreset.." "..COLOR_4.."is UNLOCKED|r .. CLONING "..COLOR_6.." "..from_PresetName.." LAYOUT")
+c_log(COLOR_3..selectedPreset.." "..COLOR_4.."is UNLOCKED|r .. CLONING "..COLOR_6.." "..from_PresetName.." LAYOUT")
 
         to.ButtonColumns     =          from.ButtonColumns
         to.ButtonFontSize    =          from.ButtonFontSize
