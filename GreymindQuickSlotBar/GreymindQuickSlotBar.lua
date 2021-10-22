@@ -1,8 +1,16 @@
--- GreymindQuickSlotBar_tag (211006:21h:08) --{{{
+-- GreymindQuickSlotBar_tag (211022:02h:26) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.5.3 211022 {{{
+Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)
+1 - Warning and and Alert sounds controled by [color="magenta"]ChatMute Settings[/color] option
+2 - Default Warning and Alert sounds set to none
+3 - Red Gear-Header-tooltip about Lock this Preset
+4 - Initialize function scope set to local
+5 - Slot not cleared when depleted
+}}}
 v2.6.5.2 211006 {{{
 Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)
 1 - Warning and and Alert sounds controled by [color="magenta"]ChatMute Settings[/color] option
@@ -449,7 +457,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.5.2", -- 211006 previous: 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.5.3", -- 211022 previous: 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -1312,7 +1320,7 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
 
         --}}}
         -- ITEM COUNT=0 WARNING {{{
-        elseif(count == 0 or bagIndex == -1) then
+        elseif(bagIndex == -1) then -- (211022) elseif(count == 0 or bagIndex == -1) then
             -- Trader08 (190925) {{{
             -- count will always be 0 if we have a bug finding the item
             -- ... or if they actually ran out of this item
@@ -5760,9 +5768,9 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (211006)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (211022)\n"
     .."!!"..COLOR_7.."- Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)\n"
-    .."!!"..COLOR_1.."- Patch for Poalima sound spam mutable with "..COLOR_7.."ChatMute Settings option\n"
+    .."!!"..COLOR_1.."- Patch for jayman (Slot not cleared when depleted)\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
