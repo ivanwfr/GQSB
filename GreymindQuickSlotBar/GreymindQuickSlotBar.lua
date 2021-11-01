@@ -1,8 +1,16 @@
--- GreymindQuickSlotBar_tag (211023:17h:05) --{{{
+-- GreymindQuickSlotBar_tag (211101:18h:15) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.6   211101 {{{
+- [color="blue"]Checked with Update 32 Deadlands (7.2.5): (API 101032)[/color]
+1 - Keeping depleted items equipped in slot (will show on refill)
+2 - Default Warning and Alert sounds set to none
+3 - Warning and and Alert sounds controled by [color="magenta"]ChatMute Settings[/color] option
+4 - Red-Gear-Header: added a tooltip about Lock this Preset
+5 - "Initialize function scope" set to local
+}}}
 v2.6.5.3 211023 {{{
 5 - Patch for jayman: keep depleted items in slot, will show on refill
 }}}
@@ -452,7 +460,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.5.3", -- 211023 previous: 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.6", -- 211101 previous: 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -5759,9 +5767,8 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (211023)\n"
-    .."!!"..COLOR_7.."- Checked with v7.1.5 - Waking Flame & Update 31: (API 101031)\n"
-    .."!!"..COLOR_1.."- Patch for jayman: keep depleted items in slot, will show on refill\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (211101)\n"
+    .."!!"..COLOR_7.."- Checked with Deadlands - Update 32 (v7.2.5 - API 101032)\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
@@ -5779,6 +5786,11 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
 :!start explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
 :!start explorer "https://esodata.uesp.net/100029/data/z/o/_/ZO_SavedVars.NewCharacterIdSettings.html"
 
-:!start explorer "https://esoapi.uesp.net/100035"
+:!start explorer "https://forums.elderscrollsonline.com/en/discussion/586882/pts-patch-notes-v7-2-5/p1"
+:!start explorer "https://www.elderscrollsonline.com/en-us/news"
+:!start explorer "https://www.esoui.com/forums/showthread.php?t=9923"
+
+:!start explorer "https://esoapi.uesp.net/100036"
+:!start explorer "https://wiki.esoui.com/APIVersion#101032"
 --]]--}}}
 
