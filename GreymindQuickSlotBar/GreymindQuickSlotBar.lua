@@ -1,4 +1,4 @@
--- GreymindQuickSlotBar_tag (211105:15h:39) --{{{
+-- GreymindQuickSlotBar_tag (211105:17h:41) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
@@ -947,12 +947,12 @@ if(DEBUG_EQUIP) then c(COLOR_5.."IN COMBAT: PRESET NOT CHANGED: "..QSB.Settings.
     if QSB.Settings.LockThisPreset and QSB.Panel:IsHidden() then
 
 --//FIXME
-if( true || log_this) then c(QSB.Settings.PresetName..COLOR_M.." → LOCKED → NOT SAVED") end
+if( true or log_this) then c(QSB.Settings.PresetName..COLOR_M.." → LOCKED → NOT SAVED") end
 
     elseif QSB.Settings.PresetName == selectedPreset then -- (211023)
 
 --//FIXME
-if( true || log_this) then c(QSB.Settings.PresetName..COLOR_M.." → RELOADING "..selectedPreset.." → NOT SAVED") end
+if( true or log_this) then c(QSB.Settings.PresetName..COLOR_M.." → RELOADING "..selectedPreset.." → NOT SAVED") end
 
     elseif QSB.Settings.PresetName then
         local we_can_save_because -- LUA equivalent to ternary operator ?:
@@ -5660,7 +5660,7 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
 :!start explorer "https://www.elderscrollsonline.com/en-us/news"
 :!start explorer "https://www.esoui.com/forums/showthread.php?t=9923"
 
-:!start explorer "https://esoapi.uesp.net/100036"
+:!start explorer "https://esoapi.uesp.net/101032"
 :!start explorer "https://wiki.esoui.com/APIVersion#101032"
 --]]--}}}
 
