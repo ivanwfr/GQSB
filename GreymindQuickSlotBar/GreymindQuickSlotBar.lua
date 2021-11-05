@@ -1,4 +1,4 @@
--- GreymindQuickSlotBar_tag (211105:17h:41) --{{{
+-- GreymindQuickSlotBar_tag (211105:17h:48) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
@@ -978,7 +978,7 @@ c_log("NO DEFINED PRESET -> USING DEFAULTS")
     --}}}
     -- LOAD SELECTED PRESET {{{
 --//FIXME
-if( true || log_this) then c(selectedPreset         ..COLOR_M.." → LOADING:") end
+if( true or log_this) then c(selectedPreset         ..COLOR_M.." → LOADING:") end
 
     local from = QSB.Settings.Presets[selectedPreset]
     local to   = QSB.Settings
@@ -1073,7 +1073,7 @@ function SaveCurrentPreset(_caller)
     local currentPreset = QSB.Settings.PresetName
 
 --//FIXME
-if( true || log_this) then c(COLOR_4.."SAVING PRESET "..COLOR_M.."["..tostring(currentPreset).."]: ".._caller) end
+if( true or log_this) then c(COLOR_4.."SAVING PRESET "..COLOR_M.."["..tostring(currentPreset).."]: ".._caller) end
 
     -- DEFAULTS SETTINGS
     QSB.Settings.Presets[currentPreset] = DeepCopy(QSB.SettingsDefaults)
