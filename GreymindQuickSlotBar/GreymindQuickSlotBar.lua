@@ -1,14 +1,20 @@
--- GreymindQuickSlotBar_tag (211105:19h:57) --{{{
+-- GreymindQuickSlotBar_tag (211106:15h:49) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.7   211105 {{{
+- [color="gray"]Checked with Update 32 Deadlands (7.2.5): (API 101032)[/color]
+[color="#844"]1 - Preset adjustments were rejected on first Item consumed (unless saved by a Preset swap or reload)[/color]
+[color="#800"]2 - Character name-to-ID and Megaserver migration code removed[/color]
+
+}}}
 v2.6.6.3 211105 19h57 {{{
 - [color="gray"]Checked with Update 32 Deadlands (7.2.5): (API 101032)[/color]
 [color="#844"]1 - tracking LockThisPreset-related bug[/color]
 [color="#800"]2 - Character name-to-ID and Megaserver migration code removed[/color]
 [color="#930"]3 - Some Chat trace messages activated by default while debugging[/color]
-[color="#930"]4 - nailed the wrong 'NOT SAVED' then 'RELOAD' on single-slot-updated[/color]
+[color="#FF0"]4 - nailed the wrong 'NOT SAVED' then 'RELOAD' on single-slot-updated[/color]
 
 }}}
 v2.6.6.2 211105 {{{
@@ -480,7 +486,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.6.3", -- 211105 previous: 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.7",   -- 211105 previous: 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -953,12 +959,10 @@ if(DEBUG_EQUIP) then c(COLOR_5.."IN COMBAT: PRESET NOT CHANGED: "..QSB.Settings.
 --}}}
     -- SAVE CURRENT PRESET .. (unless LockThisPreset is ON and Settings menu is hidden) {{{
     if QSB.Settings.LockThisPreset and QSB.Panel:IsHidden() then
---//FIXME
-if( true or log_this) then c(QSB.Settings.PresetName..COLOR_M.." → LOCKED → NOT SAVED") end
+if(log_this) then c(QSB.Settings.PresetName..COLOR_M.." → LOCKED → NOT SAVED") end
 
     elseif QSB.Settings.PresetName == selectedPreset then -- (211023)
---//FIXME
-if( true or log_this) then c(QSB.Settings.PresetName..COLOR_M.." → RELOADING "..selectedPreset.." → NOT SAVED") end
+if(log_this) then c(QSB.Settings.PresetName..COLOR_M.." → RELOADING "..selectedPreset.." → NOT SAVED") end
 
         return --//FIXME (211105 .. that was the presumably LockThisPreset bug)
 
@@ -985,8 +989,7 @@ c_log("NO DEFINED PRESET -> USING DEFAULTS")
     end
     --}}}
     -- LOAD SELECTED PRESET {{{
---//FIXME
-if( true or log_this) then c(selectedPreset         ..COLOR_M.." → LOADING:") end
+if(log_this) then c(selectedPreset         ..COLOR_M.." → LOADING:") end
 
     local from = QSB.Settings.Presets[selectedPreset]
     local to   = QSB.Settings
@@ -1080,8 +1083,7 @@ function SaveCurrentPreset(_caller)
 
     local currentPreset = QSB.Settings.PresetName
 
---//FIXME
-if( true or log_this) then c(COLOR_4.."SAVING PRESET "..COLOR_M.."["..tostring(currentPreset).."]: ".._caller) end
+if(log_this) then c(COLOR_4.."SAVING PRESET "..COLOR_M.."["..tostring(currentPreset).."]: ".._caller) end
 
     -- DEFAULTS SETTINGS
     QSB.Settings.Presets[currentPreset] = DeepCopy(QSB.SettingsDefaults)
