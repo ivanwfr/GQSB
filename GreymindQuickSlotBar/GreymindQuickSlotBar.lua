@@ -1,4 +1,4 @@
--- GreymindQuickSlotBar_tag (211111:15h:59) --{{{
+-- GreymindQuickSlotBar_tag (211111:17h:32) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
@@ -5664,9 +5664,9 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (211111)\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (211111 17h32)\n"
     .."!!"..COLOR_7.."- Checked with Deadlands - Update 32 (v7.2.5 - API 101032)\n"
-    .."!!"..COLOR_1.."- Using LibDebugLogger (if installed) to save crash logs in: SavedVariables\LibDebugLogger.lua\n"
+    .."!!"..COLOR_1.."- Using LibDebugLogger (if installed) to save crash logs in: SavedVariables\\LibDebugLogger.lua\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
