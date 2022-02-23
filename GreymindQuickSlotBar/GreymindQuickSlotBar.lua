@@ -1,8 +1,13 @@
--- GreymindQuickSlotBar_tag (211125:14h:05) --{{{
+-- GreymindQuickSlotBar_tag (220223:14h:53) --{{{
 --  Feature Author: ivanwfr
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.8   (220223) {{{
+- [color="gray"]Checked with Update 33 Deadlands (7.2.10): (API 101032)[/color]
+[color="#844"]1 - Added ChatMute and ChatWarned flags to warn at most once[/color] with [color="#FF4"]"You need a refill"[/color]
+[color="#800"]2 - LibDebugLogger (if installed) to save logs in SavedVariables\LibDebugLogger.lua[/color]
+}}}
 v2.6.7.2 (211125 14h05) {{{
 - [color="gray"]Checked with Update 32 Deadlands (7.2.5): (API 101032)[/color]
 [color="#844"]1 - Added QSB.ChatMute flag to warn only once about needing a refill[/color]
@@ -495,7 +500,7 @@ local QSB = {
 
     Name                                = "GreymindQuickSlotBar",
     Panel                               = nil,
-    Version                             = "v2.6.7.2", -- 211125 previous: 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    Version                             = "v2.6.8", -- 220223 previous: 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     SettingsVersion                     = 1,
 
     -- CHOICES
@@ -761,7 +766,7 @@ local function c    (args,logging)
         LibDebugLogger:ClearLog()
         logger:Debug("GQSB: LibDebugLogger:ClearLog()")
     end
-    if logger ~= nil then logger:Debug("GQSB: "..tostring(args))    end -- call LibDebugLogger
+    if  logger ~= nil then logger:Debug("GQSB: "..tostring(args))    end -- call LibDebugLogger
 
 end
 
@@ -5678,10 +5683,8 @@ end
 function d_signature()
 
     d("\r\n"
-    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (211125)\n"
-    .."!!"..COLOR_7.."- Checked with Deadlands - Update 32 (v7.2.5 - API 101032)\n"
-    .."!!"..COLOR_1.."- LibDebugLogger (if installed) to save logs in SavedVariables\LibDebugLogger.lua\n"
-    .."!!"..COLOR_2.."- Added QSB.ChatMute flag to warn only once about needing a refill\n"
+    .."!! GQSB"..COLOR_C.." "..QSB.Version.." (220223)\n"
+    .."!!"..COLOR_7.."- Checked with Deadlands - Update 33 (v7.2.10 - API 101032)\n"
     .."→ "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
@@ -5696,14 +5699,15 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.Name, EVENT_ADD_ON_LOADED, I
 :new C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/P.txt
 :e   C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/ARCHIVES/BAK/GreymindQuickSlotBar_210425.lua
 :e   C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/ARCHIVES/BAK/GreymindQuickSlotBar_210509.lua
-:!start explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
-:!start explorer "https://esodata.uesp.net/100029/data/z/o/_/ZO_SavedVars.NewCharacterIdSettings.html"
 
-:!start explorer "https://forums.elderscrollsonline.com/en/discussion/586882/pts-patch-notes-v7-2-5/p1"
-:!start explorer "https://www.elderscrollsonline.com/en-us/news"
-:!start explorer "https://www.esoui.com/forums/showthread.php?t=9923"
+:!start /b explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
+:!start /b explorer "https://esodata.uesp.net/100029/data/z/o/_/ZO_SavedVars.NewCharacterIdSettings.html"
 
-:!start explorer "https://esoapi.uesp.net/101032"
-:!start explorer "https://wiki.esoui.com/APIVersion#101032"
+:!start /b explorer "https://forums.elderscrollsonline.com/en/categories/pts"
+:!start /b explorer "https://www.elderscrollsonline.com/en-us/news"
+:!start /b explorer "https://www.esoui.com/forums/showthread.php?t=9923"
+
+:!start /b explorer "https://esoapi.uesp.net/101032"
+:!start /b explorer "https://wiki.esoui.com/APIVersion"
 --]]--}}}
 
