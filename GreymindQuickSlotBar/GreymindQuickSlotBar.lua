@@ -1,6 +1,12 @@
 -- GreymindQuickSlotBar {{{
 --  Feature Author: ivanwfr
 --}}}
+
+--[[ XXX (2022-04-30 01:02:00)
+:!start /b explorer "https://www.esoui.com/downloads/fileinfo.php?id=258\#comments"
+/\vGetSlotItemCount|GetSlotItemLink|GetSlotName|GetSlotTexture
+--]]
+
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
 v2.6.8.2 (220429) {{{
@@ -336,7 +342,8 @@ local ZO_CALLLATER_DELAY_ONMOUSEEXIT  =  100 -- Hide Handles
 local ZO_MENU_SHOW_HIDE_DELAY         =  500
 
 -- QUICK SLOT WHEEL NUMBERING
-local WHEEL_LOOKUPTABLE       = { 12, 11, 10, 9, 16, 15, 14, 13 } -- holds, and hide, the ESO Wheel items order
+--cal WHEEL_LOOKUPTABLE       = { 12, 11, 10, 9, 16, 15, 14, 13 } -- holds, and hide, the ESO Wheel items order
+local WHEEL_LOOKUPTABLE       = {  4,  3,  2,  1, 8,  7,  6,  5 } -- holds, and hide, the ESO Wheel items order
 
 -- VISIBILITY POLICY
 local VISCUE_OFF              = "Off"
@@ -515,7 +522,7 @@ local QSB = {
     VERSION                             = "v2.6.8.2", -- 220429 previous: 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     UPDATE                              = "High Isle - 34 (8.0.0)",
     API                                 = "101034",
-    TRACE_TAG                           = "(220429:20h:01)",
+    TRACE_TAG                           = "(220430:04h:44)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -1241,7 +1248,7 @@ local log_this = DEBUG_EQUIP or DEBUG_TASK or DEBUG_STATUS or DEBUG_ITEM
         -- TASK: [CLEAR EMPTY PRESET SLOT] {{{
         local presetItemName  =          tostring( QSB.Settings.SlotItemTable[bNum].itemName )
         local slotIndex       = bNum_to_slotIndex( bNum                                      )
-        local slottedName     =       GetSlotName( slotIndex                                 )
+        local slottedName     =       GetSlotName( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
         local emptyPresetSlot = (presetItemName == nil) or (presetItemName == "")
         if(   emptyPresetSlot   ) then
             if(slottedName == "") then
@@ -1471,7 +1478,7 @@ end
 function clear_bNum(bNum, reason, log_this)
 
     local slotIndex    = bNum_to_slotIndex( bNum      )
-    local slottedName  = GetSlotName      ( slotIndex )
+    local slottedName  = GetSlotName      ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
     if(   slottedName ~= "") then
 if(log_this) then c("_CLEARING ["..COLOR_6..bNum.."|r] ["..COLOR_8..reason.."|r] ["..COLOR_6..tostring( slottedName).."|r]") end
 
@@ -1487,7 +1494,7 @@ function is_same_slotted_item( bNum )
 
         local  save_itemlLink = QSB.Settings.SlotItemTable       [ bNum ].itemLink
 
-        local  slot_itemLink  = GetSlotItemLink(bNum_to_slotIndex( bNum ))
+        local  slot_itemLink  = GetSlotItemLink(bNum_to_slotIndex( bNum ), HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
 
         return is_same_item_link(save_itemlLink, slot_itemLink)
 end
@@ -1654,9 +1661,9 @@ local log_this = DEBUG_ITEM or DEBUG_EQUIP
 if(log_this) then c("save_QSB_to_SlotItemTable("..bNum.."):") end
 
     local slotIndex = bNum_to_slotIndex( bNum      )
-    local itemName  = GetSlotName      ( slotIndex )
-    local texture   = GetSlotTexture   ( slotIndex )
-    local itemLink  = GetSlotItemLink  ( slotIndex )
+    local itemName  = GetSlotName      ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+    local texture   = GetSlotTexture   ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+    local itemLink  = GetSlotItemLink  ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
 
     local itemSlot  = -1
     if   (itemName ~= nil) and (itemName ~= "") then itemSlot =   getItem_slot_from_name( itemName ) end
@@ -1711,12 +1718,12 @@ function getItem_tooltip(bNum)
 
     --}}}
     -- count {{{
-    local       count = GetSlotItemCount( slotIndex ) or 0
+    local       count = GetSlotItemCount(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL) or 0
 
     --}}}
     -- itemLink {{{
     local label = "-"
-    local itemLink = GetSlotItemLink( slotIndex )
+    local itemLink = GetSlotItemLink(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
     if(   itemLink and (itemLink ~= "")) then -- 191125 .. ignore empty itemLink
         label = itemLink
     end
@@ -1785,7 +1792,8 @@ function getItem_tooltip(bNum)
 -- :!start explorer "https://esoapi.uesp.net/100029/data/z/o/_/ZO_LinkHandler_ParseLink.html"
 
         local _, _, itemType, itemId = ZO_LinkHandler_ParseLink( itemLink  )
-        local name_from_slotIndex    = GetSlotName             ( slotIndex )
+        local name_from_slotIndex    = GetSlotName             ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+        local count_from_slotIndex   = GetSlotItemCount        ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
         local slot_from_name         = getItem_slot_from_name  ( itemName  )
         local slot_from_Link         = getItem_slot_from_link  ( itemLink  )
 
@@ -1808,14 +1816,14 @@ function getItem_tooltip(bNum)
 
         --}}}
         -- ITEM ......... f(bagIndex) {{{
-        local bagIndex  = getItem_slot_from_name( GetSlotName(slotIndex) )
+        local bagIndex  = getItem_slot_from_name( GetSlotName(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL) )
         if(   bagIndex ~= -1) then
             local s = COLOR_5.."bagIndex "..bagIndex
 
             tt = tt
             .."\n"
             .."\n"..COLOR_3.."---------------------- ITEM -----------------------"
-            .."\n- GetSlotItemCount("..slotIndex..")"..s..")"       ..COLOR_2.. " ["..tostring(        GetSlotItemCount( slotIndex )).."]|r"
+            .."\n- GetSlotItemCount("..slotIndex..")"..s..")"       ..COLOR_2.. " ["..tostring(  count_from_slotIndex               ).."]|r"
             .."\n- getItem_itID_from_slot("          ..s..")"       ..COLOR_2.. " ["..tostring(  getItem_itID_from_slot( bagIndex  )).."]|r"
             .."\n- GetItemId("                       ..s..")"       ..COLOR_2.. " ["..tostring(  GetItemId(BAG_BACKPACK, bagIndex  )).."]|r"
             .."\n- GetItemName("                     ..s..")"       ..COLOR_4..":\n"..tostring(GetItemName(BAG_BACKPACK, bagIndex  )).. "|r"
@@ -2360,11 +2368,11 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
         local overground        = QSB.Overgrounds[bNum]
         local keyLabel          = QSB.KeyLabels[bNum]
         local quantityLabel     = QSB.QuantityLabels[bNum]
-        local slotItemCount     = GetSlotItemCount(slotIndex)
-        local buttonTexture     = GetSlotTexture  (slotIndex)
+        local slotItemCount     = GetSlotItemCount(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+        local buttonTexture     = GetSlotTexture  (slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
         local emptySlot         = (buttonTexture == "")
 
-        -- PRESET texture (i.e. GetSlotTexture is missing when stackCount is null)
+        -- PRESET texture (missing when stackCount is null)
         if  (QSB.Settings.SlotItemTable               ~= nil)
         and (QSB.Settings.SlotItemTable[bNum].texture ~= nil)
         then
@@ -2433,7 +2441,7 @@ end
             --}}}
             -- quantityLabel [text, layout] --{{{
             if not emptySlot then
-                quantityLabel:SetText(GetSlotItemCount(slotIndex))
+                quantityLabel:SetText(GetSlotItemCount(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL))
             else
                 quantityLabel:SetText("")
             end
@@ -3644,7 +3652,7 @@ end
 function IsEmptySlot(slotIndex)
 D_ITEM("IsEmptySlot(slotIndex " ..tostring( slotIndex )..")")
 
-    local slotName =       GetSlotName( slotIndex  )
+    local slotName =       GetSlotName( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
     local     bNum = slotIndex_to_bNum( slotIndex  )
 D_ITEM("....slotName=["..tostring( slotName  ).."]")
 D_ITEM("........bNum=["..tostring(     bNum  ).."]")
@@ -5565,10 +5573,11 @@ function OnSlashCommand(arg)
         -- /gqsb lua BUFF_DEBUFF_FRAGMENT
 
         ------------ API 101034
-        -- /gqsb lua GetSlotItemCount(slotIndex)
-        -- /gqsb lua GetSlotTexture  (slotIndex)
-        --  .....bNum:  1   2   3  4   5   6   7   8
-        --  slotIndex: 12, 11, 10, 9, 16, 15, 14, 13
+        -- /gqsb lua GetSlotItemCount(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+        -- /gqsb lua GetSlotTexture  (slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+        --  .....bNum:  1   2   3   4   5   6   7   8
+        --  slotIndex:  4,  3,  2,  1,  8,  7,  6,  5 (since API 101034) (220430)
+        --  slotIndex: 12, 11, 10,  9, 16, 15, 14, 13 (before)
 
         lua_expr = string.match(arg, "^%s*lua%s*(.*)")
         if lua_expr then
