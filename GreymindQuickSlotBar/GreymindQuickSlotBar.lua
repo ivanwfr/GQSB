@@ -1,14 +1,12 @@
 -- GreymindQuickSlotBar {{{
 --  Feature Author: ivanwfr
 --}}}
-
---[[ XXX (2022-04-30 01:02:00)
-:!start /b explorer "https://www.esoui.com/downloads/fileinfo.php?id=258\#comments"
-/\vGetSlotItemCount|GetSlotItemLink|GetSlotName|GetSlotTexture
---]]
-
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.9   (220501) {{{
+- [color="gray"]Checked with Update 34 High Isle (8.0.1): (API 101034)[/color]
+-- APIVersion some functions added argument [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] to some
+}}}
 v2.6.8.2 (220429) {{{
 - [color="gray"]Checked with Update 34 High Isle (8.0.0): (API 101034)[/color]
   PTS not working
@@ -342,8 +340,7 @@ local ZO_CALLLATER_DELAY_ONMOUSEEXIT  =  100 -- Hide Handles
 local ZO_MENU_SHOW_HIDE_DELAY         =  500
 
 -- QUICK SLOT WHEEL NUMBERING
---cal WHEEL_LOOKUPTABLE       = { 12, 11, 10, 9, 16, 15, 14, 13 } -- holds, and hide, the ESO Wheel items order
-local WHEEL_LOOKUPTABLE       = {  4,  3,  2,  1, 8,  7,  6,  5 } -- holds, and hide, the ESO Wheel items order
+local WHEEL_LOOKUPTABLE       -- set by Initialize_APIVersion
 
 -- VISIBILITY POLICY
 local VISCUE_OFF              = "Off"
@@ -519,10 +516,10 @@ local Loaded_Preset
 local QSB = {
 
     NAME                                = "GreymindQuickSlotBar",
-    VERSION                             = "v2.6.8.2", -- 220429 previous: 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
-    UPDATE                              = "High Isle - 34 (8.0.0)",
+    VERSION                             = "v2.6.8.2", -- 220501 previous: 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    UPDATE                              = "High Isle - 34 (8.0.1)",
     API                                 = "101034",
-    TRACE_TAG                           = "(220430:04h:44)",
+    TRACE_TAG                           = "(220501:01h:47)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -747,6 +744,17 @@ local tasks_cooldown_end
 local tasks_handler
 local tasks_post
 
+local MyGetSlotItemCount
+local MyGetSlotItemLink
+local MyGetSlotName
+local MyGetSlotTexture
+local MyIsValidCollectibleForSlot
+local MyIsValidItemForSlot
+local MyIsValidQuestItemForSlot
+
+local MyClearSlot
+local MySelectSlotItem
+local MySelectSlotSimpleAction
 --}}}
 --{{{
 local BlockBarVisibility            = false
@@ -795,6 +803,14 @@ local function c    (args,logging)
 end
 
 local function c_log(args) c(args,true) end
+ 
+local function c_log_table(title,table)
+    local s = ""
+    for i=1, #table do
+        s   = s..(" "..table[i])
+    end
+    logs[#logs+1] = title..": {"..s.." }"
+end
 --}}}
 -- D {{{
 local function D(msg)
@@ -806,23 +822,12 @@ end
 -- D_EQUIP {{{
 local function D_EQUIP(title, bNum, itemId, itemType, itemLevel, itemLink)
 
-    if    itemLink == "" then
-
-        c("→ "..title
-        .." " ..COLOR_4.." #"..  bNum
-        ..                " ".. (itemId   and (COLOR_8..          tostring(itemId   )) or "→")
-        .." " ..COLOR_3.."→ → →"
-        ..      COLOR_8.." empty slot")
-
-    else
-
-        c("→ "..title
-        .." " ..COLOR_4.." #"..  bNum
-        ..               " ".. (itemId    and (COLOR_8..          tostring(itemId   )) or "→")
-        ..      COLOR_3.." ".. (itemType  and (                   tostring(itemType )) or "→")
-        ..               " ".. (itemLevel and (COLOR_5.."Level "..tostring(itemLevel)) or "→")
-        ..             "|r "..                                    tostring(itemLink ))
-    end
+    c("→ "..title
+    .."\n -  bNum=[".. (              (COLOR_4.." "..tostring(bNum     )) or "").."]|r"
+    .."\n -    Id=[".. (itemId    and (COLOR_2.." "..tostring(itemId   )) or "").."]|r"
+    .."\n -  Type=[".. (itemType  and (COLOR_3.." "..tostring(itemType )) or "").."]|r"
+    .."\n - Level=[".. (itemLevel and (COLOR_6.." "..tostring(itemLevel)) or "").."]|r"
+    .."\n -  Link=[".. (itemLink  and (COLOR_5.." "..tostring(itemLink )) or "").."]|r")
 
 end
 --}}}
@@ -843,20 +848,22 @@ end
 
 --}}}
 -- D_QSB {{{
-local function D_QSB(title, bNum)
+local function D_QSB()
 
-    if(QSB.Settings.SlotItemTable[bNum].slotId) then
-
-        c( COLOR_X[bNum]      .. title.."["..bNum.."]"
-        .. COLOR_9 .." Link_" .. tostring( QSB.Settings.SlotItemTable[bNum].itemLink  )
-        .. COLOR_2 .." ID_"   .. tostring( QSB.Settings.SlotItemTable[bNum].itemId    )
-        .. COLOR_3 .." Type_" .. tostring( QSB.Settings.SlotItemTable[bNum].itemType  )
-        .. COLOR_4 .." Name_" .. tostring( QSB.Settings.SlotItemTable[bNum].itemName  )
-        .. COLOR_5 .." Slot_" .. tostring( QSB.Settings.SlotItemTable[bNum].slotId    )
-        .. COLOR_6 .." Level_".. tostring( QSB.Settings.SlotItemTable[bNum].itemLevel )
-        )
-    else
-        c(           title    .. "["..bNum.."] "..COLOR_8.." EMPTY SLOT")
+    for bNum = 1, QSB.ButtonCountMax do
+        if(QSB.Settings.SlotItemTable[bNum].slotId) then
+            c(       COLOR_X[bNum].." bNum_"     ..tostring(                            bNum            )
+            ..                      " slotIndex_"..tostring(          bNum_to_slotIndex(bNum)           )..":"
+            .."\n…".. COLOR_9      .." Link_"    ..tostring( QSB.Settings.SlotItemTable[bNum].itemLink  )
+            .."\n…".. COLOR_2      .." ID_"      ..tostring( QSB.Settings.SlotItemTable[bNum].itemId    )
+            .."\n…".. COLOR_3      .." Type_"    ..tostring( QSB.Settings.SlotItemTable[bNum].itemType  )
+            .."\n…".. COLOR_4      .." Name_"    ..tostring( QSB.Settings.SlotItemTable[bNum].itemName  )
+            .."\n…".. COLOR_5      .." slotId_"  ..tostring( QSB.Settings.SlotItemTable[bNum].slotId    )
+            .."\n…".. COLOR_6      .." Level_"   ..tostring( QSB.Settings.SlotItemTable[bNum].itemLevel )
+            )
+        else
+            c("["..bNum.."] "..COLOR_8.." EMPTY SLOT")
+        end
     end
 
 end
@@ -1248,7 +1255,7 @@ local log_this = DEBUG_EQUIP or DEBUG_TASK or DEBUG_STATUS or DEBUG_ITEM
         -- TASK: [CLEAR EMPTY PRESET SLOT] {{{
         local presetItemName  =          tostring( QSB.Settings.SlotItemTable[bNum].itemName )
         local slotIndex       = bNum_to_slotIndex( bNum                                      )
-        local slottedName     =       GetSlotName( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+        local slottedName     =     MyGetSlotName( slotIndex)
         local emptyPresetSlot = (presetItemName == nil) or (presetItemName == "")
         if(   emptyPresetSlot   ) then
             if(slottedName == "") then
@@ -1350,7 +1357,7 @@ local log_this  = DEBUG_EQUIP
 
 if(log_this) then D_EQUIP(ITEM_4_EQUIP, bNum, itemId, itemType, itemLevel, itemLink) end
 
-local slotIndex = bNum_to_slotIndex( bNum )
+    local slotIndex = bNum_to_slotIndex( bNum )
 
     -- SYNC ON [itemLink] {{{
     -- (collectibles and quest_items may use itemType and itemId args)
@@ -1374,10 +1381,11 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
         -- ITEM COUNT AND SLOT {{{
         local bagIndex   = getItem_slot_from_link(itemLink)
         local _,   count = GetItemInfo(BAG_BACKPACK, bagIndex)
+        local is_valid   = MyIsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)
         if(QSB.Settings.LockThisPreset) then
-            CallSecureProtected("SelectSlotItem"   ,BAG_BACKPACK, bagIndex, slotIndex)
+            MySelectSlotItem(BAG_BACKPACK, bagIndex, slotIndex)
 
-            if(    count <= 0 or not IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
+            if(    count <= 0 or not is_valid) then
                 if not QSB.ChatWarned and not QSB.Settings.ChatMute then
                     QSB.ChatWarned = true
                     -- ZO ALERT .. REFILL FOR A LOCKED PRESET {{{
@@ -1399,8 +1407,8 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
                     --}}}
                 end
             end
-        elseif(    count > 0 and IsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)) then
-            CallSecureProtected("SelectSlotItem"   ,BAG_BACKPACK, bagIndex, slotIndex)
+        elseif(    count >  0 and    is_valid) then
+            MySelectSlotItem(BAG_BACKPACK, bagIndex, slotIndex)
 
         --}}}
         -- ITEM COUNT=0 WARNING {{{
@@ -1436,27 +1444,31 @@ if(log_this) then D_EQUIP(ITEM_5_EQUIP_CHANGED, bNum, itemId, itemType, itemLeve
         --}}}
         -- ITEM_2_EQUIP_ERROR_SLOT {{{
         else
-D_EQUIP(ITEM_2_EQUIP_ERROR_SLOT, bNum, itemId, itemType, itemLevel, itemLink)
-
             if not QSB.ChatWarned and not QSB.Settings.ChatMute then
                 QSB.ChatWarned = true
                 -- CHAT ALERT
-                c(                      COLOR_2..QSB.NAME..":\r\n"
-                .."→. [slotId   ".. tostring( slotId   ) .."]\r\n"
-                .."→. [bagIndex ".. tostring( bagIndex ) .."]\r\n"
-                .."→. [itemName ".. tostring( itemName ) .."]\r\n")
+                local  is_valid = MyIsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)
+                c(                     COLOR_2..QSB.NAME  ..":\r\n"
+                .."→    slotId=[".. tostring( slotId    ) .."]\r\n"
+                .."→  bagIndex=[".. tostring( bagIndex  ) .."]\r\n"
+                .."→  itemName=[".. tostring( itemName  ) .."]\r\n"
+                .."→     count=[".. tostring( count     ) .."]\r\n"
+                .."→ slotIndex=[".. tostring( slotIndex ) .."]\r\n"
+                .."→  is_valid=[".. tostring( is_valid  ) .."]\r\n"
+                )
             end
+D_EQUIP(ITEM_2_EQUIP_ERROR_SLOT, bNum, itemId, itemType, itemLevel, itemLink)
         end
         --}}}
     --}}}
     -- [collectible] {{{
-    elseif(itemType == "collectible" and IsValidCollectibleForSlot(itemId, slotIndex)) then
-        CallSecureProtected("SelectSlotSimpleAction", ACTION_TYPE_COLLECTIBLE, itemId, slotIndex)
+    elseif(itemType == "collectible" and MyIsValidCollectibleForSlot(itemId, slotIndex)) then
+        MySelectSlotSimpleAction(ACTION_TYPE_COLLECTIBLE, itemId, slotIndex)
 
     --}}}
     -- [quest_item] {{{
-    elseif(itemType == "quest_item" and IsValidQuestItemForSlot(itemId, slotIndex)) then
-        CallSecureProtected("SelectSlotSimpleAction", ACTION_TYPE_QUEST_ITEM , itemId, slotIndex)
+    elseif(itemType == "quest_item" and MyIsValidQuestItemForSlot(itemId, slotIndex)) then
+        MySelectSlotSimpleAction(ACTION_TYPE_QUEST_ITEM , itemId, slotIndex)
 
     --}}}
     -- [itemType Unknown] .. (saved item is not available anymore) {{{
@@ -1478,7 +1490,7 @@ end
 function clear_bNum(bNum, reason, log_this)
 
     local slotIndex    = bNum_to_slotIndex( bNum      )
-    local slottedName  = GetSlotName      ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+    local slottedName  = MyGetSlotName      ( slotIndex)
     if(   slottedName ~= "") then
 if(log_this) then c("_CLEARING ["..COLOR_6..bNum.."|r] ["..COLOR_8..reason.."|r] ["..COLOR_6..tostring( slottedName).."|r]") end
 
@@ -1486,7 +1498,8 @@ if(log_this) then c("_CLEARING ["..COLOR_6..bNum.."|r] ["..COLOR_8..reason.."|r]
 if(log_this) then c("_CLEARING ["..COLOR_6..bNum.."|r] ["..COLOR_8..reason.."|r] ["..COLOR_8.."no slottedName]") end
 
     end
-    CallSecureProtected("ClearSlot", slotIndex)
+    MyClearSlot(slotIndex)
+
 end
 --}}}
 -- is_same_slotted_item {{{
@@ -1494,7 +1507,7 @@ function is_same_slotted_item( bNum )
 
         local  save_itemlLink = QSB.Settings.SlotItemTable       [ bNum ].itemLink
 
-        local  slot_itemLink  = GetSlotItemLink(bNum_to_slotIndex( bNum ), HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+        local  slot_itemLink  = MyGetSlotItemLink(bNum_to_slotIndex( bNum ))
 
         return is_same_item_link(save_itemlLink, slot_itemLink)
 end
@@ -1660,10 +1673,11 @@ function save_QSB_to_SlotItemTable(bNum)
 local log_this = DEBUG_ITEM or DEBUG_EQUIP
 if(log_this) then c("save_QSB_to_SlotItemTable("..bNum.."):") end
 
-    local slotIndex = bNum_to_slotIndex( bNum      )
-    local itemName  = GetSlotName      ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
-    local texture   = GetSlotTexture   ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
-    local itemLink  = GetSlotItemLink  ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+    local slotIndex = bNum_to_slotIndex( bNum     )
+
+    local itemName  = MyGetSlotName    ( slotIndex)
+    local texture   = MyGetSlotTexture ( slotIndex)
+    local itemLink  = MyGetSlotItemLink( slotIndex)
 
     local itemSlot  = -1
     if   (itemName ~= nil) and (itemName ~= "") then itemSlot =   getItem_slot_from_name( itemName ) end
@@ -1718,12 +1732,12 @@ function getItem_tooltip(bNum)
 
     --}}}
     -- count {{{
-    local       count = GetSlotItemCount(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL) or 0
+    local       count = MyGetSlotItemCount(slotIndex) or 0
 
     --}}}
     -- itemLink {{{
     local label = "-"
-    local itemLink = GetSlotItemLink(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+    local itemLink = MyGetSlotItemLink(slotIndex)
     if(   itemLink and (itemLink ~= "")) then -- 191125 .. ignore empty itemLink
         label = itemLink
     end
@@ -1792,8 +1806,8 @@ function getItem_tooltip(bNum)
 -- :!start explorer "https://esoapi.uesp.net/100029/data/z/o/_/ZO_LinkHandler_ParseLink.html"
 
         local _, _, itemType, itemId = ZO_LinkHandler_ParseLink( itemLink  )
-        local name_from_slotIndex    = GetSlotName             ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
-        local count_from_slotIndex   = GetSlotItemCount        ( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+        local name_from_slotIndex    = MyGetSlotName             ( slotIndex)
+        local count_from_slotIndex   = MyGetSlotItemCount        ( slotIndex)
         local slot_from_name         = getItem_slot_from_name  ( itemName  )
         local slot_from_Link         = getItem_slot_from_link  ( itemLink  )
 
@@ -1816,20 +1830,23 @@ function getItem_tooltip(bNum)
 
         --}}}
         -- ITEM ......... f(bagIndex) {{{
-        local bagIndex  = getItem_slot_from_name( GetSlotName(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL) )
+        local bagIndex  = getItem_slot_from_name( MyGetSlotName(slotIndex) )
         if(   bagIndex ~= -1) then
             local s = COLOR_5.."bagIndex "..bagIndex
+
+            local is_valid = MyIsValidItemForSlot(BAG_BACKPACK, bagIndex, slotIndex)
 
             tt = tt
             .."\n"
             .."\n"..COLOR_3.."---------------------- ITEM -----------------------"
             .."\n- GetSlotItemCount("..slotIndex..")"..s..")"       ..COLOR_2.. " ["..tostring(  count_from_slotIndex               ).."]|r"
-            .."\n- getItem_itID_from_slot("          ..s..")"       ..COLOR_2.. " ["..tostring(  getItem_itID_from_slot( bagIndex  )).."]|r"
-            .."\n- GetItemId("                       ..s..")"       ..COLOR_2.. " ["..tostring(  GetItemId(BAG_BACKPACK, bagIndex  )).."]|r"
-            .."\n- GetItemName("                     ..s..")"       ..COLOR_4..":\n"..tostring(GetItemName(BAG_BACKPACK, bagIndex  )).. "|r"
-            .."\n- ZO_CachedStrFormat('<<C:1>>',   itemName)"       ..COLOR_5..":\n"..ZO_CachedStrFormat('<<C:1>>',      itemName   ).. "|r"
-            .."\n- getItem_link_from_slot("          ..s..")"       ..COLOR_9..":\n"..tostring(  getItem_link_from_slot( bagIndex  )).. "|r"
-            .."\n- getItem_name_from_slot("          ..s..")"       ..COLOR_4..":\n"..tostring(  getItem_name_from_slot( bagIndex  )).. "|r"
+            .."\n- getItem_itID_from_slot("          ..s..")"       ..COLOR_2.. " ["..tostring(  getItem_itID_from_slot( bagIndex ) ).."]|r"
+            .."\n- GetItemId("                       ..s..")"       ..COLOR_2.. " ["..tostring(  GetItemId(BAG_BACKPACK, bagIndex ) ).."]|r"
+            .."\n- IsValidItemForSlot("..      slotIndex..")"       ..COLOR_3.. " ["..tostring(  is_valid                           ).."]|r"
+            .."\n- GetItemName("                     ..s..")"       ..COLOR_4..":\n"..tostring(GetItemName(BAG_BACKPACK, bagIndex ) ).. "|r"
+            .."\n- ZO_CachedStrFormat('<<C:1>>',   itemName)"       ..COLOR_5..":\n"..     ZO_CachedStrFormat('<<C:1>>', itemName   ).. "|r"
+            .."\n- getItem_link_from_slot("          ..s..")"       ..COLOR_9..":\n"..tostring(  getItem_link_from_slot( bagIndex ) ).. "|r"
+            .."\n- getItem_name_from_slot("          ..s..")"       ..COLOR_4..":\n"..tostring(  getItem_name_from_slot( bagIndex ) ).. "|r"
             .."\n"
 
         end
@@ -1993,13 +2010,12 @@ end
 --}}}
 -- is_same_item_link {{{
 function is_same_item_link(l1, l2)
-local log_this = DEBUG_ITEM
 
     if(not l1 or not l2) then return false end
 
     local result = getItem_normalized_link( l1 ) == getItem_normalized_link( l2 )
 
-if(log_this) then c("l1=["..l1.."] == l2=["..l2.."] .. return "..tostring(result)) end
+--c("l1=["..l1.."] == l2=["..l2.."] .. return "..tostring(result)) end
 
     return result
 end
@@ -2326,36 +2342,41 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
             local baseground            = QSB.Basegrounds[bNum]
             baseground                  :SetTexture(BASEBACKGROUNDTEXTURE)
             baseground                  :SetAnchorFill(button)
+            baseground                  :SetDrawLayer(1)
 
             QSB.Backgrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBackground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local background            = QSB.Backgrounds[bNum]
             background                  :SetTexture(BACKGROUNDTEXTURE)
             background                  :SetAnchorFill(button)
+            background                  :SetDrawLayer(2)
 
             QSB.VisualCueBorders[bNum]  = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonVisualCue"        .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local visualCueBorder       = QSB.VisualCueBorders[bNum]
             visualCueBorder             :SetTexture(VISUALCUEBORDERTEXTURE)
             visualCueBorder             :SetAnchorFill(button)
+            visualCueBorder             :SetDrawLayer(3)
 
             QSB.Borders[bNum]           = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBorder"           .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local border                = QSB.Borders[bNum]
             border                      :SetTexture(BORDERTEXTURE)
             border                      :SetAnchorFill(button)
+            border                      :SetDrawLayer(4)
 
             QSB.Overgrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonOverground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local overground            = QSB.Overgrounds[bNum]
             overground                  :SetAnchorFill(button)
             overground                  :SetColor(0.0,0.0,0.0)
+            overground                  :SetDrawLayer(5)
 
             QSB.KeyLabels[bNum]         = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonKeyName"          .. tostring_bNum, GreymindQuickSlotBarUI, CT_LABEL)
             local keyLabel              = QSB.KeyLabels[bNum]
             keyLabel                    :SetAnchor(CENTER, button, CENTER, 0, -(buttonSize / 2) - QSB.ButtonPadding)
---          keyLabel                    :SetDrawLayer(1)
+            keyLabel                    :SetDrawLayer(6)
 
             QSB.QuantityLabels[bNum]    = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonQuantityLabel"    .. tostring_bNum, GreymindQuickSlotBarUI, CT_LABEL)
             local quantityLabel         = QSB.QuantityLabels[bNum]
             quantityLabel               :SetAnchor(CENTER, button, CENTER, 0, -(buttonSize / 2) - QSB.ButtonPadding)
---          quantityLabel               :SetDrawLayer(2)
+            quantityLabel               :SetDrawLayer(7)
 
         end --}}}
 
@@ -2368,8 +2389,8 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
         local overground        = QSB.Overgrounds[bNum]
         local keyLabel          = QSB.KeyLabels[bNum]
         local quantityLabel     = QSB.QuantityLabels[bNum]
-        local slotItemCount     = GetSlotItemCount(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
-        local buttonTexture     = GetSlotTexture  (slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+        local slotItemCount     = MyGetSlotItemCount(slotIndex)
+        local buttonTexture     = MyGetSlotTexture  (slotIndex)
         local emptySlot         = (buttonTexture == "")
 
         -- PRESET texture (missing when stackCount is null)
@@ -2441,7 +2462,7 @@ end
             --}}}
             -- quantityLabel [text, layout] --{{{
             if not emptySlot then
-                quantityLabel:SetText(GetSlotItemCount(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL))
+                quantityLabel:SetText( MyGetSlotItemCount(slotIndex) )
             else
                 quantityLabel:SetText("")
             end
@@ -2658,7 +2679,7 @@ function GameActionButtonHideHandler(_caller)
 
     if not ActionButton9 then
         if not NO_ActionButton9_reported_once then
-c_log(COLOR_2.." GQSB GameActionButtonHideHandler: NO ActionButton9")
+--//FIXME c_log(COLOR_2.." GQSB GameActionButtonHideHandler: NO ActionButton9")
             NO_ActionButton9_reported_once = true
         end
         return
@@ -3598,10 +3619,10 @@ end
 
 -- UTIL
 -- slotIndex_to_bNum {{{
-function slotIndex_to_bNum( slotIndex )
-    for bNum = 1, #WHEEL_LOOKUPTABLE do
-        if WHEEL_LOOKUPTABLE[bNum] == slotIndex then
-            return bNum
+function slotIndex_to_bNum(            slotIndex)
+    for                       bNum   = 1, #WHEEL_LOOKUPTABLE do
+        if WHEEL_LOOKUPTABLE [bNum] == slotIndex then
+            return            bNum
         end
     end
 
@@ -3610,7 +3631,7 @@ end
 
 --}}}
 -- bNum_to_slotIndex {{{
-function bNum_to_slotIndex( bNum )
+function bNum_to_slotIndex(    bNum )
     return  WHEEL_LOOKUPTABLE[ bNum ]
 end
 
@@ -3652,7 +3673,7 @@ end
 function IsEmptySlot(slotIndex)
 D_ITEM("IsEmptySlot(slotIndex " ..tostring( slotIndex )..")")
 
-    local slotName =       GetSlotName( slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+    local slotName =       MyGetSlotName( slotIndex)
     local     bNum = slotIndex_to_bNum( slotIndex  )
 D_ITEM("....slotName=["..tostring( slotName  ).."]")
 D_ITEM("........bNum=["..tostring(     bNum  ).."]")
@@ -3673,7 +3694,7 @@ function string_split(s, sep)
 end
 --}}}
 
---.. BAERTRAM --
+-- BAERTRAM
 -- removeServerDataOnce {{{
 --Remove the megaserver name subtable from the copied data, if given
 local function removeServerDataOnce(svTableOld)
@@ -3692,6 +3713,7 @@ c_log(">>found existing servername data -> stripped!")
 end
 --}}}
 
+-- AccountWide..Character Settings
 -- Load_AccountWideSettings {{{
 local function Load_AccountWideSettings(accountwide)
 if DEBUG_STATUS then c_log(COLOR_9.." Load_AccountWideSettings("..tostring(accountwide)..")") end
@@ -3751,11 +3773,126 @@ c_log(COLOR_5.." ------------------------------------------------------------")
 
 end
 --}}}
+
+-- APIVersion 101034
+-- XXX
+--{{{
+-- W:/Temp/APIPatchNotesP34.txt -- functions with added argument [HOTBAR_CATEGORY_QUICKSLOT_WHEEL]
+
+-- ✔ GetSlotItemCount(*luaindex* _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]* _hotbarCategory_)
+-- ✔ GetSlotItemLink(*luaindex* _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]* _hotbarCategory_)
+-- ✔ GetSlotName(*luaindex* _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]:nilable* _hotbarCategory_)
+-- ✔ IsValidCollectibleForSlot(*integer* _collectibleId_, *luaindex* _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]* _hotbarCategory_)
+-- ✔ IsValidItemForSlot(*[Bag|#Bag]* _bagId_, *integer* _bagSlotIndex_, *luaindex* _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]* _hotbarCategory_)
+-- ✔ IsValidQuestItemForSlot(*integer* _questItemId_, *luaindex* _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]* _hotbarCategory_)
+-- MyGetSlotItemCount {{{
+function MyGetSlotItemCount  (slotIndex)
+    return (GetAPIVersion() < 101034)
+    and     GetSlotItemCount (slotIndex)
+    or      GetSlotItemCount (slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+end
+--}}}
+-- MyGetSlotItemLink {{{
+function MyGetSlotItemLink   (slotIndex)
+    return (GetAPIVersion() < 101034)
+    and     GetSlotItemLink  (slotIndex)
+    or      GetSlotItemLink  (slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+end
+--}}}
+-- MyGetSlotName {{{
+function MyGetSlotName       (slotIndex)
+    return (GetAPIVersion() < 101034)
+    and     GetSlotName      (slotIndex)
+    or      GetSlotName      (slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+end
+--}}}
+-- MyGetSlotTexture {{{
+function MyGetSlotTexture    (slotIndex)
+    return (GetAPIVersion() < 101034)
+    and     GetSlotTexture   (slotIndex)
+    or      GetSlotTexture   (slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+end
+--}}}
+-- MyIsValidItemForSlot {{{
+function MyIsValidItemForSlot (bagId, bagIndex, slotIndex)
+    return (GetAPIVersion() < 101034)
+    and     IsValidItemForSlot(bagId, bagIndex, slotIndex)
+    or      IsValidItemForSlot(bagId, bagIndex, slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+-- IsValidItemForSlot(_bagId_, _bagSlotIndex_, _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]* _hotbarCategory_)
+end--}}}
+-- MyIsValidCollectibleForSlot {{{
+function MyIsValidCollectibleForSlot (collectibleId, slotIndex)
+    return (GetAPIVersion() < 101034)
+    and     IsValidCollectibleForSlot(collectibleId, slotIndex)
+    or      IsValidCollectibleForSlot(collectibleId, slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+--          IsValidCollectibleForSlot(_collectibleId_, _actionSlotIndex_, _hotbarCategory_)
+end--}}}
+-- MyIsValidQuestItemForSlot {{{
+function MyIsValidQuestItemForSlot (questItemId, slotIndex)
+    return (GetAPIVersion() < 101034)
+    and     IsValidQuestItemForSlot(questItemId, slotIndex)
+    or      IsValidQuestItemForSlot(questItemId, slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+--          IsValidQuestItemForSlot(_questItemId_, _actionSlotIndex_, _hotbarCategory_)
+end--}}}
+
+-- protected
+-- ✔ ClearSlot *protected* (*luaindex* _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]:nilable* _hotbarCategory_)
+-- ✔ SelectSlotItem *protected* (*[Bag|#Bag]* _bagId_, *integer* _bagSlotIndex_, *luaindex* _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]* _hotbarCategory_)
+-- ✔ SelectSlotSimpleAction *protected* (*[ActionBarSlotType|#ActionBarSlotType]* _actionType_, *integer* _actionId_, *luaindex* _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]:nilable* _hotbarCategory_)
+-- MyClearSlot {{{
+function MyClearSlot       (             slotIndex)
+    if(GetAPIVersion() < 101034) then
+        CallSecureProtected("ClearSlot", slotIndex)
+    else
+--d(   "CallSecureProtected('ClearSlot', slotIndex=["..tostring(slotIndex).."], HOTBAR_CATEGORY_QUICKSLOT_WHEEL=["..tostring(HOTBAR_CATEGORY_QUICKSLOT_WHEEL).."])")
+        CallSecureProtected("ClearSlot", slotIndex                            , HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+--                           ClearSlot , _actionSlotIndex_                    , _hotbarCategory_)
+    end
+end
+--}}}
+-- MySelectSlotItem {{{
+function MySelectSlotItem(bagId,bagIndex,slotIndex)
+    if(GetAPIVersion() < 101034) then
+        CallSecureProtected("SelectSlotItem", bagId                        , bagIndex                           , slotIndex)
+    else
+--d(   "CallSecureProtected('SelectSlotItem', bagId=["..tostring(bagId).."], bagIndex=["..tostring(bagIndex).."], slotIndex=["..tostring(slotIndex).."], HOTBAR_CATEGORY_QUICKSLOT_WHEEL=["..tostring(HOTBAR_CATEGORY_QUICKSLOT_WHEEL).."])")
+        CallSecureProtected("SelectSlotItem", bagId                        , bagIndex                           , slotIndex                            , HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+--                           SelectSlotItem (_bagId_                       , _bagSlotIndex_                     , _actionSlotIndex_                    , _hotbarCategory_)
+    end
+end
+--}}}
+-- MySelectSlotSimpleAction {{{
+function MySelectSlotSimpleAction(actionType,itemId,slotIndex)
+    if(GetAPIVersion() < 101034) then
+        CallSecureProtected("SelectSlotSimpleAction", actionType                             , itemId                         , slotIndex)
+    else
+--d(   "CallSecureProtected('SelectSlotSimpleAction', actionType=["..tostring(actionType).."], itemId=["..tostring(itemId).."], slotIndex=["..tostring(slotIndex).."], HOTBAR_CATEGORY_QUICKSLOT_WHEEL=["..tostring(HOTBAR_CATEGORY_QUICKSLOT_WHEEL).."])")
+        CallSecureProtected("SelectSlotSimpleAction", actionType                             , itemId                         , slotIndex                            , HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+--                           SelectSlotSimpleAction (_actionType_                            , _actionId_                     , _actionSlotIndex_                    , _hotbarCategory_)
+    end
+end
+--}}}
+--}}}
+
 -- INIT
+-- Initialize_APIVersion {{{
+local function Initialize_APIVersion(_api_version_)
+c_log("Initialize_APIVersion(".._api_version_..")")
+
+    WHEEL_LOOKUPTABLE = (_api_version_ < 101034)
+    and                 { 12, 11, 10, 9, 16, 15, 14, 13 }
+    or                  {  4,  3,  2,  1, 8,  7,  6,  5 }
+c_log_table("WHEEL_LOOKUPTABLE", WHEEL_LOOKUPTABLE)
+
+end
+--}}}
 -- Initialize {{{
 local function Initialize(eventCode, addOnName)
 c_log("Initialize("..addOnName..")")
     if (addOnName ~= QSB.NAME) then return end
+
+    -- APIVersion
+    Initialize_APIVersion( GetAPIVersion() )
 
     -- KEYBINDINGS
     BuildKeyBindingsMenu()
@@ -4927,6 +5064,56 @@ D_ITEM(COLOR_8..".GetCurrentQuickslot=["..tostring(  GetCurrentQuickslot() ).."]
 
     end)
     --}}}
+--XXX
+    -- .2 Refresh .. ACTION_SLOT_STATE_UPDATED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.ACTION_SLOT_STATE_UPDATED"
+    , EVENT_ACTION_SLOT_STATE_UPDATED
+    , function(event, arg1, arg2, arg3, arg4)
+D_ITEM("ACTION_SLOT_STATE_UPDATED:")
+D_ITEM(COLOR_8..              ".event=["..tostring( event                  ).."]")
+D_ITEM(COLOR_8..               ".arg1=["..tostring(  arg1                  ).."]")
+D_ITEM(COLOR_8..               ".arg2=["..tostring(  arg2                  ).."]")
+D_ITEM(COLOR_8..               ".arg3=["..tostring(  arg3                  ).."]")
+D_ITEM(COLOR_8..               ".arg4=["..tostring(  arg4                  ).."]")
+D_ITEM(COLOR_8..".GetCurrentQuickslot=["..tostring(  GetCurrentQuickslot() ).."]")
+
+        Refresh(COLOR_2.."ACTION_SLOT_STATE_UPDATED")
+
+    end)
+    --}}}
+    -- .2 Refresh .. ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED"
+    , EVENT_ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED
+    , function(event, arg1, arg2, arg3, arg4)
+D_ITEM("ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED:")
+D_ITEM(COLOR_8..              ".event=["..tostring( event                  ).."]")
+D_ITEM(COLOR_8..               ".arg1=["..tostring(  arg1                  ).."]")
+D_ITEM(COLOR_8..               ".arg2=["..tostring(  arg2                  ).."]")
+D_ITEM(COLOR_8..               ".arg3=["..tostring(  arg3                  ).."]")
+D_ITEM(COLOR_8..               ".arg4=["..tostring(  arg4                  ).."]")
+D_ITEM(COLOR_8..".GetCurrentQuickslot=["..tostring(  GetCurrentQuickslot() ).."]")
+
+        Refresh(COLOR_2.."ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED")
+
+    end)
+    --}}}
+    -- .2 Refresh .. LEVEL_UPDATE --{{{
+    EVENT_MANAGER:RegisterForEvent("GQSB.LEVEL_UPDATE"
+    , EVENT_LEVEL_UPDATE
+    , function(event, arg1, arg2, arg3, arg4)
+D_ITEM("LEVEL_UPDATE:")
+D_ITEM(COLOR_8..              ".event=["..tostring( event                  ).."]")
+D_ITEM(COLOR_8..               ".arg1=["..tostring(  arg1                  ).."]")
+D_ITEM(COLOR_8..               ".arg2=["..tostring(  arg2                  ).."]")
+D_ITEM(COLOR_8..               ".arg3=["..tostring(  arg3                  ).."]")
+D_ITEM(COLOR_8..               ".arg4=["..tostring(  arg4                  ).."]")
+D_ITEM(COLOR_8..".GetCurrentQuickslot=["..tostring(  GetCurrentQuickslot() ).."]")
+
+        Refresh(COLOR_2.."LEVEL_UPDATE")
+
+    end)
+    --}}}
+--XXX
     -- .3 Refresh .. ACTIVE_QUICKSLOT_CHANGED --{{{
     EVENT_MANAGER:RegisterForEvent("GQSB.ACTIVE_QUICKSLOT_CHANGED"
     , EVENT_ACTIVE_QUICKSLOT_CHANGED
@@ -5370,6 +5557,15 @@ function OnSlashCommand(arg)
     elseif(arg == "p4"         ) then presetName = PRESETNAMES[4]
     elseif(arg == "p5"         ) then presetName = PRESETNAMES[5]
 
+    elseif(arg == "b1"         ) then handle_ACTION_SLOT_UPDATED(1); ui_may_have_changed = true
+    elseif(arg == "b2"         ) then handle_ACTION_SLOT_UPDATED(2); ui_may_have_changed = true
+    elseif(arg == "b3"         ) then handle_ACTION_SLOT_UPDATED(3); ui_may_have_changed = true
+    elseif(arg == "b4"         ) then handle_ACTION_SLOT_UPDATED(4); ui_may_have_changed = true
+    elseif(arg == "b5"         ) then handle_ACTION_SLOT_UPDATED(5); ui_may_have_changed = true
+    elseif(arg == "b6"         ) then handle_ACTION_SLOT_UPDATED(6); ui_may_have_changed = true
+    elseif(arg == "b7"         ) then handle_ACTION_SLOT_UPDATED(7); ui_may_have_changed = true
+    elseif(arg == "b8"         ) then handle_ACTION_SLOT_UPDATED(8); ui_may_have_changed = true
+
     elseif(arg == "kbclr"      ) then ClearKeyBindings()
     elseif(arg == "kbmod"      ) then ApplyKeyBindingsModifier(); ApplyKeyBindingsModifier_SWAPS()
     --}}}
@@ -5493,16 +5689,21 @@ function OnSlashCommand(arg)
     elseif(arg == "debug_status"  ) then DEBUG_STATUS   = not DEBUG_STATUS  ; c("...DEBUG_STATUS...=[" ..tostring( DEBUG_STATUS   ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_task"    ) then DEBUG_TASK     = not DEBUG_TASK    ; c("...DEBUG_TASK.....=[" ..tostring( DEBUG_TASK     ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_tooltip" ) then DEBUG_TOOLTIP  = not DEBUG_TOOLTIP ; c("...DEBUG_TOOLTIP..=[" ..tostring( DEBUG_TOOLTIP  ).. "]"); ui_may_have_changed = true
+    elseif(arg == "QSB"           ) then D_QSB()
     --}}}
+    -- logs {{{
     elseif(arg == "logs"      ) then
         QSB_ClearChat()
         SetChatMax( true)
         d("GQSB "..COLOR_8.." logs * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
         for k,v in pairs(logs) do d(k..": "..v) end
         d("GQSB "..COLOR_8.."* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
+
     elseif(arg == "clear_logs") then
         QSB_ClearChat()
         clear_logs()
+
+    --}}}
     else -- LUA
         clear_logs()
         -- _G --{{{
@@ -5576,7 +5777,7 @@ function OnSlashCommand(arg)
         -- /gqsb lua GetSlotItemCount(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
         -- /gqsb lua GetSlotTexture  (slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
         --  .....bNum:  1   2   3   4   5   6   7   8
-        --  slotIndex:  4,  3,  2,  1,  8,  7,  6,  5 (since API 101034) (220430)
+        --  slotIndex:  4,  3,  2,  1,  8,  7,  6,  5 (since API 101034) (220501)
         --  slotIndex: 12, 11, 10,  9, 16, 15, 14, 13 (before)
 
         lua_expr = string.match(arg, "^%s*lua%s*(.*)")
@@ -5752,6 +5953,7 @@ function d_signature()
 
     d("\r\n"
     .."!! GQSB"..COLOR_C.." "..QSB.VERSION.." "..COLOR_7.." "..QSB.UPDATE.." (API "..QSB.API..") ("..QSB.TRACE_TAG..")\n"
+    .."!! "    ..COLOR_2.." EVENT_ACTION_SLOT_UPDATED not fired for SLOTTABLE ITEMS|r\n"
     .."!! "    ..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n"
     )
 
@@ -5777,7 +5979,7 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, I
 :!start /b explorer "https://esoapi.uesp.net/101034"
 :!start /b explorer "https://wiki.esoui.com/APIVersion"
 
-:n %               $TEMP/APIPatchNotes*.txt $TEMP/ESOUIDocumentation*.txt
+:new|n             $TEMP/APIPatchNotes*.txt $TEMP/ESOUIDocumentation*.txt
 :update|:only|vnew $TEMP/APIPatchNotes*.txt
 :update|:only|vnew $TEMP/ESOUIDocumentation*.txt
 
@@ -5785,5 +5987,6 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, I
 
 :e SavedVariables/LibDebugLogger.lua
 
+:!start /b explorer "https://www.esoui.com/downloads/fileinfo.php?id=258\#comments"
 --]]--}}}
 
