@@ -7,8 +7,8 @@ v2.6.8.2 (220501) {{{
 - [color="gray"]Checked with Update 34 High Isle (8.0.1): (API 101034)[/color]
 
   PTS(API 101034) NOT WORKING
-  FIXME: [Disable Default Quick Slot Button] [ActionButton9] dissapeared
-  FIXME: [standard QSB UI  Shown / Hidden  ] [ZO_QuickSlot]  dissapeared
+  FIXME: [Disable Default Quick Slot Button] [ActionButton9] disappeared
+  FIXME: [standard QSB UI  Shown / Hidden  ] [ZO_QuickSlot]  disappeared
   FIXME: [QSB slot changed in radial menu  ] [EVENT_ACTION_SLOT_UPDATED] not fired by ZO_RadialMenu
 
   FIXED: [HOTBAR_CATEGORY_QUICKSLOT_WHEEL  ] extra argument for some functions
@@ -517,7 +517,7 @@ local QSB = {
     VERSION                             = "v2.6.8.2", -- 220501 previous: 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     UPDATE                              = "High Isle - 34 (8.0.1)",
     API                                 = "101034",
-    TRACE_TAG                           = "(220501:23h:25)",
+    TRACE_TAG                           = "(220501:23h:53)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -5969,8 +5969,8 @@ function d_signature()
 
     d("\r\n!! GQSB"..COLOR_C.." "..QSB.VERSION.." "..COLOR_7.." "..QSB.UPDATE.." (API "..QSB.API..") ("..QSB.TRACE_TAG..")|r\n"
     .."!! Issues with API 101034 on PTS:\n"
-    .."!! "..COLOR_7.." [Disable Default Quick Slot Button] "..COLOR_2.."ActionButton9 dissapeared\n"
-    .."!! "..COLOR_7.." [standard QSB UI  Shown / Hidden] "  ..COLOR_2.."ZO_QuickSlot  dissapeared\n"
+    .."!! "..COLOR_7.." [Disable Default Quick Slot Button] "..COLOR_2.."ActionButton9 disappeared\n"
+    .."!! "..COLOR_7.." [standard QSB UI  Shown / Hidden] "  ..COLOR_2.."ZO_QuickSlot  disappeared\n"
     .."!! "..COLOR_7.." [QSB slot changed in radial menu] "  ..COLOR_2.."EVENT_ACTION_SLOT_UPDATED not fired\n"
     .."!! "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n")
 
