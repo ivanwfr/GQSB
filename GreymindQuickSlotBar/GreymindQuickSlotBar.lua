@@ -3,14 +3,14 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
-v2.6.8.2 (220504) {{ {
+v2.6.8.2 (220504) {{{
 - [color="gray"]Checked with Update 34 High Isle (8.0.1): (API 101034)[/color]
 
   PTS(API 101034) NOT WORKING
-  FIXME: [color="magenta"] * [QSB slot changed in radial menu] trying [SlotUpdated callback] when [EVENT_ACTION_SLOT_UPDATED] is not fired[/color]
   FIXME: [Disable Default Quick Slot Button] [ActionButton9] disappeared
-  FIXED: [color="red"    ]   2 - [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] extra argument for some functions
-  FIXED: [color="orange" ]   3 - [standard QSB UI  Shown / Hidden  ] ZO_QuickSlot replaced by QUICKSLOT_KEYBOARD
+  FIXED: [color="brown"  ] 1 [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] extra argument for some functions
+  FIXED: [color="red"    ] 2 [standard QSB UI  Shown / Hidden  ] ZO_QuickSlot replaced by QUICKSLOT_KEYBOARD
+  FIXED: [color="orange" ] 3 [QSB slot changed in radial menu] [EVENT_ACTION_SLOT_UPDATED] replaced by [EVENT_HOTBAR_SLOT_UPDATED]
 }}}
 v2.6.8.1 (220306) {{{
 - [color="gray"]Checked with Update 33 Deadlands (7.2.10): (API 101033)[/color]
@@ -262,7 +262,7 @@ v2.4.8   191102 {{{
 local DEBUG          = false
 local DEBUG_ITEM     = false
 local DEBUG_EQUIP    = false
-local DEBUG_EVENT    = true--//FIXME false
+local DEBUG_EVENT    = false
 local DEBUG_TASK     = false
 local DEBUG_STATION  = false
 local DEBUG_STATUS   = false
@@ -516,7 +516,7 @@ local QSB = {
     VERSION                             = "v2.6.8.2", -- 220504 previous: 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     UPDATE                              = "High Isle - 34 (8.0.1)",
     API                                 = "101034",
-    TRACE_TAG                           = "(220504:17h:21)",
+    TRACE_TAG                           = "(220504:23h:09)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -5087,6 +5087,19 @@ D("RegisterEventHandlers()")
         handle_SlotUpdated("ACTION_SLOT_UPDATED", slotIndex)
     end)
     --}}}
+    -- .1 Refresh .. HOTBAR_SLOT_UPDATED --{{{
+    -- update from quickslot wheel
+    EVENT_MANAGER:RegisterForEvent("GQSB.HOTBAR_SLOT_UPDATED"
+    , EVENT_HOTBAR_SLOT_UPDATED
+    , function(event, slotIndex, hotbarCategory)
+        D_EVENT(COLOR_2.."HOTBAR_SLOT_UPDATED")
+        D_ITEM(COLOR_8..              ".event=["..tostring( event                  ).."]")
+        D_ITEM(COLOR_8..          ".slotIndex=["..tostring(  slotIndex             ).."]")
+        D_ITEM(COLOR_8..     ".hotbarCategory=["..tostring(  hotbarCategory        ).."]")
+
+        handle_SlotUpdated("HOTBAR_SLOT_UPDATED", slotIndex)
+    end)
+    --}}}
     -- .1 Refresh .. SlotUpdated --{{{
     -- update from quickslot wheel
     ACTION_BAR_ASSIGNMENT_MANAGER:RegisterCallback("SlotUpdated"
@@ -5806,28 +5819,6 @@ function OnSlashCommand(arg)
         -- API 101034 WHEEL_LOOKUPTABLE = {  4,  3,  2,  1, 8,  7,  6,  5 }
         -- API 101033 WHEEL_LOOKUPTABLE = { 12, 11, 10, 9, 16, 15, 14, 13 }
 
-        -- $APROJECTS/GITHUB/ESO/pts8.0/actionbarassignmentmanager.lua
-        -- /gqsb lua ZO_ActionBarAssignmentManager_Hotbar:Initialize(10)
-        -- /gqsb lua ACTION_BAR_ASSIGNMENT_MANAGER:FireCallbacks("SlotUpdated", 10, 4, true)
-        -- /gqsb lua CallSecureProtected("ClearSlot", 4, 10)
-
---[[ actionbarassignmentmanager.lua {{{
-
-:!start /b explorer "https://www.esoui.com/forums/showthread.php?p=45812\#post45812"
-
-:cd $APROJECTS/GITHUB/esoui
-:r !git branch -a
-:r !git switch pts7.2
-:r !git switch pts7.3
-:r !git switch pts8.0
-:r !git branch
-
-:new       $APROJECTS/GITHUB/esoui/esoui/ingame/skills/actionbarassignmentmanager.lua
-:below new $APROJECTS/GITHUB/ESO/pts8.0/actionbarassignmentmanager.lua|diffthis|set cursorline!|set cursorcolumn!
-:below new $APROJECTS/GITHUB/ESO/pts7.2/actionbarassignmentmanager.lua|diffthis|set cursorline!|set cursorcolumn!
-
-}}}--]]
-
         lua_expr = string.match(arg, "^%s*lua%s*(.*)")
         if lua_expr then
 
@@ -5999,7 +5990,6 @@ function d_signature()
     d("\r\n!! GQSB"..COLOR_C.." "..QSB.VERSION.." "..COLOR_7.." "..QSB.UPDATE.." (API "..QSB.API..") ("..QSB.TRACE_TAG..")|r\n"
     .."!! Issues with API 101034 on PTS:\n"
     .."!! "..COLOR_7.." [Disable Default Quick Slot Button] "..COLOR_2.."ActionButton9 disappeared\n"
-    .."!! "..COLOR_7.." [QSB slot changed in radial menu] trying [SlotUpdated callback] when [EVENT_ACTION_SLOT_UPDATED] is not fired\n"
     .."!! "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n")
 
     if(QSB.Settings.ChatMute) then d(COLOR_7.." GQSB: ChatMute is ON") end
