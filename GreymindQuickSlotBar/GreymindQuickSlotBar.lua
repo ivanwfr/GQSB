@@ -3,16 +3,14 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
-v2.6.8.2 (220501) {{{
+v2.6.8.2 (220504) {{ {
 - [color="gray"]Checked with Update 34 High Isle (8.0.1): (API 101034)[/color]
 
   PTS(API 101034) NOT WORKING
+  FIXME: [color="magenta"] * [QSB slot changed in radial menu] trying [SlotUpdated callback] when [EVENT_ACTION_SLOT_UPDATED] is not fired[/color]
   FIXME: [Disable Default Quick Slot Button] [ActionButton9] disappeared
-  FIXME: [standard QSB UI  Shown / Hidden  ] [ZO_QuickSlot]  disappeared
-  FIXME: [QSB slot changed in radial menu  ] [EVENT_ACTION_SLOT_UPDATED] not fired by ZO_RadialMenu
-
-  FIXED: [HOTBAR_CATEGORY_QUICKSLOT_WHEEL  ] extra argument for some functions
-
+  FIXED: [color="red"    ]   2 - [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] extra argument for some functions
+  FIXED: [color="orange" ]   3 - [standard QSB UI  Shown / Hidden  ] ZO_QuickSlot replaced by QUICKSLOT_KEYBOARD
 }}}
 v2.6.8.1 (220306) {{{
 - [color="gray"]Checked with Update 33 Deadlands (7.2.10): (API 101033)[/color]
@@ -264,7 +262,7 @@ v2.4.8   191102 {{{
 local DEBUG          = false
 local DEBUG_ITEM     = false
 local DEBUG_EQUIP    = false
-local DEBUG_EVENT    = false
+local DEBUG_EVENT    = true--//FIXME false
 local DEBUG_TASK     = false
 local DEBUG_STATION  = false
 local DEBUG_STATUS   = false
@@ -336,6 +334,7 @@ local ZO_CALLLATER_DELAY_TASKS        =   20 -- clear_or_equip
 local ZO_COOL_DOWN_DELAY_TASKS        = 7000 -- tasks_cooldown_begin tasks_cooldown_end
 local ZO_CALLLATER_DELAY_ONMOUSEEXIT  =  100 -- Hide Handles
 local ZO_MENU_SHOW_HIDE_DELAY         =  500
+local ZO_CALLLATER_SLOTUPDATED_DELAY  = 1000
 
 -- QUICK SLOT WHEEL NUMBERING
 local WHEEL_LOOKUPTABLE       -- f(Initialize_API_VERSION)
@@ -514,10 +513,10 @@ local Loaded_Preset
 local QSB = {
 
     NAME                                = "GreymindQuickSlotBar",
-    VERSION                             = "v2.6.8.2", -- 220501 previous: 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    VERSION                             = "v2.6.8.2", -- 220504 previous: 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     UPDATE                              = "High Isle - 34 (8.0.1)",
     API                                 = "101034",
-    TRACE_TAG                           = "(220501:23h:53)",
+    TRACE_TAG                           = "(220504:17h:21)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -754,6 +753,9 @@ local MyIsValidQuestItemForSlot
 local MyClearSlot
 local MySelectSlotItem
 local MySelectSlotSimpleAction
+
+local My_qsb_wheel_showing
+
 --}}}
 --{{{
 local BlockBarVisibility            = false
@@ -762,6 +764,7 @@ local Hide_pending                  = false
 local PlaySoundAlert_pending        = false
 local PlaySoundSlotted_pending      = false
 local Rebuild_LibAddonMenu_pending  = false
+local SlotUpdated_pending           = false
 local Reticle_isHidden              = false
 local SelectNextAuto_pending        = false
 
@@ -899,7 +902,7 @@ c("\r\n".._caller..":")
     local interface_showing =     Reticle_isHidden
     local inventory_showing = not ZO_PlayerInventory:IsHidden()
     local qsb_panel_showing = not QSB.Panel:IsHidden()
-    local qsb_wheel_showing = ZO_QuickSlot and not ZO_QuickSlot:IsHidden()
+    local qsb_wheel_showing = My_qsb_wheel_showing()
 
     if(    qsb_panel_showing
         or interface_showing
@@ -1139,7 +1142,7 @@ end
 --}}}
 -- SaveCurrentPreset {{{
 function SaveCurrentPreset(_caller)
-    local log_this = DEBUG_EQUIP
+local log_this = DEBUG_EQUIP
 
     local currentPreset = QSB.Settings.PresetName
 
@@ -1531,14 +1534,16 @@ end
 --}}}
 -- tasks_cooldown_end {{{
 function tasks_cooldown_end()
+local log_this = DEBUG_TASK or DEBUG_EVENT
+
     tasks_cooldown_inprogress = false
 
     if(#tasks_loaded > 0) then
-if(DEBUG_TASK) then c(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_4.."POSTING "..#tasks_loaded.." LOADED TASKS") end
+if(log_this) then c(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_4.."POSTING "..#tasks_loaded.." LOADED TASKS") end
 
         tasks_post(ZO_CALLLATER_DELAY_TASKS)
     else
-if(DEBUG_TASK) then c(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_8.."NO MORE LOADED TASKS") end
+if(log_this) then c(COLOR_7.."TASK .. COOLDOWN END .. "..COLOR_8.."NO MORE LOADED TASKS") end
 
         Refresh("TASKS COOLDOWN END")
     end
@@ -1663,10 +1668,14 @@ D_ITEM(COLOR_6.."populate_an_empty_SlotItemTable:\n"..COLOR_8..msg.."|r")
 end
 --}}}
 -- handle_ACTION_SLOT_UPDATED {{{
-function handle_ACTION_SLOT_UPDATED(bNum)
-D_ITEM(COLOR_3.."handle_ACTION_SLOT_UPDATED(bNum="..bNum.."):|r")
+function handle_ACTION_SLOT_UPDATED()
+D_EVENT(COLOR_5.."handle_ACTION_SLOT_UPDATED: RUNNING")
 
-    save_QSB_to_SlotItemTable(bNum)
+    for bNum = 1, QSB.ButtonCountMax do
+        save_QSB_to_SlotItemTable( bNum )
+    end
+
+    SlotUpdated_pending = false
 end
 --}}}
 -- save_QSB_to_SlotItemTable {{{
@@ -2209,7 +2218,7 @@ if(log_this) then c("...Refresh_handler() .. "..tostring(Refresh_last_caller)) e
     local preset_locked     =  QSB.Settings.LockThisPreset
 
     local inventory_showing = not ZO_PlayerInventory:IsHidden()
-    local qsb_wheel_showing = ZO_QuickSlot and not ZO_QuickSlot:IsHidden()
+    local qsb_wheel_showing = My_qsb_wheel_showing()
 
     --}}}
     -- BACKGROUND COLORS .. f(STATES) {{{
@@ -2791,7 +2800,7 @@ function ShowOrHide()
     local               vis =     QSB.Settings.Visibility
     local qsb_panel_showing = not QSB.Panel:IsHidden()
     local inventory_showing = not ZO_PlayerInventory:IsHidden()
-    local qsb_wheel_showing = ZO_QuickSlot and not ZO_QuickSlot:IsHidden()
+    local qsb_wheel_showing = My_qsb_wheel_showing()
     local          crafting =     ZO_CraftingUtils_IsCraftingWindowOpen()
     local           digging =     ANTIQUITY_DIGGING_ACTIONS_FRAGMENT:IsShowing()
     local           scrying =     IsScryingInProgress()
@@ -2920,7 +2929,7 @@ function ShowOrHideUIHandles_handler()
 
     -- SHOW UI HANDLES WHEN:
     local  qsb_panel_showing = not QSB.Panel:IsHidden()
-    local  qsb_wheel_showing = ZO_QuickSlot and not ZO_QuickSlot:IsHidden()
+    local  qsb_wheel_showing = My_qsb_wheel_showing()
     local  preset_pending    = Get_preset_pending_IN_COMBAT()
     local  visibility_forced = ForceBarVisibility and not BlockBarVisibility -- precedence!
 
@@ -3781,7 +3790,7 @@ local                     API_VERSION
 local function Initialize_API_VERSION()
 
     API_VERSION = GetAPIVersion()
-c_log("("..API_VERSION..")")
+c_log("Initialize_API_VERSION "..API_VERSION..":")
 
     WHEEL_LOOKUPTABLE = (API_VERSION < 101034)
     and                 { 12, 11, 10, 9, 16, 15, 14, 13 }
@@ -3815,6 +3824,7 @@ c_log("Initialize("..addOnName..")")
 
         zo_callLater(RegisterEventHandlers, 500)
 
+if(DEBUG_TOOLTIP) then SetChatMax( true) end
 end
 --}}}
 -- Load_ZO_SavedVars {{{
@@ -4010,6 +4020,17 @@ function MySelectSlotSimpleAction(actionType,itemId,slotIndex)
         CallSecureProtected("SelectSlotSimpleAction", actionType                             , itemId                         , slotIndex                            , HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
 --                           SelectSlotSimpleAction (_actionType_                            , _actionId_                     , _actionSlotIndex_                    , _hotbarCategory_)
     end
+end
+--}}}
+
+-- QUICKSLOT
+-- My_qsb_wheel_showing {{{
+function My_qsb_wheel_showing()
+    local qsb_wheel_showing
+    =  (ZO_QuickSlot       and not       ZO_QuickSlot:IsHidden()            )
+    or (QUICKSLOT_KEYBOARD and     QUICKSLOT_KEYBOARD:AreQuickSlotsShowing())
+
+    return qsb_wheel_showing
 end
 --}}}
 --}}}
@@ -5026,80 +5047,56 @@ end
 --}}}
 
 -- EVENTS
+-- handle_SlotUpdated {{{
+local function handle_SlotUpdated(_caller,slotIndex)
+D_ITEM(COLOR_8..  "handle_SlotUpdated: "..tostring(_caller    ))
+
+    local bNum = slotIndex_to_bNum( slotIndex )
+D_ITEM(COLOR_8..          ".slotIndex=["..tostring( slotIndex ).."]")
+D_ITEM(COLOR_8..               ".bNum=["..tostring( bNum      ).."]")
+    if(bNum == 0) then return end
+
+    if(QSB_BAG_BACKPACK_UPDATE_mutex or (#tasks_loaded > 0)) then
+D_EVENT(COLOR_8..   "handle_ACTION_SLOT_UPDATED .. MUTEXED")
+
+    elseif SlotUpdated_pending then
+D_EVENT(COLOR_8..   "handle_ACTION_SLOT_UPDATED .. PENDING")
+
+    else
+D_EVENT(COLOR_4..   "handle_ACTION_SLOT_UPDATED .. CALLED")
+        SlotUpdated_pending = true
+
+        zo_callLater(handle_ACTION_SLOT_UPDATED, ZO_CALLLATER_SLOTUPDATED_DELAY)
+    end
+
+    Refresh(_caller)
+end
+--}}}
 -- RegisterEventHandlers {{{
 function RegisterEventHandlers()
 D("RegisterEventHandlers()")
+
     -- .1 Refresh .. ACTION_SLOT_UPDATED --{{{
     -- update from quickslot wheel
     EVENT_MANAGER:RegisterForEvent("GQSB.ACTION_SLOT_UPDATED"
     , EVENT_ACTION_SLOT_UPDATED
     , function(event, slotIndex)
-        D_EVENT(COLOR_1.."ACTION_SLOT_UPDATED")
-        D_ITEM(COLOR_8..              ".event=["..tostring( event                  ).."]")
-        D_ITEM(COLOR_8..          ".slotIndex=["..tostring( slotIndex              ).."]")
-
         -- Quick Slot Bar item added or removed
         -- Or weapons swapped QSB.Settings.SwapBackgroundColors
 
-        local bNum = slotIndex_to_bNum( slotIndex )
-        if(bNum == 0) then return end
-
-        if(QSB_BAG_BACKPACK_UPDATE_mutex or (#tasks_loaded > 0)) then
-            D_ITEM(COLOR_2.."handle_ACTION_SLOT_UPDATED(bNum "..bNum..") .. MUTEXED")
-
-        else
-            D_ITEM(COLOR_5.."handle_ACTION_SLOT_UPDATED(bNum "..bNum..") .. CALLED" )
-
-            handle_ACTION_SLOT_UPDATED(bNum)
-        end
-
-        Refresh("ACTION_SLOT_UPDATED")
+        handle_SlotUpdated("ACTION_SLOT_UPDATED", slotIndex)
     end)
     --}}}
---XXX
---  -- .1 Refresh .. ACTION_SLOT_STATE_UPDATED --{{{
---  EVENT_MANAGER:RegisterForEvent("GQSB.ACTION_SLOT_STATE_UPDATED"
---  , EVENT_ACTION_SLOT_STATE_UPDATED
---  , function(event, arg1, arg2, arg3, arg4)
---      D_EVENT(COLOR_1.."ACTION_SLOT_STATE_UPDATED")
---      D_ITEM(COLOR_8..              ".event=["..tostring( event                  ).."]")
---      D_ITEM(COLOR_8..               ".arg1=["..tostring(  arg1                  ).."]")
---      D_ITEM(COLOR_8..               ".arg2=["..tostring(  arg2                  ).."]")
---      D_ITEM(COLOR_8..               ".arg3=["..tostring(  arg3                  ).."]")
---      D_ITEM(COLOR_8..               ".arg4=["..tostring(  arg4                  ).."]")
+    -- .1 Refresh .. SlotUpdated --{{{
+    -- update from quickslot wheel
+    ACTION_BAR_ASSIGNMENT_MANAGER:RegisterCallback("SlotUpdated"
+    , function(hotbarCategory, actionSlotIndex, isChangedByPlayer)
+        -- Quick Slot Bar item added or removed
+        -- Or weapons swapped QSB.Settings.SwapBackgroundColors
 
---      Refresh("ACTION_SLOT_STATE_UPDATED")
---  end)
---  --}}}
-    -- .1 Refresh .. ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED"
-    , EVENT_ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED
-    , function(event, arg1, arg2, arg3, arg4)
-        D_EVENT(COLOR_1.."ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED")
-        D_ITEM(COLOR_8..              ".event=["..tostring( event                  ).."]")
-        D_ITEM(COLOR_8..               ".arg1=["..tostring(  arg1                  ).."]")
-        D_ITEM(COLOR_8..               ".arg2=["..tostring(  arg2                  ).."]")
-        D_ITEM(COLOR_8..               ".arg3=["..tostring(  arg3                  ).."]")
-        D_ITEM(COLOR_8..               ".arg4=["..tostring(  arg4                  ).."]")
-
-        Refresh("ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED")
+        handle_SlotUpdated("SlotUpdated", actionSlotIndex)
     end)
     --}}}
-    -- .1 Refresh .. LEVEL_UPDATE --{{{
-    EVENT_MANAGER:RegisterForEvent("GQSB.LEVEL_UPDATE"
-    , EVENT_LEVEL_UPDATE
-    , function(event, arg1, arg2, arg3, arg4)
-        D_EVENT(COLOR_1.."LEVEL_UPDATE")
-        D_ITEM(COLOR_8..              ".event=["..tostring( event                  ).."]")
-        D_ITEM(COLOR_8..               ".arg1=["..tostring(  arg1                  ).."]")
-        D_ITEM(COLOR_8..               ".arg2=["..tostring(  arg2                  ).."]")
-        D_ITEM(COLOR_8..               ".arg3=["..tostring(  arg3                  ).."]")
-        D_ITEM(COLOR_8..               ".arg4=["..tostring(  arg4                  ).."]")
-
-        Refresh("LEVEL_UPDATE")
-    end)
-    --}}}
---XXX
     -- .2 Refresh .. ITEM_SLOT_CHANGED --{{{
     EVENT_MANAGER:RegisterForEvent("GQSB.ITEM_SLOT_CHANGED"
     , EVENT_ITEM_SLOT_CHANGED
@@ -5188,20 +5185,20 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
     , function(...) -- (*bool* _hidden_)
         Reticle_isHidden = select(2,...)
         local refresh_reason
-        =  ((ZO_QuickSlot and not ZO_QuickSlot:IsHidden()       ) and "qsb_wheel_showing")
+        =  ((                             My_qsb_wheel_showing()) and "qsb_wheel_showing")
         or ((QSB.Settings.Visibility                            ) and "Settings_showing" )
         or (((vis == VIS_BLINK_CHANGES) and not Reticle_isHidden) and "have_to_blink"    )
         or ""
         D_EVENT(COLOR_6.."RETICLE_HIDDEN_UPDATE ["..(Reticle_isHidden and "HIDDEN" or "SHOWING").."] "..refresh_reason)
 
-        -- SAVING PROFILE SLOTS WHEN UI PANELS ALL HIDEN //FIXME
-        if(API_VERSION >= 101034) and not Reticle_isHidden then
-            if not QSB.EVENT_ACTION_SLOT_UPDATED_warned then
-                QSB.EVENT_ACTION_SLOT_UPDATED_warned = true
-c(COLOR_7.."GQSB: Saving slots as a workaround for missing "..COLOR_2.."EVENT_ACTION_SLOT_UPDATED|r in API "..API_VERSION.."")
-            end
-            for bNum = 1, QSB.ButtonCountMax do handle_ACTION_SLOT_UPDATED(bNum) end
-        end
+--      -- SAVING PROFILE SLOTS WHEN UI PANELS ALL HIDDEN
+--      if(API_VERSION >= 101034) and not Reticle_isHidden then
+--          if not QSB.EVENT_ACTION_SLOT_UPDATED_warned then
+--              QSB.EVENT_ACTION_SLOT_UPDATED_warned = true
+--c(COLOR_7.."GQSB: Saving slots as a workaround for missing "..COLOR_2.."EVENT_ACTION_SLOT_UPDATED|r in API "..API_VERSION.."")
+--          end
+--          handle_ACTION_SLOT_UPDATED()
+--      end
 
         if(refresh_reason ~= "") then
             Refresh("RETICLE_HIDDEN_UPDATE: "..refresh_reason, ZO_MENU_SHOW_HIDE_DELAY)
@@ -5572,15 +5569,7 @@ function OnSlashCommand(arg)
     elseif(arg == "p4"         ) then presetName = PRESETNAMES[4]
     elseif(arg == "p5"         ) then presetName = PRESETNAMES[5]
 
-    elseif(arg == "b"          ) then for bNum = 1, QSB.ButtonCountMax do handle_ACTION_SLOT_UPDATED(bNum) end ui_may_have_changed = true
-    elseif(arg == "b1"         ) then handle_ACTION_SLOT_UPDATED(1); ui_may_have_changed = true
-    elseif(arg == "b2"         ) then handle_ACTION_SLOT_UPDATED(2); ui_may_have_changed = true
-    elseif(arg == "b3"         ) then handle_ACTION_SLOT_UPDATED(3); ui_may_have_changed = true
-    elseif(arg == "b4"         ) then handle_ACTION_SLOT_UPDATED(4); ui_may_have_changed = true
-    elseif(arg == "b5"         ) then handle_ACTION_SLOT_UPDATED(5); ui_may_have_changed = true
-    elseif(arg == "b6"         ) then handle_ACTION_SLOT_UPDATED(6); ui_may_have_changed = true
-    elseif(arg == "b7"         ) then handle_ACTION_SLOT_UPDATED(7); ui_may_have_changed = true
-    elseif(arg == "b8"         ) then handle_ACTION_SLOT_UPDATED(8); ui_may_have_changed = true
+    elseif(arg == "b"          ) then handle_ACTION_SLOT_UPDATED()
 
     elseif(arg == "kbclr"      ) then ClearKeyBindings()
     elseif(arg == "kbmod"      ) then ApplyKeyBindingsModifier(); ApplyKeyBindingsModifier_SWAPS()
@@ -5790,11 +5779,54 @@ function OnSlashCommand(arg)
         -- /gqsb lua BUFF_DEBUFF_FRAGMENT
 
         ------------ API 101034
-        -- /gqsb lua GetSlotItemCount(slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
-        -- /gqsb lua GetSlotTexture  (slotIndex, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
-        --  .....bNum:  1   2   3   4   5   6   7   8
-        --  slotIndex:  4,  3,  2,  1,  8,  7,  6,  5 (since API 101034) (220501)
-        --  slotIndex: 12, 11, 10,  9, 16, 15, 14, 13 (before)
+        -- $APROJECTS/GITHUB/ESO/pts8.0/actionbar.lua
+        -- /gqsb lua ZO_ActionBar_GetButton(UNUSED, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+
+        -- $APROJECTS/GITHUB/ESO/pts8.0/assignableutilitywheel_shared.lua
+        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:Activate()
+        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:CreateSlots()
+        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:CycleHotbarCategory()
+        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:Deactivate()
+        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:GetHotbarCategory()
+        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:GetNumSlotted()
+        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:RefreshHotbarCategory()
+        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:UpdateAllSlots()
+
+        -- $APROJECTS/GITHUB/ESO/pts8.0/actionbarassignmentmanager.lua
+
+        -- $APROJECTS/GITHUB/ESO/pts8.0/ESOUIDocumentation.txt
+        -- /gqsb lua GetSlotName(1)
+        -- /gqsb lua GetSlotName(1, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+
+        -- $APROJECTS/GITHUB/ESO/pts8.0/inventoryslot.lua
+        -- /gqsb lua   QUICKSLOT_WINDOW:AreQuickSlotsShowing()
+        -- /gqsb lua QUICKSLOT_KEYBOARD:AreQuickSlotsShowing()
+
+        -- /gqsb lua HOTBAR_CATEGORY_QUICKSLOT_WHEEL -- API 101034 ...return 10
+        -- API 101034 WHEEL_LOOKUPTABLE = {  4,  3,  2,  1, 8,  7,  6,  5 }
+        -- API 101033 WHEEL_LOOKUPTABLE = { 12, 11, 10, 9, 16, 15, 14, 13 }
+
+        -- $APROJECTS/GITHUB/ESO/pts8.0/actionbarassignmentmanager.lua
+        -- /gqsb lua ZO_ActionBarAssignmentManager_Hotbar:Initialize(10)
+        -- /gqsb lua ACTION_BAR_ASSIGNMENT_MANAGER:FireCallbacks("SlotUpdated", 10, 4, true)
+        -- /gqsb lua CallSecureProtected("ClearSlot", 4, 10)
+
+--[[ actionbarassignmentmanager.lua {{{
+
+:!start /b explorer "https://www.esoui.com/forums/showthread.php?p=45812\#post45812"
+
+:cd $APROJECTS/GITHUB/esoui
+:r !git branch -a
+:r !git switch pts7.2
+:r !git switch pts7.3
+:r !git switch pts8.0
+:r !git branch
+
+:new       $APROJECTS/GITHUB/esoui/esoui/ingame/skills/actionbarassignmentmanager.lua
+:below new $APROJECTS/GITHUB/ESO/pts8.0/actionbarassignmentmanager.lua|diffthis|set cursorline!|set cursorcolumn!
+:below new $APROJECTS/GITHUB/ESO/pts7.2/actionbarassignmentmanager.lua|diffthis|set cursorline!|set cursorcolumn!
+
+}}}--]]
 
         lua_expr = string.match(arg, "^%s*lua%s*(.*)")
         if lua_expr then
@@ -5963,20 +5995,15 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
 end
 --}}}
 
--- PUB
--- d_signature {{{
 function d_signature()
-
     d("\r\n!! GQSB"..COLOR_C.." "..QSB.VERSION.." "..COLOR_7.." "..QSB.UPDATE.." (API "..QSB.API..") ("..QSB.TRACE_TAG..")|r\n"
     .."!! Issues with API 101034 on PTS:\n"
     .."!! "..COLOR_7.." [Disable Default Quick Slot Button] "..COLOR_2.."ActionButton9 disappeared\n"
-    .."!! "..COLOR_7.." [standard QSB UI  Shown / Hidden] "  ..COLOR_2.."ZO_QuickSlot  disappeared\n"
-    .."!! "..COLOR_7.." [QSB slot changed in radial menu] "  ..COLOR_2.."EVENT_ACTION_SLOT_UPDATED not fired\n"
+    .."!! "..COLOR_7.." [QSB slot changed in radial menu] trying [SlotUpdated callback] when [EVENT_ACTION_SLOT_UPDATED] is not fired\n"
     .."!! "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n")
 
     if(QSB.Settings.ChatMute) then d(COLOR_7.." GQSB: ChatMute is ON") end
 end
---}}}
 GreymindQuickSlotBar = QSB
 EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, Initialize)
 
@@ -5993,6 +6020,7 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, I
 :!start /b explorer "https://www.elderscrollsonline.com/en-us/news"
 :!start /b explorer "https://www.esoui.com/forums/showthread.php?t=9923"
 
+:!start /b explorer "https://wiki.esoui.com/Globals"
 :!start /b explorer "https://esoapi.uesp.net/101034"
 :!start /b explorer "https://wiki.esoui.com/APIVersion"
 
@@ -6005,5 +6033,14 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, I
 :e SavedVariables/LibDebugLogger.lua
 
 :!start /b explorer "https://www.esoui.com/downloads/fileinfo.php?id=258\#comments"
+
+"PTS800
+:new|n GreymindQuickSlotBar.lua PTS800/*.lua
+
+/\w*BAR\w*_MANAGER
+/ACTION_BAR_ASSIGNMENT_MANAGER
+/EVENT_MANAGER
+/WINDOW_MANAGER
+
 --]]--}}}
 
