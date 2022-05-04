@@ -3,14 +3,21 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.9   (220505) {{{
+- [color="gray"]Checked with Update 34 High Isle (8.0.1): (API 101034)[/color]
+  [color="brown"  ] 1 [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] extra argument for some functions
+  [color="red"    ] 2 [standard QSB UI  Shown / Hidden  ] [ZO_QuickSlot] replaced by [QUICKSLOT_KEYBOARD]
+  [color="orange" ] 3 [QSB slot changed in radial menu] [EVENT_ACTION_SLOT_UPDATED] replaced by [EVENT_HOTBAR_SLOT_UPDATED]
+  [color="yellow" ] 4 [Disable Default Quick Slot Button] [ActionButton9] replaced by [QuickslotButton]
+}}}
 v2.6.8.2 (220504) {{{
 - [color="gray"]Checked with Update 34 High Isle (8.0.1): (API 101034)[/color]
 
   PTS(API 101034) NOT WORKING
-  FIXME: [Disable Default Quick Slot Button] [ActionButton9] disappeared
   FIXED: [color="brown"  ] 1 [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] extra argument for some functions
   FIXED: [color="red"    ] 2 [standard QSB UI  Shown / Hidden  ] ZO_QuickSlot replaced by QUICKSLOT_KEYBOARD
   FIXED: [color="orange" ] 3 [QSB slot changed in radial menu] [EVENT_ACTION_SLOT_UPDATED] replaced by [EVENT_HOTBAR_SLOT_UPDATED]
+  FIXED: [color="yellow" ] 4 [Disable Default Quick Slot Button] [ActionButton9] replaced by [QuickslotButton]
 }}}
 v2.6.8.1 (220306) {{{
 - [color="gray"]Checked with Update 33 Deadlands (7.2.10): (API 101033)[/color]
@@ -513,10 +520,10 @@ local Loaded_Preset
 local QSB = {
 
     NAME                                = "GreymindQuickSlotBar",
-    VERSION                             = "v2.6.8.2", -- 220504 previous: 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
-    UPDATE                              = "High Isle - 34 (8.0.1)",
+    VERSION                             = "v2.6.9"  , -- 220504 previous: 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    UPDATE                              = "High Isle - 34 (8.0)",
     API                                 = "101034",
-    TRACE_TAG                           = "(220504:23h:09)",
+    TRACE_TAG                           = "(220505:01h:18)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -724,7 +731,7 @@ local getItem_normalized_link
 local getItem_slot_from_link
 local getItem_slot_from_name
 local getItem_tooltip
-local handle_ACTION_SLOT_UPDATED
+local handle_save_QSB_to_SlotItemTable
 local is_SlotItemTable_empty
 local is_same_item_link
 local is_same_slotted_item
@@ -1667,9 +1674,9 @@ D_ITEM(COLOR_6.."populate_an_empty_SlotItemTable:\n"..COLOR_8..msg.."|r")
 
 end
 --}}}
--- handle_ACTION_SLOT_UPDATED {{{
-function handle_ACTION_SLOT_UPDATED()
-D_EVENT(COLOR_5.."handle_ACTION_SLOT_UPDATED: RUNNING")
+-- handle_save_QSB_to_SlotItemTable {{{
+function handle_save_QSB_to_SlotItemTable()
+D_EVENT(COLOR_5.."handle_save_QSB_to_SlotItemTable: RUNNING")
 
     for bNum = 1, QSB.ButtonCountMax do
         save_QSB_to_SlotItemTable( bNum )
@@ -2683,32 +2690,20 @@ end
 end
 --}}}
 -- GameActionButtonHideHandler {{{
---cal    NO_ActionButton9_reported_once = false
-
 function GameActionButtonHideHandler(_caller)
 
-    if not ActionButton9 then
---      if not NO_ActionButton9_reported_once then
---      i   c_log(COLOR_2.." GQSB: API "..(API_VERSION or GetAPIVersion()).." removed access to [ActionButton9]")
---          NO_ActionButton9_reported_once = true
---      end
-        return
-    end
+    local button = ActionButton9 or QuickslotButton -- before or since API_101034
 
     if QSB.Settings.GameActionButtonHide then
-
-        if not ActionButton9:IsHidden() then
-D(COLOR_6.."- @@@ HIDING Game Action Slot Button"..COLOR_3.." _caller=[".. _caller .."]|r")  --(160218)
-            ActionButton9:SetHidden(true)
+        if not button:IsHidden() then
+            D(COLOR_6.."- @@@ HIDING Game Action Slot Button"..COLOR_3.." _caller=[".. _caller .."]|r")  --(160218)
+            button:SetHidden(true)
         end
-
     else
-
-            if ActionButton9:IsHidden() then
-D(COLOR_5.."- @@@ RESTORING Game Action Slot Button"..COLOR_3.." _caller=[".. _caller .."]|r")  --(160218)
-                ActionButton9:SetHidden(false)
-            end
-
+        if button:IsHidden() then
+            D(COLOR_5.."- @@@ RESTORING Game Action Slot Button"..COLOR_3.." _caller=[".. _caller .."]|r")  --(160218)
+            button:SetHidden(false)
+        end
     end
 
 end
@@ -4327,12 +4322,8 @@ D("BuildSettingsMenu()")
             return QSB.Settings.GameActionButtonHide
         end,
         setFunc     = function(value)
-            if not ActionButton9 then
-c_log(COLOR_2.." GQSB: API "..(API_VERSION or GetAPIVersion()).." removed access to [ActionButton9]")
-            else
-                QSB.Settings.GameActionButtonHide = value
-                GameActionButtonHideHandler("Settings.control")
-            end
+            QSB.Settings.GameActionButtonHide = value
+            GameActionButtonHideHandler("Settings.control")
 
         end,
         width       = "full",
@@ -5057,16 +5048,16 @@ D_ITEM(COLOR_8..               ".bNum=["..tostring( bNum      ).."]")
     if(bNum == 0) then return end
 
     if(QSB_BAG_BACKPACK_UPDATE_mutex or (#tasks_loaded > 0)) then
-D_EVENT(COLOR_8..   "handle_ACTION_SLOT_UPDATED .. MUTEXED")
+D_EVENT(COLOR_8..   "handle_save_QSB_to_SlotItemTable .. MUTEXED")
 
     elseif SlotUpdated_pending then
-D_EVENT(COLOR_8..   "handle_ACTION_SLOT_UPDATED .. PENDING")
+D_EVENT(COLOR_8..   "handle_save_QSB_to_SlotItemTable .. PENDING")
 
     else
-D_EVENT(COLOR_4..   "handle_ACTION_SLOT_UPDATED .. CALLED")
+D_EVENT(COLOR_4..   "handle_save_QSB_to_SlotItemTable .. CALLED")
         SlotUpdated_pending = true
 
-        zo_callLater(handle_ACTION_SLOT_UPDATED, ZO_CALLLATER_SLOTUPDATED_DELAY)
+        zo_callLater(handle_save_QSB_to_SlotItemTable, ZO_CALLLATER_SLOTUPDATED_DELAY)
     end
 
     Refresh(_caller)
@@ -5075,7 +5066,6 @@ end
 -- RegisterEventHandlers {{{
 function RegisterEventHandlers()
 D("RegisterEventHandlers()")
-
     -- .1 Refresh .. ACTION_SLOT_UPDATED --{{{
     -- update from quickslot wheel
     EVENT_MANAGER:RegisterForEvent("GQSB.ACTION_SLOT_UPDATED"
@@ -5093,9 +5083,6 @@ D("RegisterEventHandlers()")
     , EVENT_HOTBAR_SLOT_UPDATED
     , function(event, slotIndex, hotbarCategory)
         D_EVENT(COLOR_2.."HOTBAR_SLOT_UPDATED")
-        D_ITEM(COLOR_8..              ".event=["..tostring( event                  ).."]")
-        D_ITEM(COLOR_8..          ".slotIndex=["..tostring(  slotIndex             ).."]")
-        D_ITEM(COLOR_8..     ".hotbarCategory=["..tostring(  hotbarCategory        ).."]")
 
         handle_SlotUpdated("HOTBAR_SLOT_UPDATED", slotIndex)
     end)
@@ -5104,8 +5091,6 @@ D("RegisterEventHandlers()")
     -- update from quickslot wheel
     ACTION_BAR_ASSIGNMENT_MANAGER:RegisterCallback("SlotUpdated"
     , function(hotbarCategory, actionSlotIndex, isChangedByPlayer)
-        -- Quick Slot Bar item added or removed
-        -- Or weapons swapped QSB.Settings.SwapBackgroundColors
 
         handle_SlotUpdated("SlotUpdated", actionSlotIndex)
     end)
@@ -5203,15 +5188,6 @@ if(DEBUG_EQUIP) then c(COLOR_5.."ITEM UPDATED: [ID "..bagIndex.."] [Level "..tos
         or (((vis == VIS_BLINK_CHANGES) and not Reticle_isHidden) and "have_to_blink"    )
         or ""
         D_EVENT(COLOR_6.."RETICLE_HIDDEN_UPDATE ["..(Reticle_isHidden and "HIDDEN" or "SHOWING").."] "..refresh_reason)
-
---      -- SAVING PROFILE SLOTS WHEN UI PANELS ALL HIDDEN
---      if(API_VERSION >= 101034) and not Reticle_isHidden then
---          if not QSB.EVENT_ACTION_SLOT_UPDATED_warned then
---              QSB.EVENT_ACTION_SLOT_UPDATED_warned = true
---c(COLOR_7.."GQSB: Saving slots as a workaround for missing "..COLOR_2.."EVENT_ACTION_SLOT_UPDATED|r in API "..API_VERSION.."")
---          end
---          handle_ACTION_SLOT_UPDATED()
---      end
 
         if(refresh_reason ~= "") then
             Refresh("RETICLE_HIDDEN_UPDATE: "..refresh_reason, ZO_MENU_SHOW_HIDE_DELAY)
@@ -5582,7 +5558,7 @@ function OnSlashCommand(arg)
     elseif(arg == "p4"         ) then presetName = PRESETNAMES[4]
     elseif(arg == "p5"         ) then presetName = PRESETNAMES[5]
 
-    elseif(arg == "b"          ) then handle_ACTION_SLOT_UPDATED()
+    elseif(arg == "b"          ) then handle_save_QSB_to_SlotItemTable()
 
     elseif(arg == "kbclr"      ) then ClearKeyBindings()
     elseif(arg == "kbmod"      ) then ApplyKeyBindingsModifier(); ApplyKeyBindingsModifier_SWAPS()
@@ -5988,8 +5964,6 @@ end
 
 function d_signature()
     d("\r\n!! GQSB"..COLOR_C.." "..QSB.VERSION.." "..COLOR_7.." "..QSB.UPDATE.." (API "..QSB.API..") ("..QSB.TRACE_TAG..")|r\n"
-    .."!! Issues with API 101034 on PTS:\n"
-    .."!! "..COLOR_7.." [Disable Default Quick Slot Button] "..COLOR_2.."ActionButton9 disappeared\n"
     .."!! "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n")
 
     if(QSB.Settings.ChatMute) then d(COLOR_7.." GQSB: ChatMute is ON") end
