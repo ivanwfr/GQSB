@@ -3,21 +3,24 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
-v2.6.9   (220505) {{{
+v2.6.9   (220507) {{{
 - [color="gray"]Checked with Update 34 High Isle (8.0.1): (API 101034)[/color]
-  [color="brown"  ] 1 [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] extra argument for some functions
-  [color="red"    ] 2 [standard QSB UI  Shown / Hidden  ] [ZO_QuickSlot] replaced by [QUICKSLOT_KEYBOARD]
-  [color="orange" ] 3 [QSB slot changed in radial menu] [EVENT_ACTION_SLOT_UPDATED] replaced by [EVENT_HOTBAR_SLOT_UPDATED]
-  [color="yellow" ] 4 [Disable Default Quick Slot Button] [ActionButton9] replaced by [QuickslotButton]
+  [color="brown"  ] 1 [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] extra argument for some functions[/color]
+  [color="red"    ] 2 [standard QSB UI  Shown / Hidden  ] [ZO_QuickSlot] replaced by [QUICKSLOT_KEYBOARD][/color]
+  [color="orange" ] 3 [QSB slot changed in radial menu] [EVENT_ACTION_SLOT_UPDATED] replaced by [EVENT_HOTBAR_SLOT_UPDATED][/color]
+  [color="yellow" ] 4 [Disable Default Quick Slot Button] [ActionButton9] replaced by [QuickslotButton][/color]
+  [color="green"  ] 5 New keybinding to toggle AccountWide Settings ON-OFF[/color]
+  [color="blue"   ] 6 Buttons tooltip showing current preset, button number and Current AccountWide or Character Settings[/color]
+  [color="magenta"] 7 ChatMute and ChatMax saved as Per-Preset options (instead of OFF AT LOGGIN)[/color]
 }}}
 v2.6.8.2 (220504) {{{
 - [color="gray"]Checked with Update 34 High Isle (8.0.1): (API 101034)[/color]
 
   PTS(API 101034) NOT WORKING
-  FIXED: [color="brown"  ] 1 [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] extra argument for some functions
-  FIXED: [color="red"    ] 2 [standard QSB UI  Shown / Hidden  ] ZO_QuickSlot replaced by QUICKSLOT_KEYBOARD
-  FIXED: [color="orange" ] 3 [QSB slot changed in radial menu] [EVENT_ACTION_SLOT_UPDATED] replaced by [EVENT_HOTBAR_SLOT_UPDATED]
-  FIXED: [color="yellow" ] 4 [Disable Default Quick Slot Button] [ActionButton9] replaced by [QuickslotButton]
+  FIXED: [color="brown"  ] 1 [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] extra argument for some functions[/color]
+  FIXED: [color="red"    ] 2 [standard QSB UI  Shown / Hidden  ] ZO_QuickSlot replaced by QUICKSLOT_KEYBOARD[/color]
+  FIXED: [color="orange" ] 3 [QSB slot changed in radial menu] [EVENT_ACTION_SLOT_UPDATED] replaced by [EVENT_HOTBAR_SLOT_UPDATED][/color]
+  FIXED: [color="yellow" ] 4 [Disable Default Quick Slot Button] [ActionButton9] replaced by [QuickslotButton][/color]
 }}}
 v2.6.8.1 (220306) {{{
 - [color="gray"]Checked with Update 33 Deadlands (7.2.10): (API 101033)[/color]
@@ -326,8 +329,7 @@ local COLOR_ACTIVEWEAPONPAIR2       = { R =1  , G =0  , B =0  , A = 1.0 }
 
 -- COLORS --}}}
 -- CONSTANTS --{{{
-
--- DELAYS
+-- DELAYS {{{
 local ZO_CALLLATER_DELAY_HIDE         =  200 -- Hide
 local ZO_CALLLATER_DELAY_SHOW         =  200 -- Show
 local ZO_CALLLATER_DELAY_HANDLER      =  200 -- Show   or Hide
@@ -343,10 +345,12 @@ local ZO_CALLLATER_DELAY_ONMOUSEEXIT  =  100 -- Hide Handles
 local ZO_MENU_SHOW_HIDE_DELAY         =  500
 local ZO_CALLLATER_SLOTUPDATED_DELAY  = 1000
 
--- QUICK SLOT WHEEL NUMBERING
+--}}}
+-- QUICK SLOT WHEEL NUMBERING {{{
 local WHEEL_LOOKUPTABLE       -- f(Initialize_API_VERSION)
 
--- VISIBILITY POLICY
+--}}}
+-- VISIBILITY POLICY {{{
 local VISCUE_OFF              = "Off"
 local VISCUE_WA               = "Warn + Alert"
 local VISCUE_WAC              = "Warn + Alert + Hide Consumed"
@@ -356,14 +360,15 @@ local VIS_NEVER               = "Never"
 local VIS_ALWAYS              = "Always"
 local VIS_RETICLE             = "Reticle"
 local VIS_BLINK_CHANGES       = "Blink Changes"
-
--- TEXTURES
+--}}}
+-- TEXTURES {{{
 local BACKGROUNDTEXTURE       = "ESOUI/art/actionbar/quickslotbg.dds"
 local BASEBACKGROUNDTEXTURE   = "ESOUI/art/actionbar/abilityframe64_empty.dds"
 local BORDERTEXTURE           = "ESOUI/art/actionbar/abilityframe64_up.dds"
 local VISUALCUEBORDERTEXTURE  = "GreymindQuickSlotBar/BorderAlt.dds"
 
--- TOOLTIP
+--}}}
+-- TOOLTIP {{{
 local UNLOCKED_TT
 = "UI currently "..COLOR_2.." UNLOCKED for layout|r\n"
 .."...that's why you can't see any icons...\n"
@@ -376,8 +381,8 @@ local COOLDOWN_TT
 local PENDING_TT
 = "PRESET CHANGE "..COLOR_5.." DELAYED|r\n"
 ..COLOR_5.."requested while IN-COMBAT\n"
-
--- KEYS
+--}}}
+-- KEYS {{{
 local MOD_NONE                = "No Modifier"
 
 local MOD_ALT                 = "Alt"
@@ -391,8 +396,11 @@ local MOD_CONTROL_KEYCODE     = 4           -- KEY_CTRL
 
 local MOD_SHIFT               = "Shift"
 local MOD_SHIFT_KEYCODE       = 7           -- KEY_SHIFT
-
+--}}}
+-- KB {{{
 local KEYBINDINGS_PREFIX      = "SI_BINDING_NAME_"
+
+local KBNAME_ACCOUNT_WIDE     = COLOR_3.."Account-Wide Settings "..COLOR_7.."TOGGLE"
 
 local KBNAME_P1               = COLOR_1.."Preset P1"
 local KBNAME_P2               = COLOR_2.."Preset P2"
@@ -408,11 +416,24 @@ local KBNAME_RELOADUI         = COLOR_8.."Reload UI"
 local KBNAME_CLEARCHAT        = COLOR_8.."Clear Chat"
 local KBNAME_SETTINGS         = COLOR_9.."Settings"
 
--- CHOICE-LISTS
+--}}}
+-- CHOICE-LISTS {{{
 local ALIGNH                  = { "Off-Left", "Left", "Center", "Right"  , "Off-Right"}
 local ALIGNV                  = { "Above"   , "Top" , "Middle", "Bottom" , "Below"    }
 local PRESETNAMES             = { "P1"      , "P2"  , "P3"    , "P4"     , "P5"       }
 local NO_SOUND                = "NO SOUND"
+
+local CHATMAX_ON              = "ON"
+local CHATMAX_OFF             = "OFF"
+local CHATMAX_KEEP_CURRENT    = "KEEP CURRENT"
+local CHATMAX_STATES          = { CHATMAX_ON, CHATMAX_OFF, CHATMAX_KEEP_CURRENT }
+
+--}}}
+-- SOUNDNAMES {{{
+--[[
+:!start explorer "https://wiki.esoui.com/Sounds"
+--]]
+
 local SOUNDNAMES              = {
     NO_SOUND,
     "QUICKSLOT_USE_EMPTY",
@@ -455,11 +476,11 @@ local SOUNDNAMES              = {
     "GROUP_KICK",
     "GROUP_PROMOTE"
 }
---[[
-:!start explorer "https://wiki.esoui.com/Sounds"
---]]
-
+--}}}
+-- KEYBINDINGS {{{
 local KEYBINDINGS = {
+
+    { name=COLOR_3.."AccountWide"      , id="GREYMIND_QUICK_SLOT_BAR_ACCOUNT_WIDE"        }, -- QSB_AccountWideToggle
 
     { name=COLOR_1.."Quick Slot Item 1", id="GREYMIND_QUICK_SLOT_BAR_ITEM_1"              }, -- QSB_Item1
     { name=COLOR_2.."Quick Slot Item 2", id="GREYMIND_QUICK_SLOT_BAR_ITEM_2"              }, -- QSB_Item2
@@ -495,7 +516,7 @@ local KEYBINDINGS_SWAPS = {
     { name="Load Preset #5"            , id="SWAPS_BUTTON_5"},
 
 }
-
+--}}}
 --}}}
 -- ITEM_MSG {{{
 local ITEM_3_SAVE                    = COLOR_3.."ITEM SAVE"
@@ -523,7 +544,7 @@ local QSB = {
     VERSION                             = "v2.6.9"  , -- 220504 previous: 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     UPDATE                              = "High Isle - 34 (8.0)",
     API                                 = "101034",
-    TRACE_TAG                           = "(220505:01h:18)",
+    TRACE_TAG                           = "(220507:20h:02)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -592,7 +613,7 @@ QSB.SettingsDefaults = {
     ButtonSize                          = 36,
     ButtonsDisplayed                    = QSB.ButtonCountMax,
     GameActionButtonHide                = false,
-    ChatMax                             = false,
+    ChatMax                             = CHATMAX_KEEP_CURRENT,
     ChatMute                            = false,
     ChatWarned                          = false,
     EVENT_ACTION_SLOT_UPDATED_warned    = false,
@@ -812,7 +833,7 @@ local function c    (args,logging)
 end
 
 local function c_log(args) c(args,true) end
- 
+
 local function c_log_table(title,table)
     local s = ""
     for i=1, #table do
@@ -831,12 +852,12 @@ end
 -- D_EQUIP {{{
 local function D_EQUIP(title, bNum, itemId, itemType, itemLevel, itemLink)
 
-    c("→ "..title
-    .."\n -  bNum=[".. (              (COLOR_4.." "..tostring(bNum     )) or "").."]|r"
-    .."\n -    Id=[".. (itemId    and (COLOR_2.." "..tostring(itemId   )) or "").."]|r"
-    .."\n -  Type=[".. (itemType  and (COLOR_3.." "..tostring(itemType )) or "").."]|r"
-    .."\n - Level=[".. (itemLevel and (COLOR_6.." "..tostring(itemLevel)) or "").."]|r"
-    .."\n -  Link=[".. (itemLink  and (COLOR_5.." "..tostring(itemLink )) or "").."]|r")
+    c( COLOR_4..        "→ "..(              (tostring( title     )) or "(no title").."|r"
+    .. COLOR_4.. "  button "..(              (tostring( bNum      )) or "-"        ).."|r"
+    .. COLOR_2..     "  Id "..(itemId    and (tostring( itemId    )) or "-"        ).."|r"
+    .. COLOR_3..   "  Type "..(itemType  and (tostring( itemType  )) or "-"        ).."|r"
+    .. COLOR_6..  "  Level "..(itemLevel and (tostring( itemLevel )) or "-"        ).."|r"
+    .. COLOR_5..      "\n… "..(itemLink  and (tostring( itemLink  )) or "(no link)").."|r")
 
 end
 --}}}
@@ -1083,6 +1104,10 @@ D("...PRESET SELECTED:"..QSB.Settings.PresetName)
     --}}}
     -- UPDATE SETTINGS PANEL .. (only if it is showing) {{{
     if not QSB.Panel:IsHidden() then Rebuild_LibAddonMenu() end
+
+    --}}}
+    -- ChatMax {{{
+    SetChatMax( QSB.Settings.ChatMax )
 
     --}}}
 end
@@ -1798,7 +1823,15 @@ function getItem_tooltip(bNum)
     end
     --}}}
     -- [tt] {{{
-    local  tt = color  .. label .."|r"
+--  local  tt = color  .. label .."|r"
+
+    local presetName =                              COLOR_4.. QSB.Settings.PresetName
+
+    local       currentSettings
+    =   QSB.AccountWideSettings.SaveAccountWide and COLOR_3.. "AccountWide"
+    or                                              COLOR_6.. GetUnitName("player").." Character"
+
+    local  tt = presetName ..COLOR_8.." #"..bNum.." "..currentSettings.."\n"..color  .. label .."|r"
 
     --}}}
     -- QSB .. f(DEBUG_TOOLTIP) {{{
@@ -1807,6 +1840,7 @@ function getItem_tooltip(bNum)
         tt = tt
         .."\n"
         .."QSB"..COLOR_9..".Settings"  .."  ["..           QSB.Settings.PresetName.."]  ["..bNum       .."]|r\n"
+
         .."QSB"..COLOR_9..".itemLink"  .."|r ".. tostring( QSB.Settings.SlotItemTable[bNum].itemLink  ).. "|r\n"
         .."QSB"..COLOR_2..".itemId"    .."|r ".. tostring( QSB.Settings.SlotItemTable[bNum].itemId    ).. "|r\n"
         .."QSB"..COLOR_3..".itemType"  .."|r ".. tostring( QSB.Settings.SlotItemTable[bNum].itemType  ).. "|r\n"
@@ -2105,6 +2139,10 @@ function CopyNotNilSettingsFromTo(orig, dest)
     if( orig.SoundAlert                               ~= nil) then dest.SoundAlert                               = orig.SoundAlert                               end
     if( orig.SlotItemTable                            ~= nil) then dest.SlotItemTable                            = DeepCopy(orig.SlotItemTable)                  end
     if( orig.CurrentSlotIndex                         ~= nil) then dest.CurrentSlotIndex                         = DeepCopy(orig.CurrentSlotIndex)               end
+
+    -- (since 220507)
+    if( orig.ChatMax                                  ~= nil) then dest.ChatMax                                  = DeepCopy(orig.ChatMax)                        end
+    if( orig.ChatMute                                 ~= nil) then dest.ChatMute                                 = DeepCopy(orig.ChatMute)                       end
 
     if( orig.SlotItem.KeyBindAlignH                   ~= nil) then dest.SlotItem.KeyBindAlignH                   = orig.SlotItem.KeyBindAlignH                   end
     if( orig.SlotItem.KeyBindAlignV                   ~= nil) then dest.SlotItem.KeyBindAlignV                   = orig.SlotItem.KeyBindAlignV                   end
@@ -2764,22 +2802,34 @@ end
 --}}}
 -- SetChatMax {{{
 function SetChatMax(state)
+D("SetChatMax("..tostring(state)..")")
     if(not QSB or not QSB.Panel) then return end
+
+    -- (220507) turn garbage into a usable default
+    state = (state == CHATMAX_ON ) and CHATMAX_ON
+    or      (state == CHATMAX_OFF) and CHATMAX_OFF
+    or                                 CHATMAX_KEEP_CURRENT
 
     QSB.Settings.ChatMax = state
 
-    if(state) then
+    if(    state == CHATMAX_ON ) then
         CHAT_SYSTEM.maxContainerWidth, CHAT_SYSTEM.maxContainerHeight = GuiRoot:GetDimensions()
 
-        c("GQSB: "..COLOR_3.." ChatMax "..COLOR_5.." ON|r → "..CHAT_SYSTEM.maxContainerWidth.." x "..CHAT_SYSTEM.maxContainerHeight)
-    else
+D_EVENT("GQSB:SetChatMax "..COLOR_5.." "..state.." |r → "..CHAT_SYSTEM.maxContainerWidth.." x "..CHAT_SYSTEM.maxContainerHeight)
+    elseif(state == CHATMAX_OFF) then
         for i = 1, #CHAT_SYSTEM.containers do
             CHAT_SYSTEM:ResetContainerPositionAndSize( CHAT_SYSTEM.containers[i] )
         end
-        c("GQSB: "..COLOR_3.." ChatMax "..COLOR_8.." OFF → Resized to default")
+D_EVENT("GQSB:SetChatMax "..COLOR_8.." "..state.."|r → Resized to default")
     end
 
-    CHAT_SYSTEM:Maximize()
+    if(    state == CHATMAX_ON) or (state == CHATMAX_OFF) then
+        CHAT_SYSTEM:Maximize()
+
+    else
+D_EVENT("GQSB:SetChatMax "..COLOR_8.." "..state.."|r → Keeping chat unchanged")
+
+    end
 
     if not QSB.Panel:IsHidden() then Rebuild_LibAddonMenu() end
 
@@ -3434,6 +3484,10 @@ function QSB_P4()    SelectPreset( PRESETNAMES[4] ); loadPresetSlots(); Refresh(
 function QSB_P5()    SelectPreset( PRESETNAMES[5] ); loadPresetSlots(); Refresh("P5"); end
 
 --}}}
+-- KEYBOARD-SHORTCUTS: ACCOUNT_WIDE TOGGLE {{{
+function QSB_AccountWideToggle() Load_ZO_SavedVars(not QSB.AccountWideSettings.SaveAccountWide) end
+
+--}}}
 
 -- TRANSTITION
 -- SelectNextAuto {{{
@@ -3819,7 +3873,6 @@ c_log("Initialize("..addOnName..")")
 
         zo_callLater(RegisterEventHandlers, 500)
 
-if(DEBUG_TOOLTIP) then SetChatMax( true) end
 end
 --}}}
 -- Load_ZO_SavedVars {{{
@@ -4891,21 +4944,23 @@ D("BuildSettingsMenu()")
     --}}}
     -- ChatMax --{{{
     control = {
-        type        = "checkbox",
+        type        = "dropdown",
         reference   = "SetChatMax",
         name        = "Chat Window Unlock Max",
+        choices     = CHATMAX_STATES,
         tooltip     = "Whether to allow resizing Chat Window up to whole screen size",
         getFunc     = function()
-            return QSB.Settings.ChatMax
+            return (QSB.Settings.ChatMax == CHATMAX_ON ) and CHATMAX_ON
+            or     (QSB.Settings.ChatMax == CHATMAX_OFF) and CHATMAX_OFF
+            or                                               CHATMAX_KEEP_CURRENT
         end,
         setFunc     = function(value)
             SetChatMax(value)
         end,
         width       = "full",
-        warning     = "This is an "..COLOR_3.."all Presets|r option\n\n"
-        ..            "Switching from "..COLOR_5.."ON|r to "..COLOR_8.."OFF|r"
-        ..            " will restore the default size,"
-        ..            " but the maximun width and height"
+        warning     = "Switching this option to "..COLOR_8.."OFF|r"
+        ..            " will restore the default size\n"
+        ..COLOR_3   .."But the maximun width and height"
         ..            " will remain unlocked until logout."
     }
 
@@ -4925,10 +4980,19 @@ D("BuildSettingsMenu()")
             Rebuild_LibAddonMenu()
         end,
         width       = "full",
-        warning     = "This is an "..COLOR_3.."all Presets|r option\n\n"
-        ..            "Default is to allow somehow important messages\n"
-        ..            "to be displayed in the Main Chat window and\n"
-        ..            "your Alert and Warning Sounds to be played."
+        warning     = "Default is to allow somehow important messages"
+        ..            "to be displayed in the Main Chat window and"
+        ..            "your Alert and Warning Sounds to be played.\n"
+        .."\n"
+        ..COLOR_5..   "...will silence these sounds:\n"
+        ..            " Item Slotted\n"
+        ..            " Item Count Alert\n"
+        ..            " Preset Select: while IN COMBAT\n"
+        .."\n"
+        ..COLOR_6..   "...will remove these messages:\n"
+        ..            " Item Equip: You need a refill\n"
+        ..            " Item Equip: Slot Error\n"
+        ..            " Preset Select: while IN COMBAT\n"
     }
 
     QSB.SettingsControls[#QSB.SettingsControls+1] = control
@@ -5536,11 +5600,12 @@ function OnSlashCommand(arg)
     --}}}
     -- chatmax chatreset {{{
     elseif(arg == "chatmax"  ) then
-        SetChatMax( true)
+        local state
+        =  (QSB.Settings.ChatMax == CHATMAX_KEEP_CURRENT) and CHATMAX_ON
+        or (QSB.Settings.ChatMax == CHATMAX_ON          ) and CHATMAX_OFF
+        or                                                    CHATMAX_KEEP_CURRENT
 
-    elseif(arg == "chatreset") then
-        SetChatMax(false)
-
+        SetChatMax( state )
     --}}}
     -- hide show refresh reset p1-5 kbclr kbmod {{{
     elseif(arg == "hide"       ) then Hide_delayed("OnSlashCommand /"..arg)
@@ -5688,7 +5753,6 @@ function OnSlashCommand(arg)
     -- logs {{{
     elseif(arg == "logs"      ) then
         QSB_ClearChat()
-        SetChatMax( true)
         d("GQSB "..COLOR_8.." logs * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
         for k,v in pairs(logs) do d(k..": "..v) end
         d("GQSB "..COLOR_8.."* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
@@ -5964,6 +6028,9 @@ end
 
 function d_signature()
     d("\r\n!! GQSB"..COLOR_C.." "..QSB.VERSION.." "..COLOR_7.." "..QSB.UPDATE.." (API "..QSB.API..") ("..QSB.TRACE_TAG..")|r\n"
+    .."!! "..COLOR_5.."New Keybind to Toggle AccountWide Settings|r\n"
+    .."!! "..COLOR_6.."Tooltip: Preset..button#..AccountWide-Character|r\n"
+    .."!! "..COLOR_7.."ChatMute and ChatMax as Per-Preset options|r\n"
     .."!! "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n")
 
     if(QSB.Settings.ChatMute) then d(COLOR_7.." GQSB: ChatMute is ON") end
@@ -5988,23 +6055,10 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, I
 :!start /b explorer "https://esoapi.uesp.net/101034"
 :!start /b explorer "https://wiki.esoui.com/APIVersion"
 
-:new|n             $TEMP/APIPatchNotes*.txt $TEMP/ESOUIDocumentation*.txt
-:update|:only|vnew $TEMP/APIPatchNotes*.txt
-:update|:only|vnew $TEMP/ESOUIDocumentation*.txt
+:vnew|n API101034/APIPatchNotes*.txt API101034/ESOUIDocumentation*.txt
+:e $APROJECTS/Make_GIT
+:e C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/P.txt
 
-:!start /b explorer "https://github.com/esoui/esoui"
-
-:e SavedVariables/LibDebugLogger.lua
-
-:!start /b explorer "https://www.esoui.com/downloads/fileinfo.php?id=258\#comments"
-
-"PTS800
-:new|n GreymindQuickSlotBar.lua PTS800/*.lua
-
-/\w*BAR\w*_MANAGER
-/ACTION_BAR_ASSIGNMENT_MANAGER
-/EVENT_MANAGER
-/WINDOW_MANAGER
-
+vim: complete=.,w,b,u,sAPI101034/ESOUIDocumentationP34.txt
 --]]--}}}
 

@@ -2,6 +2,8 @@
  <Layer name="SI_KEYBINDINGS_LAYER_GENERAL">
   <Category name="|cFFA500Greymind Quick Slot Bar">
 
+   <Action name="GREYMIND_QUICK_SLOT_BAR_ACCOUNT_WIDE"        > <Down>QSB_AccountWideToggle() </Down> </Action>
+
    <Action name="GREYMIND_QUICK_SLOT_BAR_ITEM_1"              > <Down>QSB_Item1()             </Down> </Action>
    <Action name="GREYMIND_QUICK_SLOT_BAR_ITEM_2"              > <Down>QSB_Item2()             </Down> </Action>
    <Action name="GREYMIND_QUICK_SLOT_BAR_ITEM_3"              > <Down>QSB_Item3()             </Down> </Action>
