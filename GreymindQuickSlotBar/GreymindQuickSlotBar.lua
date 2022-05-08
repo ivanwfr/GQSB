@@ -3,15 +3,16 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
-v2.6.9   (220507) {{{
-- [color="gray"]Checked with Update 34 High Isle (8.0.1): (API 101034)[/color]
-  [color="brown"  ] 1 [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] extra argument for some functions[/color]
-  [color="red"    ] 2 [standard QSB UI  Shown / Hidden  ] [ZO_QuickSlot] replaced by [QUICKSLOT_KEYBOARD][/color]
-  [color="orange" ] 3 [QSB slot changed in radial menu] [EVENT_ACTION_SLOT_UPDATED] replaced by [EVENT_HOTBAR_SLOT_UPDATED][/color]
-  [color="yellow" ] 4 [Disable Default Quick Slot Button] [ActionButton9] replaced by [QuickslotButton][/color]
-  [color="green"  ] 5 New keybinding to toggle AccountWide Settings ON-OFF[/color]
-  [color="blue"   ] 6 Buttons tooltip showing current preset, button number and Current AccountWide or Character Settings[/color]
+v2.6.9   (220508) {{{
+- [color="gray"]Checked with Update 34 High Isle (8.0): (API 101034)[/color]
+  [color="brown"]   1 [HOTBAR_CATEGORY_QUICKSLOT_WHEEL] extra argument for some functions[/color]
+  [color="red"]     2 [standard QSB UI  Shown / Hidden] [ZO_QuickSlot] replaced by [QUICKSLOT_KEYBOARD][/color]
+  [color="orange"]  3 [QSB slot changed in radial menu] [EVENT_ACTION_SLOT_UPDATED] replaced by [EVENT_HOTBAR_SLOT_UPDATED][/color]
+  [color="yellow"]  4 [Disable Default Quick Slot Button] [ActionButton9] replaced by [QuickslotButton][/color]
+  [color="green"]   5 New keybinding to toggle AccountWide Settings ON-OFF[/color]
+  [color="blue"]    6 Buttons tooltip showing current preset, button number and Current AccountWide or Character Settings[/color]
   [color="magenta"] 7 ChatMute and ChatMax saved as Per-Preset options (instead of OFF AT LOGGIN)[/color]
+  [color="gray"]    8 Button labels above texture (instead of hidden below)[/color]
 }}}
 v2.6.8.2 (220504) {{{
 - [color="gray"]Checked with Update 34 High Isle (8.0.1): (API 101034)[/color]
@@ -542,9 +543,9 @@ local QSB = {
 
     NAME                                = "GreymindQuickSlotBar",
     VERSION                             = "v2.6.9"  , -- 220504 previous: 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
-    UPDATE                              = "High Isle - 34 (8.0)",
+    UPDATE                              = "High Isle (U34 v8.0)",
     API                                 = "101034",
-    TRACE_TAG                           = "(220507:20h:02)",
+    TRACE_TAG                           = "(220508:15h:50)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -2397,41 +2398,41 @@ if(log_this) then c("background_color=[ R="..r.." G="..g.." B="..b.." ]") end
             local baseground            = QSB.Basegrounds[bNum]
             baseground                  :SetTexture(BASEBACKGROUNDTEXTURE)
             baseground                  :SetAnchorFill(button)
-            baseground                  :SetDrawLayer(1)
+--          baseground                  :SetDrawLayer(1)
 
             QSB.Backgrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBackground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local background            = QSB.Backgrounds[bNum]
             background                  :SetTexture(BACKGROUNDTEXTURE)
             background                  :SetAnchorFill(button)
-            background                  :SetDrawLayer(2)
+--          background                  :SetDrawLayer(2)
 
             QSB.VisualCueBorders[bNum]  = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonVisualCue"        .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local visualCueBorder       = QSB.VisualCueBorders[bNum]
             visualCueBorder             :SetTexture(VISUALCUEBORDERTEXTURE)
             visualCueBorder             :SetAnchorFill(button)
-            visualCueBorder             :SetDrawLayer(3)
+--          visualCueBorder             :SetDrawLayer(3)
 
             QSB.Borders[bNum]           = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonBorder"           .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local border                = QSB.Borders[bNum]
             border                      :SetTexture(BORDERTEXTURE)
             border                      :SetAnchorFill(button)
-            border                      :SetDrawLayer(4)
+--          border                      :SetDrawLayer(4)
 
             QSB.Overgrounds[bNum]       = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonOverground"       .. tostring_bNum, GreymindQuickSlotBarUI, CT_TEXTURE)
             local overground            = QSB.Overgrounds[bNum]
             overground                  :SetAnchorFill(button)
             overground                  :SetColor(0.0,0.0,0.0)
-            overground                  :SetDrawLayer(5)
+--          overground                  :SetDrawLayer(5)
 
             QSB.KeyLabels[bNum]         = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonKeyName"          .. tostring_bNum, GreymindQuickSlotBarUI, CT_LABEL)
             local keyLabel              = QSB.KeyLabels[bNum]
             keyLabel                    :SetAnchor(CENTER, button, CENTER, 0, -(buttonSize / 2) - QSB.ButtonPadding)
-            keyLabel                    :SetDrawLayer(6)
+--          keyLabel                    :SetDrawLayer(6)
 
             QSB.QuantityLabels[bNum]    = WINDOW_MANAGER:CreateControl("QuickSlotBarButtonQuantityLabel"    .. tostring_bNum, GreymindQuickSlotBarUI, CT_LABEL)
             local quantityLabel         = QSB.QuantityLabels[bNum]
             quantityLabel               :SetAnchor(CENTER, button, CENTER, 0, -(buttonSize / 2) - QSB.ButtonPadding)
-            quantityLabel               :SetDrawLayer(7)
+--          quantityLabel               :SetDrawLayer(7)
 
         end --}}}
 
@@ -2592,14 +2593,12 @@ end
             else
                 alpha = slot_settings.NotSelectedButtonOpacity / 100     -- from [1-100] to [0-1.0]
                 if QSB.SomeSlotItemChanged then
-                    if( alpha < 0.5) then
-                        alpha = 0.5
-                    end
+                    alpha              = math.max(alpha,0.5)
                 end
-                border        :SetAlpha( alpha )
-                button        :SetAlpha( alpha )
-                keyLabel      :SetAlpha( alpha )
-                quantityLabel :SetAlpha( alpha )
+                border        :SetAlpha(          alpha      )
+                button        :SetAlpha(          alpha      )
+                keyLabel      :SetAlpha( math.max(alpha,0.3) )
+                quantityLabel :SetAlpha( math.max(alpha,0.3) )
                 if slotItemCount ~= 0 then
                     background:SetAlpha( alpha )
                     baseground:SetAlpha( alpha )
