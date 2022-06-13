@@ -3,6 +3,11 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.6.9.2 (220613) {{{
+- [color="gray"]Checked with Update 34 High Isle (8.0): (API 101034)[/color]
+  [color="brown"]   1 hiding buttons while playing Tribute Games[/color]
+  [color="red"]     2 moved LibDebugLogger.ClearLog call from Initialize to QSB_ReloadUI[/color]
+}}}
 v2.6.9.1 (220612) {{{
 - [color="gray"]Checked with Update 34 High Isle (8.0): (API 101034)[/color]
   [color="brown"]   1 hiding buttons while playing Tribute Games[/color]
@@ -546,10 +551,10 @@ local Loaded_Preset
 local QSB = {
 
     NAME                                = "GreymindQuickSlotBar",
-    VERSION                             = "v2.6.9.1", -- 220612 previous: 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    VERSION                             = "v2.6.9.2", -- 220613 previous: 220612 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
     UPDATE                              = "High Isle (U34 v8.0)",
     API                                 = "101034",
-    TRACE_TAG                           = "(220612:17h:23)",
+    TRACE_TAG                           = "(220613:23h:34)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -830,10 +835,8 @@ local function c    (args,logging)
     -- ## DependsOn: LibDebugLogger>=180 -- GreymindQuickSlotBar.txt -- (211111)
     if (logger == nil) and (LibDebugLogger ~= nil) then -- so that we can skip DependsOn directive
         logger  =           LibDebugLogger("GQSB")
-        LibDebugLogger:ClearLog()
-        logger:Debug("GQSB: LibDebugLogger:ClearLog()")
     end
-    if  logger ~= nil then logger:Debug("GQSB: "..tostring(args))    end -- call LibDebugLogger
+    if  logger ~= nil then    logger:Debug("GQSB: "..tostring(args))    end -- call LibDebugLogger
 
 end
 
@@ -3649,8 +3652,10 @@ end
 -- QSB_ReloadUI {{{
 function QSB_ReloadUI()
 D("QSB_ReloadUI()")
+   if (logger ~= nil) then
+        LibDebugLogger:ClearLog()
+    end
     SLASH_COMMANDS["/reloadui"]()
-
 end
 --}}}
 -- QSB_ClearChat {{{
@@ -5686,16 +5691,16 @@ function OnSlashCommand(arg)
         OnClicked_handle( "S" )
 
     --}}}
-    -- clear -- thanks to SkOODaT's ClearChat {{{
+    -- clearchat {{{
     elseif(arg == "clearchat"  ) then
         QSB_ClearChat()
 
-        if (logger ~= nil) then
-            LibDebugLogger:ClearLog()
-            logger:Debug("GQSB: LibDebugLogger:ClearLog()")
-            d           ("GQSB: LibDebugLogger:ClearLog()")
-        end
-
+    --}}}
+    -- clearlog {{{
+    elseif(arg == "clearlog"  ) and (logger ~= nil) then
+        LibDebugLogger:ClearLog()
+        logger:Debug("GQSB: LibDebugLogger:ClearLog()")
+        d           ("GQSB: LibDebugLogger:ClearLog()")
     --}}}
     -- force {{{
     elseif(arg == "force") then
@@ -6042,6 +6047,7 @@ function d_signature()
     d("\r\n!! GQSB"..COLOR_C.." "..QSB.VERSION.." "..COLOR_7.." "..QSB.UPDATE.." (API "..QSB.API..") ("..QSB.TRACE_TAG..")|r\n"
     .."!! "..COLOR_1.."Hiding buttons while playing Tribute Games|r\n"
     .."!! "..COLOR_8.."...request from Marazota|r\n"
+    .."!! "..COLOR_8.."...LibDebugLogger.ClearLog moved from Initialize to QSB_ReloadUI|r\n"
     .."!! "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n")
 
     if(QSB.Settings.ChatMute) then d(COLOR_7.." GQSB: ChatMute is ON") end
