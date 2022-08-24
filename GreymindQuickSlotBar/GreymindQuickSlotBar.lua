@@ -3,6 +3,9 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.7.0   (220824) {{{
+- [color="gray"]Checked with Update 35 High Isle (8.1.5) (API 101035)[/color]
+}}}
 v2.6.9.2 (220613) {{{
 - [color="gray"]Checked with Update 34 High Isle (8.0): (API 101034)[/color]
   [color="brown"]   1 hiding buttons while playing Tribute Games[/color]
@@ -551,10 +554,10 @@ local Loaded_Preset
 local QSB = {
 
     NAME                                = "GreymindQuickSlotBar",
-    VERSION                             = "v2.6.9.2", -- 220613 previous: 220612 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
-    UPDATE                              = "High Isle (U34 v8.0)",
-    API                                 = "101034",
-    TRACE_TAG                           = "(220613:23h:34)",
+    VERSION                             = "v2.7.0"  , -- 220824 previous: 220613 220612 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    UPDATE                              = "High Isle (U35 v8.1.5)",
+    API                                 = "101035",
+    TRACE_TAG                           = "(220712:15h:07)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -752,7 +755,8 @@ local bNum_to_slotIndex
 local check_QSB_BAG_BACKPACK_UPDATE_bagIndex_to_check
 local clear_bNum
 local d_signature
-local d_table
+local d_name_table_key_val
+local print_bNum_to_slotIndex
 local equip_bNum
 local getItem_itID_from_slot
 local getItem_levl_from_slot
@@ -3878,10 +3882,12 @@ c_log("Initialize("..addOnName..")")
     -- from the settings menu/slash commands
     -- account to character ones or vice-versa
 
-        BuildSettingsMenu()
-        GreymindQuickSlotBarUI:SetHidden( true )  -- 191125 .. hide top-left rectangle on reloadui
+    BuildSettingsMenu()
+    GreymindQuickSlotBarUI:SetHidden( true )  -- 191125 .. hide top-left rectangle on reloadui
 
-        zo_callLater(RegisterEventHandlers, 500)
+    zo_callLater(RegisterEventHandlers, 500)
+
+    EVENT_MANAGER:UnregisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED)
 
 end
 --}}}
@@ -5556,7 +5562,7 @@ function OnClicked_bNum(bNum)
         if(DEBUG_EQUIP) then
             local bagIndex = getItem_slot_from_link(itemLink) --itemId, itemLevel, itemLink, QSB.Settings.SlotItemTable[bNum].texture)
             local data     = SHARED_INVENTORY.bagCache[BAG_BACKPACK][bagIndex]
-            d_table("data", data)
+            d_name_table_key_val("data", data)
 
         end
     end
@@ -5565,6 +5571,163 @@ end
 --}}}
 
 -- DEV
+local function what_QUICKSLOT() --//FIXME
+--{{{
+    c("what_QUICKSLOT")
+
+    c(COLOR_7.."esoui/ingame/actionbar/actionbar.lua")
+    c(" ZO_ActionBar_AreActionBarsLocked     () : "..tostring( ZO_ActionBar_AreActionBarsLocked     () ))
+    c(" ZO_ActionBar_AreHiddenButtonsShowing () : "..tostring( ZO_ActionBar_AreHiddenButtonsShowing () ))
+    c(" ZO_ActionBar_CanUseActionSlots       () : "..tostring( ZO_ActionBar_CanUseActionSlots       () ))
+    c(" ZO_ActionBar_GetAnchor               () : "..tostring( ZO_ActionBar_GetAnchor               () ))
+    c(" ZO_ActionBar_HasAnyActionSlotted     () : "..tostring( ZO_ActionBar_HasAnyActionSlotted     () ))
+
+    local cat_array = { { key=HOTBAR_CATEGORY_QUICKSLOT_WHEEL  , val="QUICKSLOT"  } 
+                      , { key=HOTBAR_CATEGORY_EMOTE_WHEEL      , val="EMOTE"      } 
+                      , { key=HOTBAR_CATEGORY_MEMENTO_WHEEL    , val="MEMENTO"    } 
+                      , { key=HOTBAR_CATEGORY_ALLY_WHEEL       , val="ALLY"       } 
+                      , { key=HOTBAR_CATEGORY_TOOL_WHEEL       , val="TOOL"       } 
+                      --{ key=HOTBAR_CATEGORY_COMPANION        , val="COMPANION"        }
+                      --{ key=HOTBAR_CATEGORY_BACKUP           , val="BACKUP"           }
+                      --{ key=HOTBAR_CATEGORY_CHAMPION         , val="CHAMPION"         }
+                      --{ key=HOTBAR_CATEGORY_DAEDRIC_ARTIFACT , val="DAEDRIC_ARTIFACT" }
+                      --{ key=HOTBAR_CATEGORY_OVERLOAD         , val="OVERLOAD"         }
+                      --{ key=HOTBAR_CATEGORY_PRIMARY          , val="PRIMARY"          }
+                      --{ key=HOTBAR_CATEGORY_TEMPORARY        , val="TEMPORARY"        }
+                      --{ key=HOTBAR_CATEGORY_WEREWOLF         , val="WEREWOLF"         }
+                  }
+
+    for bNum = 1, QSB.ButtonCountMax do
+        local slotNum = bNum_to_slotIndex(bNum)
+        for cat = 1, #cat_array do
+            local cat_num  = cat_array[cat].key
+            local cat_str  = cat_array[cat].val
+            local b_table  = ZO_ActionBar_GetButton(slotNum, cat_num)
+            if(   b_table ~= nil ) then
+                local   label = COLOR_5.." "..cat_str..COLOR_8.."(cat_num "..cat_num..") (bNum "..bNum.. ") (slotNum "..slotNum..")"
+                d_name_table_key_val(label, b_table, "string")
+            end
+        end
+    end
+
+    c(COLOR_7.."esoui/ingame/utilitywheel/utilitywheel_shared.lua:")
+    for cat = 1, #cat_array do
+        local cat_num  = cat_array[cat].key
+        local cat_str  = cat_array[cat].val
+        local b_table  = ZO_GetUtilityWheelSlottedEntries(cat_num)
+        if(   b_table ~= nil ) then
+            local       label = COLOR_6.." "..cat_str..COLOR_8.."(cat_num "..cat_num..")"
+            d_name_table_key_val(    label, b_table, "string")
+        end
+    end
+
+end
+--}}}
+local function what_IsShowing() --//FIXME
+--{{{
+
+    if (ADVANCED_STATS_FRAGMENT ~= nil) and ADVANCED_STATS_FRAGMENT:IsShowing() then c("ADVANCED_STATS_FRAGMENT") end
+    if (ANTIQUITY_DIGGING_SCENE ~= nil) and ANTIQUITY_DIGGING_SCENE:IsShowing() then c("ANTIQUITY_DIGGING_SCENE") end
+    if (ANTIQUITY_JOURNAL_SCENE_GAMEPAD ~= nil) and ANTIQUITY_JOURNAL_SCENE_GAMEPAD:IsShowing() then c("ANTIQUITY_JOURNAL_SCENE_GAMEPAD") end
+    if (ARMORY_GAMEPAD_FRAGMENT ~= nil) and ARMORY_GAMEPAD_FRAGMENT:IsShowing() then c("ARMORY_GAMEPAD_FRAGMENT") end
+    if (ARMORY_KEYBOARD_FRAGMENT ~= nil) and ARMORY_KEYBOARD_FRAGMENT:IsShowing() then c("ARMORY_KEYBOARD_FRAGMENT") end
+    if (ActivityTributeRank_Gamepad ~= nil) and ActivityTributeRank_Gamepad:IsShowing() then c("ActivityTributeRank_Gamepad") end
+    if (BUY_BACK_FRAGMENT ~= nil) and BUY_BACK_FRAGMENT:IsShowing() then c("BUY_BACK_FRAGMENT") end
+    if (COMPANION_EQUIPMENT_KEYBOARD_FRAGMENT ~= nil) and COMPANION_EQUIPMENT_KEYBOARD_FRAGMENT:IsShowing() then c("COMPANION_EQUIPMENT_KEYBOARD_FRAGMENT") end
+    if (COMPANION_FOOTER_GAMEPAD_FRAGMENT ~= nil) and COMPANION_FOOTER_GAMEPAD_FRAGMENT:IsShowing() then c("COMPANION_FOOTER_GAMEPAD_FRAGMENT") end
+    if (COMPANION_GAMEPAD_FRAGMENT ~= nil) and COMPANION_GAMEPAD_FRAGMENT:IsShowing() then c("COMPANION_GAMEPAD_FRAGMENT") end
+    if (COMPANION_KEYBOARD_FRAGMENT ~= nil) and COMPANION_KEYBOARD_FRAGMENT:IsShowing() then c("COMPANION_KEYBOARD_FRAGMENT") end
+    if (COMPANION_OVERVIEW_KEYBOARD_FRAGMENT ~= nil) and COMPANION_OVERVIEW_KEYBOARD_FRAGMENT:IsShowing() then c("COMPANION_OVERVIEW_KEYBOARD_FRAGMENT") end
+    if (COMPANION_SKILLS_KEYBOARD_SCENE ~= nil) and COMPANION_SKILLS_KEYBOARD_SCENE:IsShowing() then c("COMPANION_SKILLS_KEYBOARD_SCENE") end
+    if (FOCUSED_QUEST_TRACKER_FRAGMENT ~= nil) and FOCUSED_QUEST_TRACKER_FRAGMENT:IsShowing() then c("FOCUSED_QUEST_TRACKER_FRAGMENT") end
+    if (GAMEPAD_COLLECTIONS_BOOK_SCENE ~= nil) and GAMEPAD_COLLECTIONS_BOOK_SCENE:IsShowing() then c("GAMEPAD_COLLECTIONS_BOOK_SCENE") end
+    if (GAMEPAD_CRAFT_ADVISOR_FRAGMENT ~= nil) and GAMEPAD_CRAFT_ADVISOR_FRAGMENT:IsShowing() then c("GAMEPAD_CRAFT_ADVISOR_FRAGMENT") end
+    if (GAMEPAD_GUILD_BROWSER_GUILD_INFO_FRAGMENT ~= nil) and GAMEPAD_GUILD_BROWSER_GUILD_INFO_FRAGMENT:IsShowing() then c("GAMEPAD_GUILD_BROWSER_GUILD_INFO_FRAGMENT") end
+    if (GAMEPAD_GUILD_BROWSER_SCENE ~= nil) and GAMEPAD_GUILD_BROWSER_SCENE:IsShowing() then c("GAMEPAD_GUILD_BROWSER_SCENE") end
+    if (GAMEPAD_KEYBINDINGS_RIGHT_PANE_FRAGMENT ~= nil) and GAMEPAD_KEYBINDINGS_RIGHT_PANE_FRAGMENT:IsShowing() then c("GAMEPAD_KEYBINDINGS_RIGHT_PANE_FRAGMENT") end
+    if (GAMEPAD_LEADERBOARDS_SCENE ~= nil) and GAMEPAD_LEADERBOARDS_SCENE:IsShowing() then c("GAMEPAD_LEADERBOARDS_SCENE") end
+    if (GAMEPAD_MAIL_INBOX_FRAGMENT ~= nil) and GAMEPAD_MAIL_INBOX_FRAGMENT:IsShowing() then c("GAMEPAD_MAIL_INBOX_FRAGMENT") end
+    if (GAMEPAD_PLAYER_EMOTE_SCENE ~= nil) and GAMEPAD_PLAYER_EMOTE_SCENE:IsShowing() then c("GAMEPAD_PLAYER_EMOTE_SCENE") end
+    if (GAMEPAD_RAID_LEADERBOARD_FRAGMENT ~= nil) and GAMEPAD_RAID_LEADERBOARD_FRAGMENT:IsShowing() then c("GAMEPAD_RAID_LEADERBOARD_FRAGMENT") end
+    if (GAMEPAD_RESTYLE_STATION_SCENE ~= nil) and GAMEPAD_RESTYLE_STATION_SCENE:IsShowing() then c("GAMEPAD_RESTYLE_STATION_SCENE") end
+    if (GAMEPAD_RETRAIT_FRAGMENT ~= nil) and GAMEPAD_RETRAIT_FRAGMENT:IsShowing() then c("GAMEPAD_RETRAIT_FRAGMENT") end
+    if (GAMEPAD_VOICECHAT_CHANNELS_SCENE ~= nil) and GAMEPAD_VOICECHAT_CHANNELS_SCENE:IsShowing() then c("GAMEPAD_VOICECHAT_CHANNELS_SCENE") end
+    if (GAMEPAD_WORLD_MAP_FILTERS_FRAGMENT ~= nil) and GAMEPAD_WORLD_MAP_FILTERS_FRAGMENT:IsShowing() then c("GAMEPAD_WORLD_MAP_FILTERS_FRAGMENT") end
+    if (GAMEPAD_WORLD_MAP_LOCATIONS_FRAGMENT ~= nil) and GAMEPAD_WORLD_MAP_LOCATIONS_FRAGMENT:IsShowing() then c("GAMEPAD_WORLD_MAP_LOCATIONS_FRAGMENT") end
+    if (GAMEPAD_ZONE_STORIES_SCENE ~= nil) and GAMEPAD_ZONE_STORIES_SCENE:IsShowing() then c("GAMEPAD_ZONE_STORIES_SCENE") end
+    if (GUILD_HERALDRY_SCENE ~= nil) and GUILD_HERALDRY_SCENE:IsShowing() then c("GUILD_HERALDRY_SCENE") end
+    if (GUILD_RANKS_SCENE ~= nil) and GUILD_RANKS_SCENE:IsShowing() then c("GUILD_RANKS_SCENE") end
+    if (GUILD_RECRUITMENT_GAMEPAD_FRAGMENT ~= nil) and GUILD_RECRUITMENT_GAMEPAD_FRAGMENT:IsShowing() then c("GUILD_RECRUITMENT_GAMEPAD_FRAGMENT") end
+    if (GUILD_ROSTER_GAMEPAD.listFragment ~= nil) and GUILD_ROSTER_GAMEPAD.listFragment:IsShowing() then c("GUILD_ROSTER_GAMEPAD.listFragment") end
+    if (HELP_CUSTOMER_SERVICE_ASK_FOR_HELP_KEYBOARD_FRAGMENT ~= nil) and HELP_CUSTOMER_SERVICE_ASK_FOR_HELP_KEYBOARD_FRAGMENT:IsShowing() then c("HELP_CUSTOMER_SERVICE_ASK_FOR_HELP_KEYBOARD_FRAGMENT") end
+    if (INVENTORY_FRAGMENT ~= nil) and INVENTORY_FRAGMENT:IsShowing() then c("INVENTORY_FRAGMENT") end
+    if (KEYBINDINGS_FRAGMENT ~= nil) and KEYBINDINGS_FRAGMENT:IsShowing() then c("KEYBINDINGS_FRAGMENT") end
+    if (KEYBOARD_GROUP_MENU_SCENE ~= nil) and KEYBOARD_GROUP_MENU_SCENE:IsShowing() then c("KEYBOARD_GROUP_MENU_SCENE") end
+    if (KEYBOARD_GUILD_BROWSER_GUILD_INFO_FRAGMENT ~= nil) and KEYBOARD_GUILD_BROWSER_GUILD_INFO_FRAGMENT:IsShowing() then c("KEYBOARD_GUILD_BROWSER_GUILD_INFO_FRAGMENT") end
+    if (KEYBOARD_GUILD_BROWSER_SCENE ~= nil) and KEYBOARD_GUILD_BROWSER_SCENE:IsShowing() then c("KEYBOARD_GUILD_BROWSER_SCENE") end
+    if (KEYBOARD_GUILD_RECRUITMENT_SCENE ~= nil) and KEYBOARD_GUILD_RECRUITMENT_SCENE:IsShowing() then c("KEYBOARD_GUILD_RECRUITMENT_SCENE") end
+    if (KEYBOARD_QUICKSLOT_FRAGMENT ~= nil) and KEYBOARD_QUICKSLOT_FRAGMENT:IsShowing() then c("KEYBOARD_QUICKSLOT_FRAGMENT") end
+    if (LOOT_SCENE_GAMEPAD ~= nil) and LOOT_SCENE_GAMEPAD:IsShowing() then c("LOOT_SCENE_GAMEPAD") end
+    if (REPAIR_FRAGMENT ~= nil) and REPAIR_FRAGMENT:IsShowing() then c("REPAIR_FRAGMENT") end
+    if (SCRYING_ACTIONS_FRAGMENT ~= nil) and SCRYING_ACTIONS_FRAGMENT:IsShowing() then c("SCRYING_ACTIONS_FRAGMENT") end
+    if (SCRYING_SCENE ~= nil) and SCRYING_SCENE:IsShowing() then c("SCRYING_SCENE") end
+    if (SKILLS_FRAGMENT ~= nil) and SKILLS_FRAGMENT:IsShowing() then c("SKILLS_FRAGMENT") end
+    if (SkillsAdvisorSuggestions_Gamepad ~= nil) and SkillsAdvisorSuggestions_Gamepad:IsShowing() then c("SkillsAdvisorSuggestions_Gamepad") end
+    if (TRADING_HOUSE_GAMEPAD_SCENE ~= nil) and TRADING_HOUSE_GAMEPAD_SCENE:IsShowing() then c("TRADING_HOUSE_GAMEPAD_SCENE") end
+    if (TRADING_HOUSE_SCENE ~= nil) and TRADING_HOUSE_SCENE:IsShowing() then c("TRADING_HOUSE_SCENE") end
+    if (TRIBUTE_SCENE ~= nil) and TRIBUTE_SCENE:IsShowing() then c("TRIBUTE_SCENE") end
+    if (VOICE_CHAT_TRANSCRIPT_GAMEPAD_SCENE ~= nil) and VOICE_CHAT_TRANSCRIPT_GAMEPAD_SCENE:IsShowing() then c("VOICE_CHAT_TRANSCRIPT_GAMEPAD_SCENE") end
+    if (WALLET_FRAGMENT ~= nil) and WALLET_FRAGMENT:IsShowing() then c("WALLET_FRAGMENT") end
+    if (WORLD_MAP_AUTO_NAVIGATION_OVERLAY_FRAGMENT ~= nil) and WORLD_MAP_AUTO_NAVIGATION_OVERLAY_FRAGMENT:IsShowing() then c("WORLD_MAP_AUTO_NAVIGATION_OVERLAY_FRAGMENT") end
+    if (WORLD_MAP_INFO_FRAGMENT ~= nil) and WORLD_MAP_INFO_FRAGMENT:IsShowing() then c("WORLD_MAP_INFO_FRAGMENT") end
+    if (WRIT_ADVISOR_FRAGMENT ~= nil) and WRIT_ADVISOR_FRAGMENT:IsShowing() then c("WRIT_ADVISOR_FRAGMENT") end
+    if (ZO_ArmoryBuildChampion_Gamepad ~= nil) and ZO_ArmoryBuildChampion_Gamepad:IsShowing() then c("ZO_ArmoryBuildChampion_Gamepad") end
+    if (ZO_ArmoryBuildSkills_Gamepad ~= nil) and ZO_ArmoryBuildSkills_Gamepad:IsShowing() then c("ZO_ArmoryBuildSkills_Gamepad") end
+--  if (ZO_ChampionAssignableActionBar_GamepadQuickMenu ~= nil) and ZO_ChampionAssignableActionBar_GamepadQuickMenu:IsShowing() then c("ZO_ChampionAssignableActionBar_GamepadQuickMenu") end
+--  if (ZO_DailyLoginRewards_Gamepad ~= nil) and ZO_DailyLoginRewards_Gamepad:IsShowing() then c("ZO_DailyLoginRewards_Gamepad") end
+    if (ZO_DailyLoginRewards_Keyboard ~= nil) and ZO_DailyLoginRewards_Keyboard:IsShowing() then c("ZO_DailyLoginRewards_Keyboard") end
+    if (ZO_GAMEPAD_CHAPTER_UPGRADE_PREVIEW_SCENE ~= nil) and ZO_GAMEPAD_CHAPTER_UPGRADE_PREVIEW_SCENE:IsShowing() then c("ZO_GAMEPAD_CHAPTER_UPGRADE_PREVIEW_SCENE") end
+    if (ZO_HousingFurnitureBrowser_Gamepad ~= nil) and ZO_HousingFurnitureBrowser_Gamepad:IsShowing() then c("ZO_HousingFurnitureBrowser_Gamepad") end
+    if (ZO_HousingFurnitureBrowser_Keyboard ~= nil) and ZO_HousingFurnitureBrowser_Keyboard:IsShowing() then c("ZO_HousingFurnitureBrowser_Keyboard") end
+    if (ZO_HousingPreviewDialog_Shared ~= nil) and ZO_HousingPreviewDialog_Shared:IsShowing() then c("ZO_HousingPreviewDialog_Shared") end
+--  if (ZO_OUTFIT_STYLES_BOOK_SCENE ~= nil) and ZO_OUTFIT_STYLES_BOOK_SCENE:IsShowing() then c("ZO_OUTFIT_STYLES_BOOK_SCENE") end
+--  if (ZO_RetraitStation_Reconstruct_Keyboard ~= nil) and ZO_RetraitStation_Reconstruct_Keyboard:IsShowing() then c("ZO_RetraitStation_Reconstruct_Keyboard") end
+--  if (ZO_RetraitStation_Retrait_Base ~= nil) and ZO_RetraitStation_Retrait_Base:IsShowing() then c("ZO_RetraitStation_Retrait_Base") end
+    if (ZO_SKILLS_ADVISOR_SUGGESTION_FRAGMENT ~= nil) and ZO_SKILLS_ADVISOR_SUGGESTION_FRAGMENT:IsShowing() then c("ZO_SKILLS_ADVISOR_SUGGESTION_FRAGMENT") end
+--  if (ZO_WorldMapZoneStory_Shared ~= nil) and ZO_WorldMapZoneStory_Shared:IsShowing() then c("ZO_WorldMapZoneStory_Shared") end
+
+    if SCENE_MANAGER:IsShowing("achievementsGamepad")                  then c("achievementsGamepad")                 end
+    if SCENE_MANAGER:IsShowing("battleground_scoreboard_in_game")      then c("battleground_scoreboard_in_game")     end
+    if SCENE_MANAGER:IsShowing("battleground_scoreboard_in_game_ui")   then c("battleground_scoreboard_in_game_ui")  end
+    if SCENE_MANAGER:IsShowing("fence_keyboard")                       then c("fence_keyboard")                      end
+    if SCENE_MANAGER:IsShowing("gamepad_enchanting_creation")          then c("gamepad_enchanting_creation")         end
+    if SCENE_MANAGER:IsShowing("gamepad_enchanting_extraction")        then c("gamepad_enchanting_extraction")       end
+    if SCENE_MANAGER:IsShowing("gamepad_inventory_root")               then c("gamepad_inventory_root")              end
+    if SCENE_MANAGER:IsShowing("gamepad_outfits_selection")            then c("gamepad_outfits_selection")           end
+    if SCENE_MANAGER:IsShowing("gamepad_skills_root")                  then c("gamepad_skills_root")                 end
+    if SCENE_MANAGER:IsShowing("gamepad_smithing_deconstruct")         then c("gamepad_smithing_deconstruct")        end
+    if SCENE_MANAGER:IsShowing("gamepad_smithing_improvement")         then c("gamepad_smithing_improvement")        end
+    if SCENE_MANAGER:IsShowing("gamepad_smithing_refine")              then c("gamepad_smithing_refine")             end
+    if SCENE_MANAGER:IsShowing("gamepad_worldMap")                     then c("gamepad_worldMap")                    end
+    if SCENE_MANAGER:IsShowing("guildHeraldry")                        then c("guildHeraldry")                       end
+    if SCENE_MANAGER:IsShowing("helpCustomerSupport")                  then c("helpCustomerSupport")                 end
+    if SCENE_MANAGER:IsShowing("helpTutorials")                        then c("helpTutorials")                       end
+    if SCENE_MANAGER:IsShowing("hud")                                  then c("hud")                                 end
+    if SCENE_MANAGER:IsShowing("inventory")                            then c("inventory")                           end
+    if SCENE_MANAGER:IsShowing("keyboard_housing_path_settings_scene") then c("keyboard_housing_path_settings_scene")end
+    if SCENE_MANAGER:IsShowing("lockpickKeyboard")                     then c("lockpickKeyboard")                    end
+    if SCENE_MANAGER:IsShowing("loot")                                 then c("loot")                                end
+    if SCENE_MANAGER:IsShowing("mailInbox")                            then c("mailInbox")                           end
+    if SCENE_MANAGER:IsShowing("marketAnnouncement")                   then c("marketAnnouncement")                  end
+    if SCENE_MANAGER:IsShowing("treasureMapQuickSlot")                 then c("treasureMapQuickSlot")                end
+    if SCENE_MANAGER:IsShowing("universalDeconstructionSceneGamepad")  then c("universalDeconstructionSceneGamepad") end
+    if SCENE_MANAGER:IsShowing(GAMEPAD_TRADING_HOUSE_SCENE_NAME)       then c(GAMEPAD_TRADING_HOUSE_SCENE_NAME)      end
+    if SYSTEMS:IsShowing("champion")                                   then c("champion")                            end
+    if SYSTEMS:IsShowing("crownCrate")                                 then c("crownCrate")                          end
+    if SYSTEMS:IsShowing(ZO_ALCHEMY_SYSTEM_NAME)                       then c(ZO_ALCHEMY_SYSTEM_NAME)                end
+
+end
+--}}}
 -- OnSlashCommand --{{{
 function OnSlashCommand(arg)
     -- arg {{{
@@ -5755,6 +5918,9 @@ function OnSlashCommand(arg)
     elseif(arg ==  "playing") then  c(COLOR_3.."!! ["..arg .."] "..COLOR_5.."["..tostring( TRIBUTE_SCENE:IsShowing()                                 ).."]")
     elseif(arg ==  "setting") then  c(COLOR_3.."!! ["..arg .."] "..COLOR_5.."["..tostring( SYSTEMS:IsShowing("champion") or not ZO_Skills:IsHidden() ).."]")
     --}}}
+    elseif(arg ==  "showing") then  c(COLOR_3.."!! ["..arg .."]:"); what_IsShowing()--//FIXME
+    elseif(arg ==  "qs"     ) then  c(COLOR_3.."!! ["..arg .."]:"); what_QUICKSLOT()--//FIXME
+    elseif(arg ==  "buttons") then  c(COLOR_3.."!! ["..arg .."]:"); print_bNum_to_slotIndex()
     -- DEBUG -- {{{
     elseif(arg == "debug"         ) then DEBUG          = not DEBUG         ; c("...DEBUG..........=[" ..tostring( DEBUG          ).. "]"); ui_may_have_changed = true
     elseif(arg == "debug_equip"   ) then DEBUG_EQUIP    = not DEBUG_EQUIP   ; c("...DEBUG_EQUIP....=[" ..tostring( DEBUG_EQUIP    ).. "]"); ui_may_have_changed = true
@@ -5803,79 +5969,85 @@ function OnSlashCommand(arg)
             c(    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" )
         end
         --}}}
-        -- lua {{{
-        ------------ EXPRESSION ----------------------------------------------------------------------
-        -- /gqsb lua c("txt")                                        -- TEXT LOGS IN THE CHAT
-        -- /gqsb lua c("\r\n\r\n")                                   -- EMPTY LINES IN THE CHAT
-        -- /gqsb lua c("\226\154\153")                               -- FONT HAS NO GLYPH FOR THIS ONE
-        -- /gqsb lua PlaySound("GENERAL_ALERT_ERROR")                -- CHECK SOUNDS
-        -- /gqsb lua tonumber(nil) == nil                            -- CHECK EXPRESSION
-        -- /gqsb lua { question="what...?", answer=42 }              -- RETURNS A TABLE
-        -- /gqsb lua ("str" and string.find(string.lower("LUA STR"),"str"))
-        -- /gqsb lua            "what...?",        42                -- RETURNS MULTIPLE VALUES
+        -- lua EXPRESSION ---------------------------------------------------------------------- {{{
+        --[[
 
-        ------------ VAR
-        -- /gqsb lua BAG_BACKPACK
-
-        ------------ FUNCTION
-        -- /gqsb lua CHAT_SYSTEM.primaryContainer.currentBuffer.GetNumHistoryLines
-
-        -------------------------------------             TABLE, MAX, KEY      , VAL
-        -- /gqsb lua CHAT_SYSTEM
-        -- /gqsb lua CHAT_SYSTEM.primaryContainer
-        -- /gqsb lua CHAT_SYSTEM.primaryContainer              ,   0, ""       , "function"
-        -- /gqsb lua CHAT_SYSTEM.primaryContainer              ,   0, ""       , "bool"
-        -- /gqsb lua ZO_ChatSystem                             ,   0, ""       , "function"
-        -- /gqsb lua CHAT_SYSTEM.containers[1]                 ,   0, "name"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,   0, nil      , "true"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,   5, nil      , "Potion"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,   5, "rawName"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1]              ,  20, "rawName"
-        -- /gqsb lua SHARED_INVENTORY.bagCache[1][1].inventory.sortHeaders.highlightColor
-        -- /gqsb lua SHARED_INVENTORY.bagCache[2]              ,   5, "rawName"
-        -- /gqsb lua SHARED_INVENTORY.questCache
-        -- /gqsb lua SHARED_INVENTORY.questCache               ,   0, nil      , "string"
-        -- /gqsb lua SHARED_FURNITURE
-        -- /gqsb lua SHARED_FURNITURE.placeableFurniture
-        -- /gqsb lua SHARED_FURNITURE.placeableFurniture[1][1][8].slotData
-        -- /gqsb lua SHARED_FURNITURE.retrievableFurniture
-
-        ------------ https://esoapi.uesp.net/100034/data/i/s/s/IsShowing.html
-        -- /gqsb lua SYSTEMS:IsShowing("champion")
-
-        ------------ TABLE
-        -- /gqsb lua ACTION_BAR_ASSIGNMENT_MANAGER
-        -- /gqsb lua ACTIVITY_TRACKER
-        -- /gqsb lua BUFF_DEBUFF_FRAGMENT
-
-        ------------ API 101034
-        -- $APROJECTS/GITHUB/ESO/pts8.0/actionbar.lua
-        -- /gqsb lua ZO_ActionBar_GetButton(UNUSED, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
-
-        -- $APROJECTS/GITHUB/ESO/pts8.0/assignableutilitywheel_shared.lua
-        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:Activate()
-        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:CreateSlots()
-        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:CycleHotbarCategory()
-        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:Deactivate()
-        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:GetHotbarCategory()
-        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:GetNumSlotted()
-        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:RefreshHotbarCategory()
-        -- /gqsb lua ZO_AssignableUtilityWheel_Shared:UpdateAllSlots()
-
-        -- $APROJECTS/GITHUB/ESO/pts8.0/actionbarassignmentmanager.lua
-
-        -- $APROJECTS/GITHUB/ESO/pts8.0/ESOUIDocumentation.txt
-        -- /gqsb lua GetSlotName(1)
-        -- /gqsb lua GetSlotName(1, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
-
-        -- $APROJECTS/GITHUB/ESO/pts8.0/inventoryslot.lua
-        -- /gqsb lua   QUICKSLOT_WINDOW:AreQuickSlotsShowing()
-        -- /gqsb lua QUICKSLOT_KEYBOARD:AreQuickSlotsShowing()
-
-        -- /gqsb lua HOTBAR_CATEGORY_QUICKSLOT_WHEEL -- API 101034 ...return 10
-        -- API 101034 WHEEL_LOOKUPTABLE = {  4,  3,  2,  1, 8,  7,  6,  5 }
-        -- API 101033 WHEEL_LOOKUPTABLE = { 12, 11, 10, 9, 16, 15, 14, 13 }
-
+ /gqsb lua c("txt")                                        -- TEXT LOGS IN THE CHAT
+ /gqsb lua c("\r\n\r\n")                                   -- EMPTY LINES IN THE CHAT
+ /gqsb lua c("\226\154\153")                               -- FONT HAS NO GLYPH FOR THIS ONE
+ /gqsb lua PlaySound("GENERAL_ALERT_ERROR")                -- CHECK SOUNDS
+ /gqsb lua tonumber(nil) == nil                            -- CHECK EXPRESSION
+ /gqsb lua { question="what...?", answer=42 }              -- RETURNS A TABLE
+ /gqsb lua ("str" and string.find(string.lower("LUA STR"),"str"))
+ /gqsb lua            "what...?",        42                -- RETURNS MULTIPLE VALUES
+ 
+ --------- VAR
+ /gqsb lua BAG_BACKPACK
+ 
+ --------- FUNCTION
+ /gqsb lua CHAT_SYSTEM.primaryContainer.currentBuffer.GetNumHistoryLines
+ 
+ --------------------------------- d_name_table_key_val
+ --------- ________________________TABLE, VAL_FILTER , KEY_FILTEF , MAX
+ /gqsb lua CHAT_SYSTEM
+ /gqsb lua CHAT_SYSTEM.primaryContainer
+ /gqsb lua CHAT_SYSTEM.primaryContainer , ""         , "function"
+ /gqsb lua CHAT_SYSTEM.primaryContainer , ""         , "bool"
+ /gqsb lua CHAT_SYSTEM.containers[1]    , "name"
+ /gqsb lua ZO_ChatSystem                , ""         , "function"
+ /gqsb lua SHARED_INVENTORY.bagCache[1] , "rawName"  , "" ,   5
+ /gqsb lua SHARED_INVENTORY.bagCache[1] , "rawName"  , "" ,  20
+ /gqsb lua SHARED_INVENTORY.bagCache[1] , "Potion"
+ /gqsb lua SHARED_INVENTORY.bagCache[1] , "true"
+ /gqsb lua SHARED_INVENTORY.bagCache[2] , "rawName"  , "" ,   5
+ /gqsb lua SHARED_INVENTORY.questCache
+ /gqsb lua SHARED_INVENTORY.questCache  , "string"
+ 
+ /gqsb lua SHARED_INVENTORY.bagCache[1][1].inventory.sortHeaders.highlightColor
+ 
+ /gqsb lua SHARED_FURNITURE
+ /gqsb lua SHARED_FURNITURE.placeableFurniture
+ /gqsb lua SHARED_FURNITURE.placeableFurniture[1][1][8].slotData
+ /gqsb lua SHARED_FURNITURE.retrievableFurniture
+ 
+ --------- https://esoapi.uesp.net/100034/data/i/s/s/IsShowing.html
+ /gqsb lua SYSTEMS:IsShowing("champion")
+ 
+ --------- TABLE
+ /gqsb lua ACTION_BAR_ASSIGNMENT_MANAGER
+ /gqsb lua ACTIVITY_TRACKER
+ /gqsb lua BUFF_DEBUFF_FRAGMENT
+ 
+ --------- API 101034
+ $APROJECTS/GITHUB/ESO/pts8.0/actionbar.lua
+ /gqsb lua ZO_ActionBar_GetButton(UNUSED, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+ 
+ $APROJECTS/GITHUB/ESO/pts8.0/assignableutilitywheel_shared.lua
+ /gqsb lua ZO_AssignableUtilityWheel_Shared:Activate()
+ /gqsb lua ZO_AssignableUtilityWheel_Shared:CreateSlots()
+ /gqsb lua ZO_AssignableUtilityWheel_Shared:CycleHotbarCategory()
+ /gqsb lua ZO_AssignableUtilityWheel_Shared:Deactivate()
+ /gqsb lua ZO_AssignableUtilityWheel_Shared:GetHotbarCategory()
+ /gqsb lua ZO_AssignableUtilityWheel_Shared:GetNumSlotted()
+ /gqsb lua ZO_AssignableUtilityWheel_Shared:RefreshHotbarCategory()
+ /gqsb lua ZO_AssignableUtilityWheel_Shared:UpdateAllSlots()
+ 
+ $APROJECTS/GITHUB/ESO/pts8.0/actionbarassignmentmanager.lua
+ 
+ $APROJECTS/GITHUB/ESO/pts8.0/ESOUIDocumentation.txt
+ /gqsb lua GetSlotName(1)
+ /gqsb lua GetSlotName(1, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+ 
+ $APROJECTS/GITHUB/ESO/pts8.0/inventoryslot.lua
+ /gqsb lua   QUICKSLOT_WINDOW:AreQuickSlotsShowing()
+ /gqsb lua QUICKSLOT_KEYBOARD:AreQuickSlotsShowing()
+ 
+ /gqsb lua HOTBAR_CATEGORY_QUICKSLOT_WHEEL -- API 101034 ...return 10
+ API 101034 WHEEL_LOOKUPTABLE = {  4,  3,  2,  1, 8 ,  7,  6,  5 }
+ API 101033 WHEEL_LOOKUPTABLE = { 12, 11, 10,  9, 16, 15, 14, 13 }
+ 
+ --]]
+        --}}}
         lua_expr = string.match(arg, "^%s*lua%s*(.*)")
         if lua_expr then
 
@@ -5886,19 +6058,19 @@ function OnSlashCommand(arg)
                 c(                       "zo_loadstring("..COLOR_5.."return "..lua_expr.."|r)\n")
                 local f =         assert( zo_loadstring(            "return "..lua_expr        ))
                 if f then
-                    local r1, r2, r3,    r4, r5 = f()
+                    local res, key, val, max, nok = f()
                     c(                   "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 
-                    if(not   r1 ) then c("@ "..COLOR_2.."*** "..tostring(r1).." ***\n")
-                    elseif(  r1 ) then c("@ "..COLOR_5.."r1: "..tostring(r1)..    "\n") end
+                    if(not   res ) then c("@ "..COLOR_2.."*** "..tostring(res).." ***\n")
+                    elseif(  res ) then c("@ "..COLOR_5.."res: "..tostring(res)..    "\n") end
 
-                    if(      r2 ) then c("@ "..COLOR_5.."r2: "..tostring(r2)..    "\n") end
-                    if(      r3 ) then c("@ "..COLOR_5.."r3: "..tostring(r3)..    "\n") end
-                    if(      r4 ) then c("@ "..COLOR_5.."r4: "..tostring(r4)..    "\n") end
-                    if(      r5 ) then c("@ "..COLOR_5.."r5: "..tostring(r5)..    "\n") end
+                    if(      val ) then c("@ "..COLOR_5.."val: "..tostring(val)..    "\n") end
+                    if(      key ) then c("@ "..COLOR_5.."key: "..tostring(key)..    "\n") end
+                    if(      max ) then c("@ "..COLOR_5.."max: "..tostring(max)..    "\n") end
+                    if(      nok ) then c("@ "..COLOR_5.."nok: "..tostring(nok)..    "\n") end
 
                     -- partial -- keyFilter -- valFilter ----- NAME TABLE MAX KEY VAL
-                    if(type( r1 ) == "table") then d_table(lua_expr,   r1, r2, r3, r4 ) end
+                    if(type(res) == "table") then d_name_table_key_val(lua_expr, res, key, val, max, nok) end
 
                 end
             end
@@ -5910,7 +6082,6 @@ function OnSlashCommand(arg)
             c(                           "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
             c()
         end
-        --}}}
     end
     -- SelectPreset .. f(presetName) {{{
     if presetName ~= "" then
@@ -5939,7 +6110,7 @@ function table_includes(table, value)
     return false
 end
 --}}}
--- d_table {{{
+-- d_name_table_key_val {{{
 --{{{
 local PAIRS_MAX = 5000
 local MATCH_MAX =  100
@@ -5949,7 +6120,7 @@ local match_count
 local match_max
 local tables_visited
 --}}}
-function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter)
+function d_name_table_key_val(tableName, table, k_filter, v_filter, indent_or_match_count_max)
     local c = c_log
     -- ROOT-TABLE {{{
     if(not table) then c(tableName..": "..tostring(table)) return end
@@ -5973,7 +6144,8 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
     -- FILTER {{{
     k_filter           =  k_filter and (k_filter ~= "") and string.lower(k_filter) or nil
     v_filter           =  v_filter and (v_filter ~= "") and string.lower(v_filter) or nil
-    local  filtering   = (k_filter ~= nil) or (v_filter ~= nil)
+    local  filtering   = ((k_filter ~= nil) and (k_filter ~= ""))
+    or                   ((v_filter ~= nil) and (v_filter ~= ""))
 
     local  truncating  = (match_max >  0)
 
@@ -6010,19 +6182,28 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
                and not table_includes(tables_visited, v) -- been there, done that
             ) then
 
-            d_table(label, v, indent.."."..k_str, k_filter, v_filter)
+            d_name_table_key_val(label, v, k_filter, v_filter, indent.."."..k_str)
 
         --}}}
         -- ENTRY {{{
         else
             -- [FILTER]
-            local k_lower =               string.lower( k_str )
-            local v_lower =               string.lower( v_str )
-            local k_match = k_filter and (string.find ( k_lower, k_filter) ~= nil)
-            local v_match = v_filter and (string.find ( v_lower, v_filter) ~= nil)
-            or              v_filter and (string.find ( v_type , v_filter) ~= nil)
+            local k_lower =                                            string.lower(k_str            )
+            local k_check = (k_filter == nil) or (k_filter  == "") or (string.find (k_lower, k_filter) ~= nil)
 
-            if((not filtering) or k_match or v_match) then
+            local v_lower =                                            string.lower(v_str )
+            local v_some  =                                           (string.len  (v_lower)  >   0)
+            local v_check = (v_filter == nil) or (v_filter  ==  "")
+            or                                                        (string.find(v_type  , v_filter) ~= nil)
+            or                                                        (string.find(v_lower , v_filter) ~= nil)
+--[[{{{
+j0"*y$
+/gqsb lua SHARED_INVENTORY.bagCache[1], "rawName", "Potion"
+j0"*y$
+/gqsb lua SHARED_INVENTORY.bagCache[1], "best"   , "Potion"
+}}}--]]
+
+            if (not filtering) or (k_check and v_check) then
 
                 match_count = match_count + 1
 
@@ -6037,17 +6218,20 @@ function d_table(tableName, table, indent_or_match_count_max, k_filter, v_filter
         end
         --}}}
     end
-    if(indent == "") then
-        c("(in "..#tables_visited.." tables)")
-    end
+--  if(indent == "") then c("(in "..#tables_visited.." tables)") end
+end
+--}}}
+-- print_bNum_to_slotIndex {{{
+function print_bNum_to_slotIndex() --//FIXME
+    local slot_array = {}
+    for bNum = 1, QSB.ButtonCountMax do slot_array[bNum] = bNum_to_slotIndex(bNum) end
+    d_name_table_key_val("........[bNum] .. [slotIndex]", slot_array)
+    c                   (".............................")
 end
 --}}}
 
 function d_signature()
     d("\r\n!! GQSB"..COLOR_C.." "..QSB.VERSION.." "..COLOR_7.." "..QSB.UPDATE.." (API "..QSB.API..") ("..QSB.TRACE_TAG..")|r\n"
-    .."!! "..COLOR_1.."Hiding buttons while playing Tribute Games|r\n"
-    .."!! "..COLOR_8.."...request from Marazota|r\n"
-    .."!! "..COLOR_8.."...LibDebugLogger.ClearLog moved from Initialize to QSB_ReloadUI|r\n"
     .."!! "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n")
 
     if(QSB.Settings.ChatMute) then d(COLOR_7.." GQSB: ChatMute is ON") end
@@ -6069,13 +6253,13 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, I
 :!start /b explorer "https://www.esoui.com/forums/showthread.php?t=9923"
 
 :!start /b explorer "https://wiki.esoui.com/Globals"
-:!start /b explorer "https://esoapi.uesp.net/101034"
+:!start /b explorer "https://esoapi.uesp.net/101035"
 :!start /b explorer "https://wiki.esoui.com/APIVersion"
 
-:vnew|n API101034/APIPatchNotes*.txt API101034/ESOUIDocumentation*.txt
+:vnew|n API101035/APIPatchNotes*.txt API101035/ESOUIDocumentation*.txt
 :e $APROJECTS/Make_GIT
 :e C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/P.txt
 
-vim: complete=.,w,b,u,sAPI101034/ESOUIDocumentationP34.txt
+vim: complete=.,w,b,u,sAPI101035/ESOUIDocumentationP34.txt
 --]]--}}}
 
