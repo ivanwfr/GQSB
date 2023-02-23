@@ -3,6 +3,12 @@
 --}}}
 --[[ CHANGELOG
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.7.2.1 (230223) {{{
+- [color="gray"]Checked with Update 37 Scribes of Fate DLC (8.3.3) (API 101037)[/color]
+}}}
+v2.7.2   (230117) {{{
+- [color="gray"]ShowOrHide if elsif else end layout[/color]
+}}}
 v2.7.1   (220924) {{{
 - [color="gray"]Checked with Update 36 Firesong (8.2) (API 101036)[/color]
 }}}
@@ -557,10 +563,10 @@ local Loaded_Preset
 local QSB = {
 
     NAME                                = "GreymindQuickSlotBar",
-    VERSION                             = "v2.7.1"  , -- 220924 previous: 220824 220613 220612 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
-    UPDATE                              = "Firesong (U36 v8.2)",
-    API                                 = "101035",
-    TRACE_TAG                           = "(220924:15h:46)",
+    VERSION                             = "v2.7.3"  , -- 230223 previous: 230117 220924 220824 220613 220612 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    UPDATE                              = "Scribes of Fate DLC (U37 v8.3.3)",
+    API                                 = "101037",
+    TRACE_TAG                           = "(230223:18h:12)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -2855,7 +2861,7 @@ function ShowOrHide()
     if not QSB.Settings then return end
 
     -- CURRENT STATE OF USER-INTERFACE
-    local               vis =     QSB.Settings.Visibility
+    local               vis =     QSB.Settings.Visibility   -- current user policy
     local qsb_panel_showing = not QSB.Panel:IsHidden()
     local inventory_showing = not ZO_PlayerInventory:IsHidden()
     local qsb_wheel_showing = My_qsb_wheel_showing()
@@ -2868,50 +2874,47 @@ function ShowOrHide()
     -- SHOULD TRANSITION TO SHOWING OR HIDING
     local          show_msg = ""
     local          hide_msg = ""
-    if         qsb_panel_showing        then show_msg = "VIS-"..vis.." .. GQSB-MENU SHOWING"
-    elseif not QSB.Settings.LockUI      then show_msg = "NOT LOCKED ON SCREEN"
 
-    -- USER FORCED
-    elseif     BlockBarVisibility       then hide_msg = "BLOCKED IS ON"
-    elseif     ForceBarVisibility       then show_msg = "FORCED IS ON"
+    -- 1/4 - AUTO: NEVER SHOW
+    if         crafting                 then hide_msg = "WHILE CRAFTING"
+    elseif      digging                 then hide_msg = "WHILE DIGGING"
+    elseif      scrying                 then hide_msg = "WHILE SCRYING"
+    elseif      playing                 then hide_msg = "WHILE PLAYING"
+    elseif      setting                 then hide_msg = "SETUP SHOWING"
 
-    -- USER DEFAULT
+    -- 2/4 - AUTO: ALWAYS SHOW
+    elseif     qsb_panel_showing        then show_msg = "VIS-"..vis.." .. GQSB-MENU SHOWING"
+    elseif not QSB.Settings.LockUI      then show_msg =               "NOT LOCKED ON SCREEN"
+
+    -- 3/4 - USER: FORCED
+    elseif     BlockBarVisibility       then hide_msg =                      "BLOCKED IS ON"
+    elseif     ForceBarVisibility       then show_msg =                       "FORCED IS ON"
+
+    -- 4/4 - USER: DEFAULT
     elseif     vis == VIS_NEVER         then hide_msg = "VIS-"..vis
     elseif     vis == VIS_ALWAYS        then show_msg = "VIS-"..vis
-
     elseif     vis == VIS_BLINK_CHANGES then
         if     inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
         elseif qsb_wheel_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
         else   Show_handler();          Hide_delayed(vis, ZO_CALLLATER_DELAY_BLINK_CHANGE)
         end
-
     elseif     vis == VIS_RETICLE       then
         if not Reticle_isHidden         then show_msg = "VIS-"..vis.." .. RETICLE ON SCREEN"
         elseif inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
         elseif qsb_wheel_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
         else                                 hide_msg = "VIS-"..vis.." .. RETICLE HIDDEN"
         end
-
     elseif     vis == VIS_COMBAT        then
         if     IsUnitInCombat('player') then show_msg = "VIS-"..vis.." .. IN COMBAT"
         elseif inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
         elseif qsb_wheel_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
         else                                 hide_msg = "VIS-"..vis.." .. NOT IN COMBAT"
         end
-
     else
         if     inventory_showing        then show_msg = "VIS-"..vis.." .. INVENTORY SHOWING"
         elseif qsb_wheel_showing        then show_msg = "VIS-"..vis.." .. QSB-WHEEL SHOWING"
         else                                 hide_msg = "VIS-"..vis.." .. RETICLE ON SCREEN"
         end
-
-    end
-    -- NEVER SHOW
-    if         crafting                 then hide_msg = "WHILE CRAFTING"; show_msg = ""
-    elseif      digging                 then hide_msg = "WHILE DIGGING" ; show_msg = ""
-    elseif      scrying                 then hide_msg = "WHILE SCRYING" ; show_msg = ""
-    elseif      playing                 then hide_msg = "WHILE PLAYING" ; show_msg = ""
-    elseif      setting                 then hide_msg = "SETUP SHOWING" ; show_msg = ""
     end
 
     -- BUTTONS SHOWING OR HIDING
@@ -6021,7 +6024,7 @@ function OnSlashCommand(arg)
  /gqsb lua ACTIVITY_TRACKER
  /gqsb lua BUFF_DEBUFF_FRAGMENT
  
- --------- API 101034
+ --------- API 101037
  $APROJECTS/GITHUB/ESO/pts8.0/actionbar.lua
  /gqsb lua ZO_ActionBar_GetButton(UNUSED, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
  
@@ -6256,13 +6259,13 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, I
 :!start /b explorer "https://www.esoui.com/forums/showthread.php?t=9923"
 
 :!start /b explorer "https://wiki.esoui.com/Globals"
-:!start /b explorer "https://esoapi.uesp.net/101035"
+:!start /b explorer "https://esoapi.uesp.net/101037"
 :!start /b explorer "https://wiki.esoui.com/APIVersion"
 
-:vnew|n API101035/APIPatchNotes*.txt API101035/ESOUIDocumentation*.txt
+:vnew|n API101037/APIPatchNotes*.txt API101037/ESOUIDocumentation*.txt
 :e $APROJECTS/Make_GIT
 :e C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/P.txt
 
-vim: complete=.,w,b,u,sAPI101035/ESOUIDocumentationP34.txt
+vim: complete=.,w,b,u,sAPI101037/ESOUIDocumentationP34.txt
 --]]--}}}
 
