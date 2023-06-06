@@ -1,8 +1,20 @@
 -- GreymindQuickSlotBar {{{
 --  Feature Author: ivanwfr
 --}}}
---[[ CHANGELOG
+--[[ CHANGELOG {{{
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.7.2.5 (230606) {{{
+- [color="Wheat"]Checked with Update 38 Necrom (9.0.5) (API 101038)[/color]
+}}}
+v2.7.2.4 (230429) {{{
+- [color="gray"]Checked with Shadow Over Morrowind DLC (Hotfix 8.3.8)[/color]
+}}}
+v2.7.2.3 (230330) {{{
+- [color="gray"]Checked with Shadow Over Morrowind DLC (Hotfix 8.3.6)[/color]
+}}}
+v2.7.2.2 (230318) {{{
+- [color="gray"]Checked with Shadow Over Morrowind DLC (8.3.5)[/color]
+}}}
 v2.7.2.1 (230223) {{{
 - [color="gray"]Checked with Update 37 Scribes of Fate DLC (8.3.3) (API 101037)[/color]
 }}}
@@ -270,7 +282,7 @@ v2.4.8   191102 {{{
 - [color="magenta"][b]Items with same Id but different flavors[/b][/color] improved support based on [b]Items Link[/b].
 
 [u]Chat[/u]
-- [color="orange"][b]LinkToChatOnClick[/b][/color] to copy button's item link into chat.
+- [color="orange"][b]LinkToChatOnClick[/b][/color] to copy buttons item link into chat.
 - [color="orange"]ChatMax[/color] utility option to unlock Chat Window maximum size.
 - [color="orange"]ChatMute[/color] option to block all Chat warning messages.
 - (a per-session option i.e. not per-preset): one for [b]AccountWide[/b], one by [b]Character[/b].
@@ -289,7 +301,7 @@ v2.4.8   191102 {{{
 - [color="lightblue"]Updated ## Description: directive in embedded libraries manifest[/color]
 
 }}}
---]]
+--}}} ]]
 
 local DEBUG          = false
 local DEBUG_ITEM     = false
@@ -350,7 +362,7 @@ local COLOR_ACTIVEWEAPONPAIR1       = { R =0  , G =1  , B =0  , A = 1.0 }
 local COLOR_ACTIVEWEAPONPAIR2       = { R =1  , G =0  , B =0  , A = 1.0 }
 
 -- COLORS --}}}
--- CONSTANTS --{{{
+-- CONSTANTS --{{
 -- DELAYS {{{
 local ZO_CALLLATER_DELAY_HIDE         =  200 -- Hide
 local ZO_CALLLATER_DELAY_SHOW         =  200 -- Show
@@ -563,10 +575,10 @@ local Loaded_Preset
 local QSB = {
 
     NAME                                = "GreymindQuickSlotBar",
-    VERSION                             = "v2.7.3"  , -- 230223 previous: 230117 220924 220824 220613 220612 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
-    UPDATE                              = "Scribes of Fate DLC (U37 v8.3.3)",
-    API                                 = "101037",
-    TRACE_TAG                           = "(230223:18h:12)",
+    VERSION                             = "v2.7.2.5"  , -- 230606 previous: 230429 230330 230318 230223 230117 220924 220824 220613 220612 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    UPDATE                              = "Necrom (v9.0.5)",
+    API                                 = "101038",
+    TRACE_TAG                           = "(230606:21h:56)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -787,6 +799,7 @@ local save_QSB_to_SlotItemTable
 local set_LockThisPreset_state
 local slotIndex_to_bNum
 local string_split
+local removeServerDataOnce
 local table_includes
 local tasks_cooldown_begin
 local tasks_cooldown_end
@@ -1002,8 +1015,7 @@ c_log("QSB: Reseting current settings to default values")
     Refresh("ResetThisPreset")
 end
 --}}}
--- TRADER08_MOD
---{{{
+-- TRADER08_MOD {{{
 local presetName_pending_IN_COMBAT = ""
 --}}}
 -- Set_preset_pending_IN_COMBAT {{{
@@ -1780,8 +1792,6 @@ if(log_this) then c("save_QSB_to_SlotItemTable("..bNum.."):") end
     -- SINGLE-POINT-INITIALIZATION
 end
 --}}}
-
-
 -- ITEM GET
 -- getItem_tooltip {{{
 function getItem_tooltip(bNum)
@@ -2249,7 +2259,6 @@ if(DEBUG_ITEM) then c(COLOR_8.."Refresh "..tostring(_caller)) end
 
 end
 --}}}
--- XXX
 -- Refresh_handler {{{
 function Refresh_handler()
 -- Refresh_count_down {{{
@@ -3467,8 +3476,6 @@ end
 -- ClearKeyBindings {{{
 function ClearKeyBindings()
 
-    -- XXX wont work (protected)
-
     local mod = 0
     local key = 0
     for i = 1, #KEYBINDINGS do
@@ -3772,9 +3779,7 @@ function string_split(s, sep)
    return  fields
 end
 --}}}
-
--- BAERTRAM
--- removeServerDataOnce {{{
+-- removeServerDataOnce -- BAERTRAM {{{
 --Remove the megaserver name subtable from the copied data, if given
 local function removeServerDataOnce(svTableOld)
 
@@ -3791,8 +3796,6 @@ c_log(">>found existing servername data -> stripped!")
     return copyOfOldSV
 end
 --}}}
-
--- AccountWide..Character Settings
 -- Load_AccountWideSettings {{{
 local function Load_AccountWideSettings(accountwide)
 if DEBUG_STATUS then c_log(COLOR_9.." Load_AccountWideSettings("..tostring(accountwide)..")") end
@@ -3835,7 +3838,6 @@ end
 -- Load_SwitchTo_AccountWideSettings {{{
 local function Load_SwitchTo_AccountWideSettings()
 if DEBUG_STATUS then c_log(COLOR_9.." Load_SwitchTo_AccountWideSettings") end
-
 
 --      local namespace = nil
         local namespace = GetWorldName()
@@ -6236,21 +6238,34 @@ function print_bNum_to_slotIndex() --//FIXME
 end
 --}}}
 
+-- d_signature --{{{
 function d_signature()
     d("\r\n!! GQSB"..COLOR_C.." "..QSB.VERSION.." "..COLOR_7.." "..QSB.UPDATE.." (API "..QSB.API..") ("..QSB.TRACE_TAG..")|r\n"
     .."!! "..COLOR_8..QSB_SLASH_COMMAND.." -h for help|r\n")
 
     if(QSB.Settings.ChatMute) then d(COLOR_7.." GQSB: ChatMute is ON") end
 end
+--}}}
+
 GreymindQuickSlotBar = QSB
 EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, Initialize)
 
 -- LINKS
 --[[--{{{
+
+" ONLINE
+:!start /b explorer "https://wiki.esoui.com/APIVersion"
+:!start /b explorer "https://esoapi.uesp.net/101038"
+:!start /b explorer "https://forums.elderscrollsonline.com/en/discussion/631584/pts-patch-notes-v9-0-0"
+:!start /b explorer "https://www.esoui.com/forums/showthread.php?p=47571"
+
+" FILES
+:new %:h/GreymindQuickSlotBar.txt
 :new C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/P.txt
 :e   C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/ARCHIVES/BAK/GreymindQuickSlotBar_210425.lua
 :e   C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/ARCHIVES/BAK/GreymindQuickSlotBar_210509.lua
 
+"{{{
 :!start /b explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
 :!start /b explorer "https://esodata.uesp.net/100029/data/z/o/_/ZO_SavedVars.NewCharacterIdSettings.html"
 
@@ -6259,12 +6274,15 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, I
 :!start /b explorer "https://www.esoui.com/forums/showthread.php?t=9923"
 
 :!start /b explorer "https://wiki.esoui.com/Globals"
-:!start /b explorer "https://esoapi.uesp.net/101037"
-:!start /b explorer "https://wiki.esoui.com/APIVersion"
 
 :vnew|n API101037/APIPatchNotes*.txt API101037/ESOUIDocumentation*.txt
 :e $APROJECTS/Make_GIT
 :e C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/P.txt
+
+" Software Occlusion Culling (Beta):
+:new $USERPROFILE/Documents/Elder\ Scrolls\ Online/live/UserSettings.txt
+SET SoftwareOcclusionCullingEnabled "1"
+"}}}
 
 vim: complete=.,w,b,u,sAPI101037/ESOUIDocumentationP34.txt
 --]]--}}}
