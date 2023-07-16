@@ -3,6 +3,12 @@
 --}}}
 --[[ CHANGELOG {{{
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.7.2.7 (230716) {{{
+- [color="Wheat"]Checked with Update 39 Necrom (9.1.0) (API 101039)[/color]
+}}}
+v2.7.2.6 (230619) {{{
+- [color="#C964B00"]Checked with Patch (9.0.6)[/color]
+}}}
 v2.7.2.5 (230606) {{{
 - [color="Wheat"]Checked with Update 38 Necrom (9.0.5) (API 101038)[/color]
 }}}
@@ -362,7 +368,7 @@ local COLOR_ACTIVEWEAPONPAIR1       = { R =0  , G =1  , B =0  , A = 1.0 }
 local COLOR_ACTIVEWEAPONPAIR2       = { R =1  , G =0  , B =0  , A = 1.0 }
 
 -- COLORS --}}}
--- CONSTANTS --{{
+-- CONSTANTS --{{{
 -- DELAYS {{{
 local ZO_CALLLATER_DELAY_HIDE         =  200 -- Hide
 local ZO_CALLLATER_DELAY_SHOW         =  200 -- Show
@@ -575,10 +581,10 @@ local Loaded_Preset
 local QSB = {
 
     NAME                                = "GreymindQuickSlotBar",
-    VERSION                             = "v2.7.2.5"  , -- 230606 previous: 230429 230330 230318 230223 230117 220924 220824 220613 220612 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
-    UPDATE                              = "Necrom (v9.0.5)",
-    API                                 = "101038",
-    TRACE_TAG                           = "(230606:21h:56)",
+    VERSION                             = "v2.7.2.7"  , -- 230716 previous: 230619 230606 230429 230330 230318 230223 230117 220924 220824 220613 220612 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    UPDATE                              = "Necrom (v9.1.0)",
+    API                                 = "101039",
+    TRACE_TAG                           = "(230716:17h:04)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -3999,7 +4005,7 @@ end
 
 -- API_VERSION 101034
 --{{{
--- $TEMP/APIPatchNotesP34.txt -- functions with added argument [HOTBAR_CATEGORY_QUICKSLOT_WHEEL]
+-- $TEMP/APIPatchNotesP39.txt -- functions with added argument [HOTBAR_CATEGORY_QUICKSLOT_WHEEL]
 
 -- ✔ GetSlotItemCount(*luaindex* _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]* _hotbarCategory_)
 -- ✔ GetSlotItemLink(*luaindex* _actionSlotIndex_, *[HotBarCategory|#HotBarCategory]* _hotbarCategory_)
@@ -5005,8 +5011,8 @@ D("BuildSettingsMenu()")
         end,
         width       = "full",
         warning     = "Default is to allow somehow important messages"
-        ..            "to be displayed in the Main Chat window and"
-        ..            "your Alert and Warning Sounds to be played.\n"
+        ..            " to be displayed in the Main Chat window and"
+        ..            " your Alert and Warning Sounds to be played.\n"
         .."\n"
         ..COLOR_5..   "...will silence these sounds:\n"
         ..            " Item Slotted\n"
