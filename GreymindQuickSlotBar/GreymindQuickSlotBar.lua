@@ -3,6 +3,9 @@
 --}}}
 --[[ CHANGELOG {{{
 -- TODO: when API changed, do not forget to update version in GreymindQuickSlotBar.txt
+v2.7.2.8 (231014) {{{
+- [color="Wheat"]Checked with Update 40 Endless Archive (9.2.0) (API 101040)[/color]
+}}}
 v2.7.2.7 (230716) {{{
 - [color="Wheat"]Checked with Update 39 Necrom (9.1.0) (API 101039)[/color]
 }}}
@@ -348,7 +351,7 @@ local COLOR_8                    = "|cA0A0A0"
 local COLOR_9                    = "|cFFFFFF"
 local COLOR_X                    = { COLOR_1, COLOR_2, COLOR_3, COLOR_4, COLOR_5, COLOR_6, COLOR_7, COLOR_8, COLOR_9 }
 --[[
-:!start explorer "https://en.wikipedia.org/wiki/Electronic_color_code"
+ ● https://en.wikipedia.org/wiki/Electronic_color_code
 --]]
 
 -- VISUAL-CUE BORDERS
@@ -471,7 +474,7 @@ local CHATMAX_STATES          = { CHATMAX_ON, CHATMAX_OFF, CHATMAX_KEEP_CURRENT 
 --}}}
 -- SOUNDNAMES {{{
 --[[
-:!start explorer "https://wiki.esoui.com/Sounds"
+ ● https://wiki.esoui.com/Sounds
 --]]
 
 local SOUNDNAMES              = {
@@ -581,10 +584,10 @@ local Loaded_Preset
 local QSB = {
 
     NAME                                = "GreymindQuickSlotBar",
-    VERSION                             = "v2.7.2.7"  , -- 230716 previous: 230619 230606 230429 230330 230318 230223 230117 220924 220824 220613 220612 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
-    UPDATE                              = "Necrom (v9.1.0)",
-    API                                 = "101039",
-    TRACE_TAG                           = "(230716:17h:04)",
+    VERSION                             = "v2.7.2.8"  , -- 231014 previous: 230716 230619 230606 230429 230330 230318 230223 230117 220924 220824 220613 220612 220508 220504 220306 220223 211125 211113 211111 211105 211104 211101 211023 211006 210823 210822 210821 210728 210727 210725 210710 210708 210612 210606 210605 210509 210505 210424 210314 210313 210312 201107 201018 201010 200824 200823 200717 200703 200614 200530 200527 200413 200304 200229 191125 191118 191102 191027 191006 190928 190918 190909 190907 190904 190824 190822 190821 190819 190817 190816 190815 190814 190813 190628 190522 190405 190304 190226 190207 190205 190126 190111 181113 181027 181023 181022 180815 180722 180522 180312 180310 180302 180226 180214 180213 171230 171219 171128 171028 170917 170902 170829 170822 170818 170815 170714 170722 170720 170717 170715 170709 170524 170206 161128 161007 160824 160823 160803 160601 160310 160219 160218 151108 150905 150514 150406 150403 150330 150314 150311 15021800
+    UPDATE                              = "Endless Archive (v9.2.0)",
+    API                                 = "101040",
+    TRACE_TAG                           = "(231014:16h:19)",
 
     Panel                               = nil,
     SettingsVersion                     = 1,
@@ -1777,7 +1780,7 @@ if(log_this) then c("save_QSB_to_SlotItemTable("..bNum.."):") end
         -- for quest_item not to be handled as empty
         -- quest_item itemType AND itemName confirmed .. no other details
         -- eventually, an itemSlot should be an index pointing to a container slot
-        -- :!start explorer "https://esoapi.uesp.net/100029/data/z/o/_/ZO_LinkHandler_ParseLink.html"
+        -- ● https://esoapi.uesp.net/100029/data/z/o/_/ZO_LinkHandler_ParseLink.html
 
         itemSlot = GetQuestItemNameFromLink( itemLink )
         if(itemSlot and CanQuickslotQuestItemById(itemId)) then
@@ -1891,7 +1894,7 @@ function getItem_tooltip(bNum)
     -- ITEM COLLECTIBLE QUEST_ITEM .. f(DEBUG_TOOLTIP) {{{
     if(DEBUG_TOOLTIP and itemName) then
         -- LINK NAME SLOT .. f(slotIndex itemLink itemType itemId) {{{
--- :!start explorer "https://esoapi.uesp.net/100029/data/z/o/_/ZO_LinkHandler_ParseLink.html"
+        -- ● https://esoapi.uesp.net/100029/data/z/o/_/ZO_LinkHandler_ParseLink.html
 
         local _, _, itemType, itemId = ZO_LinkHandler_ParseLink( itemLink  )
         local name_from_slotIndex    = MyGetSlotName             ( slotIndex)
@@ -3351,7 +3354,7 @@ function GetKeyBindInfo( actionID )
         = GetActionBindingInfo(_layerIndex, _categoryIndex, _actionIndex, _bindingIndex)
 -- (191006) {{{
 --[[
-:!start explorer "https://esoapi.uesp.net/100029/src/ingame/keybindings/keyboard/keybindings.lua.html"
+ ● https://esoapi.uesp.net/100029/src/ingame/keybindings/keyboard/keybindings.lua.html
     local ctrl    = ZO_Keybindings_DoesKeyMatchAnyModifiers(KEY_CTRL   , _mod1, _mod2, _mod3, _mod4)
     local alt     = ZO_Keybindings_DoesKeyMatchAnyModifiers(KEY_ALT    , _mod1, _mod2, _mod3, _mod4)
     local shift   = ZO_Keybindings_DoesKeyMatchAnyModifiers(KEY_SHIFT  , _mod1, _mod2, _mod3, _mod4)
@@ -6024,7 +6027,7 @@ function OnSlashCommand(arg)
  /gqsb lua SHARED_FURNITURE.placeableFurniture[1][1][8].slotData
  /gqsb lua SHARED_FURNITURE.retrievableFurniture
  
- --------- https://esoapi.uesp.net/100034/data/i/s/s/IsShowing.html
+ --------- ● https://esoapi.uesp.net/100034/data/i/s/s/IsShowing.html
  /gqsb lua SYSTEMS:IsShowing("champion")
  
  --------- TABLE
@@ -6260,10 +6263,10 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, I
 --[[--{{{
 
 " ONLINE
-:!start /b explorer "https://wiki.esoui.com/APIVersion"
-:!start /b explorer "https://esoapi.uesp.net/101038"
-:!start /b explorer "https://forums.elderscrollsonline.com/en/discussion/631584/pts-patch-notes-v9-0-0"
-:!start /b explorer "https://www.esoui.com/forums/showthread.php?p=47571"
+ ● https://wiki.esoui.com/APIVersion
+ ● https://esoapi.uesp.net/101040
+ ● https://forums.elderscrollsonline.com/en/discussion/631584/pts-patch-notes-v9-0-0
+ ● https://www.esoui.com/forums/showthread.php?p=47571
 
 " FILES
 :new %:h/GreymindQuickSlotBar.txt
@@ -6272,14 +6275,14 @@ EVENT_MANAGER:RegisterForEvent(GreymindQuickSlotBar.NAME, EVENT_ADD_ON_LOADED, I
 :e   C:/LOCAL/GAMES/TESO/ADDONS/2_Greymind_Quick_Slot_Bar/ARCHIVES/BAK/GreymindQuickSlotBar_210509.lua
 
 "{{{
-:!start /b explorer "https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial"
-:!start /b explorer "https://esodata.uesp.net/100029/data/z/o/_/ZO_SavedVars.NewCharacterIdSettings.html"
+ ● https://wiki.esoui.com/Circonians_Saved_Variables_Tutorial
+ ● https://esodata.uesp.net/100029/data/z/o/_/ZO_SavedVars.NewCharacterIdSettings.html
 
-:!start /b explorer "https://forums.elderscrollsonline.com/en/categories/pts"
-:!start /b explorer "https://www.elderscrollsonline.com/en-us/news"
-:!start /b explorer "https://www.esoui.com/forums/showthread.php?t=9923"
+ ● https://forums.elderscrollsonline.com/en/categories/pts
+ ● https://www.elderscrollsonline.com/en-us/news
+ ● https://www.esoui.com/forums/showthread.php?t=9923
 
-:!start /b explorer "https://wiki.esoui.com/Globals"
+ ● https://wiki.esoui.com/Globals
 
 :vnew|n API101037/APIPatchNotes*.txt API101037/ESOUIDocumentation*.txt
 :e $APROJECTS/Make_GIT
