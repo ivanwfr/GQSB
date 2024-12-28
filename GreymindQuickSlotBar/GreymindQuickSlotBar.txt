@@ -1,7 +1,7 @@
 ## Title: |c4477FFGreymind|r Quick Slot Bar
 ## APIVersion: 101036 101044
-## Version: v2.7.16
-## AddonVersion: 2729
+## Version: v2.7.17
+## AddonVersion: 2717
 ## Description: An in-combat complement to the Quickslot Radial Menu |c4040F0
 ## SavedVariables: GreymindQuickSlotBarSettings
 ## Author: ivanwfr
